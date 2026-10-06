@@ -1,0 +1,46 @@
+# Story clock (interaction-design.md §7, story.md §7.1).
+# Time is a variable, not real time: story_min += n when a beat ends; n = the beat's `minutes`,
+# or the phase default below. Turns inside a beat do not move the clock.
+
+phases:
+  early: { until_min: 6,    default_minutes: 1.5, passage_words: [120, 180] }
+  mid:   { until_min: 12,   default_minutes: 1.5, passage_words: [80, 140] }
+  late:  { until_min: null, default_minutes: 1.0, passage_words: [50, 100] }
+
+# A generated beat's `minutes` must fall within this multiple of its phase default (beat-script.md §5).
+generated_minutes_range: [0.5, 2.0]
+
+# Force the_knock at this turn whatever the clock says.
+safety_cap_turns: 40
+
+# When no authored beat is eligible and a clock event is pending, jump the clock to it
+# ("nobody says much for a while"); only when nothing is pending does GENERATE_NEW get the slot.
+fast_forward_gaps: true
+
+# Nora's four levels. An event fires in the turn whose beat end makes story_min cross `at_min`;
+# it is written into that passage before the next beat's opening. Events only change state;
+# the beats that react to them carry their own must_follow rules (story.md §9.4).
+events:
+  - id: nora_text_1
+    at_min: 5
+    effects: { nora_pressure: 1 }
+    phone: { kind: text, from: nora, text: "Hey, is Leo with you? He's not picking up." }
+
+  - id: nora_call
+    at_min: 9
+    effects: { nora_pressure: 2, nora_call: ringing }
+    phone: { kind: call_incoming, from: nora }
+    # The call turn picks no new beat: the passage ends on the ringing phone and the next turn
+    # decides (answer -> noras_call, decline or ignore -> Nora calls Leo -> the_buzz).
+    hold_beat_choice: true
+    # If the player does neither in the next turn, the call is missed.
+    unanswered: { nora_call: missed, leo_phone: buzzed }
+
+  - id: nora_downstairs
+    at_min: 13
+    effects: { nora_pressure: 3 }
+    phone: { kind: text, from: nora, text: "I'm downstairs. His car is here. His location says he's in your building." }
+
+  - id: nora_knock
+    at_min: 16
+    effects: { nora_pressure: 4 }

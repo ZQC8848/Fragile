@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fragile.dev/schemas/llm/narrator.json",
+  "title": "LLM output: narrator",
+  "description": "One first-person passage as segments (interaction-design.md §9.1).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "segments",
+    "steps_delivered",
+    "hook"
+  ],
+  "properties": {
+    "segments": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "kind",
+          "text"
+        ],
+        "properties": {
+          "kind": {
+            "enum": [
+              "me",
+              "me_speech",
+              "narration",
+              "speech"
+            ]
+          },
+          "speaker": {
+            "enum": [
+              "julian",
+              "mia",
+              "nora"
+            ]
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "steps_delivered": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "hook": {
+      "type": "string",
+      "description": "what the passage leaves the player to respond to"
+    }
+  }
+}

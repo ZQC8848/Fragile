@@ -1,32 +1,32 @@
-// Hand-written M0 protocol. The real message set (interaction-design.md section 11) is defined in
-// schemas/messages_v2.json in M1; `npm run gen:types` then writes messages.d.ts next to this file and
-// these hand-written shapes give way to the generated ones.
+// Protocol types are GENERATED from schemas/messages_v2.json into messages.d.ts (`npm run gen:types`).
+// This module re-exports them and adds the one runtime helper the client needs: a structural check
+// that an incoming frame is a known server message. Field-level validation is the backend's job.
 
-/** Server -> client: sent once, right after the WebSocket is accepted. */
-export interface Hello {
-  type: 'hello'
-  session: string
-}
+import type { ServerToClient } from './messages'
 
-export type ServerToClient = Hello
-
-/** Client -> server. M0 backends ignore everything the client sends. */
-export interface ClientMessage {
-  type: string
-  [key: string]: unknown
-}
-
-export type ClientToServer = ClientMessage
+export type * from './messages'
 
 export type ServerMessageType = ServerToClient['type']
 
-const SERVER_TYPES: ReadonlySet<string> = new Set<ServerMessageType>(['hello'])
+const SERVER_TYPES: ReadonlySet<string> = new Set<ServerMessageType>([
+  'hello',
+  'session_state',
+  'input_review_result',
+  'turn_accepted',
+  'passage',
+  'options',
+  'phone_event',
+  'room_state',
+  'drama_state',
+  'turn_trace',
+  'error',
+])
 
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null && !Array.isArray(v)
 }
 
-/** Structural check: an object with a known server `type`. Field-level validation is the backend's job. */
+/** Structural check: an object with a known server `type`. */
 export function isServerMessage(v: unknown): v is ServerToClient {
   return isRecord(v) && typeof v.type === 'string' && SERVER_TYPES.has(v.type)
 }

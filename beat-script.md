@@ -447,7 +447,7 @@ beat 的前提**不按阶段写，按"哪些拍演过了"写**。否则时钟和
 | 顺序 | 结局 | 条件 |
 |---|---|---|
 | 1 | `confession` | 有人的镇定值 < 0.15，而且你站在他那边（Mia：`side ≥ +1`；Julian：`side ≤ −1`），且 `nora_told != lie` |
-| 2 | `open_it` | `nora_told == truth` |
+| 2 | `open_it` | `nora_told == truth`，或者你报警打通了（`police_called`） |
 | 3 | `the_witness` | `revealed` 里有 `leo_dead`，且 `nora_told` 是 lie 或 none |
 | 4 | `bon_voyage` | 其他情况（你到最后都不知道真相） |
 
@@ -474,7 +474,7 @@ beat 的前提**不按阶段写，按"哪些拍演过了"写**。否则时钟和
 
 ### 18. `open_it` · 开箱
 
-**条件**：`nora_told == truth`。
+**条件**：`nora_told == truth`，或者你报警打通了。报警版由警察开箱，第 1 步换成楼下的警笛和敲门声。
 **步**：
 1. Nora 从玄关的 TOOLS 箱里拿出电钻；如果箱子已经开了，就跳过这一步。螺丝一颗一颗落在地板上。
 2. 桌布滑下来。一只鞋。Nora 没出声。

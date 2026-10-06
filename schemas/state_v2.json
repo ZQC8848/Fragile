@@ -1,0 +1,291 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fragile.dev/schemas/state_v2.json",
+  "title": "Story state v2",
+  "description": "The story state document of Fragile (story.md §8.2, interaction-design.md §14.1). Every top-level property is addressable from the rule DSL by name; nested ones by dotted path (topic_tier.leo). Each property carries a `default`: the initial state is built from these defaults. During one turn the evaluator also sees a transient `turn` namespace (turn.acts, turn.addressee, turn.topics, turn.claims, turn.action) that is NOT part of the stored state.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "story_min",
+    "turn",
+    "story_phase",
+    "tension",
+    "julian_composure",
+    "mia_composure",
+    "side",
+    "couple_unity",
+    "player_suspicion",
+    "topic_tier",
+    "revealed",
+    "nora_pressure",
+    "nora_told",
+    "nora_call",
+    "crate",
+    "leo_phone",
+    "player_phone",
+    "player_room",
+    "julian_room",
+    "mia_room",
+    "nora_room",
+    "player_holding",
+    "private_turns",
+    "police_called",
+    "claims",
+    "heard_by",
+    "current_beat",
+    "beat_step",
+    "beat_turns",
+    "beat_history",
+    "consecutive_generated",
+    "silence_streak",
+    "ending"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 2,
+      "default": 2
+    },
+    "story_min": {
+      "type": "number",
+      "minimum": 0,
+      "default": 0,
+      "description": "Story minutes. Advances by the ending beat's `minutes` when a beat ends (interaction-design.md §7.1), never by real time."
+    },
+    "turn": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 0
+    },
+    "story_phase": {
+      "type": "string",
+      "enum": ["early", "mid", "late", "ended"],
+      "default": "early",
+      "description": "Derived from story_min: < 6 early, < 12 mid, else late; ended once `ending` is set."
+    },
+    "tension": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 5,
+      "default": 1
+    },
+    "julian_composure": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "default": 0.8
+    },
+    "mia_composure": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "default": 0.6
+    },
+    "side": {
+      "type": "number",
+      "minimum": -2,
+      "maximum": 2,
+      "default": 0,
+      "description": "-2 fully with Julian, +2 fully with Mia."
+    },
+    "couple_unity": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 3,
+      "default": 3,
+      "description": "3 = one story between them, 0 = accusing each other."
+    },
+    "player_suspicion": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 3,
+      "default": 0,
+      "description": "Written by M2 (smoothed over the last 3 turns)."
+    },
+    "topic_tier": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["crate", "leo", "money", "afternoon", "marriage", "college"],
+      "properties": {
+        "crate": { "$ref": "#/$defs/Tier" },
+        "leo": { "$ref": "#/$defs/Tier" },
+        "money": { "$ref": "#/$defs/Tier" },
+        "afternoon": { "$ref": "#/$defs/Tier" },
+        "marriage": { "$ref": "#/$defs/Tier" },
+        "college": { "$ref": "#/$defs/Tier" }
+      },
+      "default": { "crate": 0, "leo": 0, "money": 0, "afternoon": 0, "marriage": 0, "college": 0 }
+    },
+    "revealed": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/Fact" },
+      "default": [],
+      "description": "Facts the PLAYER now knows. Only authored beats and a few named topic tiers may add to it (interaction-design.md §5.4)."
+    },
+    "nora_pressure": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 4,
+      "default": 0
+    },
+    "nora_told": {
+      "type": "string",
+      "enum": ["none", "lie", "truth"],
+      "default": "none",
+      "description": "Latest answer the player gave Nora; testimony sets the final value."
+    },
+    "nora_call": {
+      "type": "string",
+      "enum": ["none", "ringing", "answered", "declined", "missed"],
+      "default": "none"
+    },
+    "crate": {
+      "type": "string",
+      "enum": ["sealed", "opened"],
+      "default": "sealed"
+    },
+    "leo_phone": {
+      "type": "string",
+      "enum": ["in_jacket", "buzzed", "found"],
+      "default": "in_jacket"
+    },
+    "player_phone": {
+      "type": "string",
+      "enum": ["unchecked", "voicemail_heard"],
+      "default": "unchecked"
+    },
+    "player_room": { "$ref": "#/$defs/Room", "default": "hall" },
+    "julian_room": { "$ref": "#/$defs/Room", "default": "living" },
+    "mia_room": { "$ref": "#/$defs/Room", "default": "hall" },
+    "nora_room": { "$ref": "#/$defs/Room", "default": "outside" },
+    "player_holding": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "enum": ["screwdriver", "drill"] },
+      "default": []
+    },
+    "private_turns": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 0,
+      "description": "Consecutive turns the player has spent alone with one host while the other is elsewhere (follow rules, interaction-design.md §8.2)."
+    },
+    "police_called": {
+      "type": "boolean",
+      "default": false,
+      "description": "The player got through to the police (call not blocked). Ending judgement treats it like telling the truth."
+    },
+    "claims": {
+      "type": "array",
+      "default": [],
+      "description": "Facts the player asserted or hinted at in speech (true or bluffed). Never enters `revealed`.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["fact", "to", "turn"],
+        "properties": {
+          "fact": { "$ref": "#/$defs/Fact" },
+          "to": { "$ref": "#/$defs/Addressee" },
+          "turn": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    "heard_by": {
+      "type": "object",
+      "default": {},
+      "description": "Who was present when something was said. Keys are disclosure ids (a Fact id, or a free id such as mia_kitchen_talk); values are the characters who heard it.",
+      "propertyNames": { "pattern": "^[a-z][a-z0-9_]*$" },
+      "additionalProperties": {
+        "type": "array",
+        "uniqueItems": true,
+        "items": { "$ref": "#/$defs/Npc" }
+      }
+    },
+    "current_beat": {
+      "type": ["string", "null"],
+      "default": null
+    },
+    "beat_step": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 0,
+      "description": "Index of the next undelivered step of current_beat."
+    },
+    "beat_turns": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 0
+    },
+    "beat_history": {
+      "type": "array",
+      "default": [],
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["beat_id", "origin", "completed"],
+        "properties": {
+          "beat_id": { "type": "string" },
+          "origin": { "type": "string", "enum": ["authored", "authored_assisted", "generated"] },
+          "completed": {
+            "type": "boolean",
+            "description": "false = aborted; aborted beats may be chosen again (interaction-design.md §6.2)."
+          },
+          "aborted_by": { "type": ["string", "null"] },
+          "entry": { "type": ["string", "null"] },
+          "outcome": { "type": ["string", "null"] },
+          "turns": { "type": "integer", "minimum": 0 },
+          "story_min_end": { "type": "number", "minimum": 0 }
+        }
+      }
+    },
+    "consecutive_generated": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 0
+    },
+    "silence_streak": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 0
+    },
+    "ending": {
+      "type": ["string", "null"],
+      "default": null
+    }
+  },
+  "$defs": {
+    "Tier": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 3
+    },
+    "Room": {
+      "type": "string",
+      "enum": ["outside", "hall", "living", "kitchen", "balcony", "bathroom"]
+    },
+    "Npc": {
+      "type": "string",
+      "enum": ["julian", "mia", "nora"]
+    },
+    "Addressee": {
+      "type": "string",
+      "enum": ["julian", "mia", "both", "nora", "self"]
+    },
+    "Fact": {
+      "type": "string",
+      "enum": [
+        "car_downstairs",
+        "missed_call",
+        "leo_was_here",
+        "embezzlement",
+        "mia_called_leo",
+        "leo_wanted_money",
+        "leo_dead",
+        "body_in_crate",
+        "who_struck",
+        "nora_pushed_leo"
+      ]
+    }
+  }
+}

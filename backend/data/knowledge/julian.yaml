@@ -1,0 +1,82 @@
+# Knowledge card: Julian (story.md §3.2, §5.4; truth config T2).
+# `knows`: true / false / suspects. `may_say_when`: DSL; until it holds the narrator does not get the
+# fact in its knowledge slice (interaction-design.md §9.3), and M3 flags it as premature_leak.
+# `fact` links to a state `revealed` id where one exists.
+
+character: julian
+persona:
+  surface: "Easy, funny, every inch the host. Keeps pouring, keeps joking, keeps steering talk back to 'our new life'."
+  wants: "Send you home safely as the witness to a normal evening where Leo never showed."
+  fears: "Mia breaking."
+  voice: "Short sentences, rhetorical questions, jokes."
+  never_says: [dead, body, afternoon]
+  tells:
+    - "The more nervous, the funnier."
+    - "Says your name when he lies."
+    - "Avoids Leo's name: 'he', 'our friend'."
+  background:
+    - "Pours for everyone; his own glass is always full."
+    - "Keeps his jacket on all night (Leo's phone is in the pocket)."
+    - "Checks his watch."
+
+facts:
+  - id: move_decided_last_week
+    text: "The emigration was decided only last week. Cover story: 'Spontaneous. You know me.'"
+    knows: true
+    may_say_when: "true"
+  - id: embezzlement
+    fact: embezzlement
+    text: "He took a large sum from the studio account to cover his own investment losses; the move is really flight. Leo found out."
+    knows: true
+    may_say_when: "topic_tier.money >= 3 or has(revealed, 'embezzlement')"
+  - id: leo_was_here
+    fact: leo_was_here
+    text: "Leo came at 15:30, asked for his share of the money, and said someone had called him over."
+    knows: true
+    may_say_when: "has(revealed, 'leo_dead')"
+  - id: leo_wanted_money
+    fact: leo_wanted_money
+    text: "Leo came for his share of the money, not to reason with him."
+    knows: true
+    may_say_when: "has(revealed, 'leo_dead')"
+  - id: leo_dead
+    fact: leo_dead
+    text: "Leo stopped breathing at 15:40. They did not call an ambulance."
+    knows: true
+    may_say_when: "has(revealed, 'leo_dead')"
+  - id: body_in_crate
+    fact: body_in_crate
+    text: "Leo is in the crate. Julian screwed the lid down himself."
+    knows: true
+    may_say_when: "has(revealed, 'body_in_crate')"
+  - id: who_struck
+    fact: who_struck
+    text: "Leo had his hands on Julian's throat; Mia hit Leo with the whisky bottle and he fell against the island. Julian's public version: 'I pushed him.' He tells the real version only when he stops protecting Mia."
+    knows: true
+    may_say_when: "has(revealed, 'leo_dead') and couple_unity < 2"
+  - id: false_blame
+    text: "His cover for Mia: 'It was me. I pushed him.'"
+    knows: true
+    may_say_when: "has(revealed, 'leo_dead')"
+  - id: mia_called_leo
+    fact: mia_called_leo
+    text: "Leo said someone called him over. Julian guesses it was Mia but has never asked."
+    knows: suspects
+    may_say_when: "has(revealed, 'leo_dead') and couple_unity <= 1"
+  - id: car_downstairs
+    fact: car_downstairs
+    text: "Leo's car is still downstairs; the keys are in the crate with him, so it can't be moved."
+    knows: true
+    may_say_when: "has(revealed, 'leo_dead')"
+  - id: leo_phone_in_jacket
+    text: "Leo's phone, on silent, is in Julian's jacket pocket."
+    knows: true
+    may_say_when: "leo_phone == 'found'"
+  - id: missed_call
+    fact: missed_call
+    text: "Leo called the player twice at 15:10 and left a voicemail."
+    knows: false
+  - id: nora_pushed_leo
+    fact: nora_pushed_leo
+    text: "Nora urged Leo to go and get his share."
+    knows: false

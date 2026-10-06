@@ -300,7 +300,7 @@ outcomes:
   mia: "Julian's smile stays a beat too long. He flicks the cigarette over the railing."
   neutral: "Julian looks at you, then down at the street."
 mix_in:
-  - on: "has(turn.acts, 'mention_car')"
+  - when: "has(turn.acts, 'mention_car')"
     do: "Julian: 'Lots of yellow cars in this city.' He flicks the ash too fast."
     effects: { julian_composure: "-0.15" }
 ```
@@ -632,6 +632,9 @@ Nora 的四级沿用 story.md §7.1，只是从"约 X 分钟"改成剧情分钟�
 | `turn` | 整数 | 回合数 |
 | `beat_step` `beat_turns` | 整数 | 当前 beat 的步指针、已用回合 |
 | `silence_streak` | 整数 | 连续沉默的回合数 |
+| `private_turns` | 整数 | 你和一个主人单独在一起、另一个不在场的连续回合数 |
+| `police_called` | 布尔 | 报警打通了 |
+| `player_holding` | 列表 | 你手里拿着的工具 |
 | `nora_call` | none / ringing / answered / declined / missed | 取代 `player_call` |
 | `claims` | 列表 | 说法、对谁、回合 |
 | `heard_by` | 映射 | 每条私下的话被谁听到 |

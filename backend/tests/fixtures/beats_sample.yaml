@@ -1,0 +1,70 @@
+# Two beats from beat-script.md translated to beat_v2, used by test_contracts.py to prove the schema
+# fits real content. M2 writes the full pool into data/beats/.
+
+- id: julian_on_the_balcony
+  title: "阳台上的 Julian"
+  type: spine
+  origin: authored
+  author: "beat-script v0"
+  schema_version: 2
+  phase_hint: mid
+  preconditions: "played('the_fourth_setting')"
+  entries:
+    - id: invited
+      when: "player_room == 'living' and julian_room == 'living'"
+      opening: "Julian: 'Keep me company? She hates the smoke.'"
+      invite: { asker: julian, to_room: balcony }
+    - id: player_initiated
+      when: "player_room == 'balcony' and julian_room == 'balcony' and mia_room != 'balcony'"
+      opening: "Julian is already at the railing when you step out."
+  weight: 1.0
+  tension_slope: 1
+  effects: { tension: "+0.5" }
+  minutes: 1.5
+  max_turns: 3
+  dramatic_intent: |
+    Julian smokes and talks about the move like a holiday ("Spontaneous. You know me."). He gets in first
+    with a warning about Mia. Looking down, you can see the car.
+  steps:
+    - id: smoke
+      do: "Julian lights a cigarette and talks up the new life: 'Spontaneous. You know me. One day you wake up and think, why not.' He checks his watch."
+    - id: the_car
+      do: "You look down: the wet street, the yellow hatchback with two wheels on the curb. Julian follows your eyes and says nothing."
+      tableau: balcony_car
+    - id: the_warning
+      do: "'Mia hasn't been well. If she says strange things tonight, be kind to her. Just don't take it to heart, {name}.'"
+      asks: { asker: julian, kind: side, on_silence: julian }
+  outcomes:
+    - id: julian
+      text: "'Knew I could count on you.' He pats your shoulder."
+      effects: { side: "-1" }
+    - id: mia
+      text: "'Sure. Sure.' He flicks the ash too fast and drops the cigarette over the railing."
+      effects: { side: "+1", julian_composure: "-0.1" }
+  mix_in:
+    - when: "has(turn.acts, 'mention_car')"
+      do: "'Lots of yellow cars in this city.' He flicks the ash too fast."
+      effects: { revealed: [add, car_downstairs], julian_composure: "-0.15" }
+    - when: "has(turn.topics, 'money')"
+      do: "'The studio's fine. The studio's great.' Twice."
+      effects: { topic_tier.money: 2 }
+  tableau: balcony
+
+- id: the_witness
+  title: "证人"
+  type: ending
+  origin: authored
+  author: "beat-script v0"
+  schema_version: 2
+  preconditions: "played('testimony') and has(revealed, 'leo_dead') and nora_told in ['lie', 'none']"
+  entries:
+    - id: default
+      opening: "Nora leaves. The door closes behind her."
+  ending_rank: 3
+  tension_slope: -1
+  effects: { tension: "-0.5" }
+  dramatic_intent: "You became their accomplice."
+  steps:
+    - id: after
+      do: "Julian folds the tablecloth. Mia doesn't move."
+  epilogue: "07:40: they board. Your phone lights up: Nora. You don't open it."

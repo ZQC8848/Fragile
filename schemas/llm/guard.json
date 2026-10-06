@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fragile.dev/schemas/llm/guard.json",
+  "title": "LLM output: guard (M3 llm path)",
+  "description": "One verdict per checked segment or option (interaction-design.md §9.4).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "verdicts"
+  ],
+  "properties": {
+    "verdicts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "index",
+          "label",
+          "confidence"
+        ],
+        "properties": {
+          "index": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "label": {
+            "enum": [
+              "consistent",
+              "premature_leak",
+              "contradiction",
+              "player_overreach"
+            ]
+          },
+          "fact": {
+            "anyOf": [
+              {
+                "enum": [
+                  "car_downstairs",
+                  "missed_call",
+                  "leo_was_here",
+                  "embezzlement",
+                  "mia_called_leo",
+                  "leo_wanted_money",
+                  "leo_dead",
+                  "body_in_crate",
+                  "who_struck",
+                  "nora_pushed_leo"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "span": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "confidence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          }
+        }
+      }
+    }
+  }
+}

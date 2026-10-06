@@ -1,0 +1,26 @@
+# Knowledge card: the player (story.md §3.1). The player's knowledge at any moment is this card plus
+# `revealed` plus what is perceivable in the current room (objects in data/interactions.yaml with
+# `where` containing player_room). M3 checks narration against it; options may only use it.
+
+character: player
+persona:
+  identity: "An old college friend of Julian, Mia and Leo; out of touch the last few years."
+  rule: "The story does not write the player's personality or past. Name and gender only."
+  written_past:
+    - "At 15:10 Leo called twice and left a voicemail; the player has not listened to it."
+    - "Leo trusted the player most; this surfaces only through the voicemail."
+
+facts:
+  - id: dinner_invitation
+    text: "Julian and Mia are emigrating tomorrow; tonight is the farewell dinner; Leo was invited too."
+    knows: true
+    may_say_when: "true"
+  - id: missed_calls_exist
+    text: "The phone buzzed a few times this afternoon; two missed calls from Leo and a voicemail."
+    knows: true
+    may_say_when: "true"
+  - id: voicemail_content
+    fact: missed_call
+    text: "What Leo said in the voicemail."
+    knows: false
+    may_say_when: "player_phone == 'voicemail_heard'"

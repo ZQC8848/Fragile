@@ -159,23 +159,25 @@ log(turn_record)
 
 ### M0 · 骨架（10/7）
 
-- [ ] 建 `backend/`、`frontend/`、`schemas/`，按 §1 拷代码；`.gitignore` 加上 `.env`、`data/logs/`、`data/cache/`
-- [ ] `uv sync` 能装；`npm install && npm run dev` 能起
-- [ ] `engine/llm/client.py` 加缓存、prompt 版本、输出校验与重试（§3.2）
-- [ ] `.env.example` 列出每个角色的 `LLM_PROVIDER_<ROLE>` / `LLM_MODEL_<ROLE>` / `LLM_API_KEY_<ROLE>`
+- [x] 建 `backend/`、`frontend/`、`schemas/`，按 §1 拷代码；`.gitignore` 加上 `.env`、`data/logs/`、`data/cache/`
+- [x] `uv sync` 能装；`npm install && npm run dev` 能起
+- [x] `engine/llm/client.py` 加缓存、prompt 版本、输出校验与重试（§3.2）
+- [x] `.env.example` 列出每个角色的 `LLM_PROVIDER_<ROLE>` / `LLM_MODEL_<ROLE>` / `LLM_API_KEY_<ROLE>`
 
 **验收**：`uv run pytest` 跑通拷过来的 DSL 测试；前端空页面能连上 WebSocket。
 
 ### M1 · 数据契约（10/7–10/8）
 
-- [ ] `schemas/state_v2.json`：story.md §8.2 的全部变量
-- [ ] `schemas/beat_v2.json`：步、`minutes`、`max_turns`、`transition_in.invited / player_initiated`、`asks`、`on_silence`、`outcomes`、本地 `mix_in`、`length`
-- [ ] `schemas/messages_v2.json`：interaction-design.md §11；跑 `gen:types` 生成前端类型
-- [ ] `schemas/llm/*.json`：每个 LLM 角色的输出格式
-- [ ] `data/clock.yaml`：各阶段默认 n、Nora 四级的分钟数、40 回合安全上限
-- [ ] `data/tension_curve.yaml`：按剧情分钟（story.md §6.2）
-- [ ] `data/interactions.yaml`：公寓的封闭动作表，包括房间移动（`go_to`）、物件动作、手机动作、`blocked_when`（interaction-design.md §6.6、§8），以及 beat-script.md §5 第 6 条的新动作：搜 Julian 的外套、看窗外、把手机递给别人、回短信
-- [ ] `data/knowledge/*.yaml`：每个人的知识卡，每条事实带解锁条件（story.md §5.4，按 T2）
+- [x] `schemas/state_v2.json`：story.md §8.2 的全部变量
+- [x] `schemas/beat_v2.json`：步、`minutes`、`max_turns`、`entries`（各自的开场，取代 transition_in 的两个版本；邀请写在 entry 上）、`asks`、`on_silence`、`outcomes`、本地 `mix_in`（触发字段叫 `when`，不叫 `on`：PyYAML 会把裸的 `on:` 读成 True）、`must_follow`、`ending_rank`、`length`
+- [x] `schemas/messages_v2.json`：interaction-design.md §11；跑 `gen:types` 生成前端类型
+- [x] `schemas/llm/*.json`：每个 LLM 角色的输出格式
+- [x] `data/clock.yaml`：各阶段默认 n、Nora 四级的分钟数、40 回合安全上限
+- [x] `data/tension_curve.yaml`：按剧情分钟（story.md §6.2）
+- [x] `data/interactions.yaml`：公寓的封闭动作表，包括房间移动（`go_to`）、物件动作、手机动作、`blocked_when`（interaction-design.md §6.6、§8），以及 beat-script.md §5 第 6 条的新动作：搜 Julian 的外套、看窗外、把手机递给别人、回短信
+- [x] `data/knowledge/*.yaml`：每个人的知识卡，每条事实带解锁条件（story.md §5.4，按 T2）
+- [x] `schemas/data/*.json`：上面四类数据文件各自的 schema；`backend/tests/test_contracts.py` 校验全部 schema、数据文件、DSL 能编译、文件之间一致
+- [x] 状态里新增两个变量：`private_turns`（跟随规则用）、`police_called`（报警打通，结局判定按说了真话处理）
 
 **验收**：所有 schema 和 YAML 都能加载并通过校验（测试覆盖）。
 
@@ -207,6 +209,7 @@ log(turn_record)
 
 - [ ] `engine/clock/`：beat 结束时 +n，计算跨过的 Nora 事件，安全上限，空档快进；来电那一回合不选新拍
 - [ ] `engine/beats/`：v2 加载、步指针、`plan_steps`、`outcomes` 选择、`max_turns`；"中止"和"演过"分开记，中止的拍可以再选
+- [ ] `engine/state/` 和 `engine/dsl/`：初始状态改从 `state_v2.json` 的 `default` 生成；`story_phase` 按剧情分钟推导；effects 和变量检查支持点号路径（`topic_tier.leo`）；`played()` 只算演完的拍；去掉 beat 加载器里 `on:` 的兼容处理
 - [ ] `engine/dm/`：优先级分层、必接拍、目标弧按剧情分钟、`GENERATE_NEW`（proposer 按 v2 生成）
 - [ ] `engine/world/`：执行动作单元，包括换房间、跟随、阻拦（被拦的人镇定值下降）、手机动作、`heard_by`
 - [ ] `engine/reactions/`：收集候选、按优先级选、确定谁来回应、只用一次、每变量每回合限一步、说法记录

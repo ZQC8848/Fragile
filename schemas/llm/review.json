@@ -1,0 +1,307 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fragile.dev/schemas/llm/review.json",
+  "title": "LLM output: review (M2 llm path)",
+  "description": "One call before submit: split a turn into channels, translate to English, check validity (interaction-design.md §4.2), offer a rewrite, and classify every unit (backend-design.md §4.2). Translation and rewrite stay LLM forever; the rest is what the trained M2 will predict.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "channels",
+    "translated",
+    "validity",
+    "rewrite",
+    "units",
+    "suspicion",
+    "claims",
+    "coverage"
+  ],
+  "properties": {
+    "channels": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "speech": {
+          "type": "string"
+        },
+        "action": {
+          "type": "string"
+        },
+        "expression": {
+          "type": "string"
+        },
+        "addressee": {
+          "anyOf": [
+            {
+              "enum": [
+                "julian",
+                "mia",
+                "both",
+                "nora",
+                "self"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "translated": {
+      "type": "boolean"
+    },
+    "validity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "label"
+      ],
+      "properties": {
+        "label": {
+          "enum": [
+            "ok",
+            "npc_action",
+            "npc_speech",
+            "outcome",
+            "perception",
+            "invention",
+            "stride",
+            "absurd",
+            "out_of_scope",
+            "meta"
+          ]
+        },
+        "span": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "the offending part of the input"
+        },
+        "message": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "one or two sentences, system voice"
+        }
+      }
+    },
+    "rewrite": {
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "speech": {
+              "type": "string"
+            },
+            "action": {
+              "type": "string"
+            },
+            "expression": {
+              "type": "string"
+            },
+            "addressee": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "julian",
+                    "mia",
+                    "both",
+                    "nora",
+                    "self"
+                  ]
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "keeps the intent of the input; null when ok, or for absurd / out_of_scope / meta"
+    },
+    "units": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "channel",
+          "act",
+          "addressee",
+          "topics",
+          "action",
+          "implausible"
+        ],
+        "properties": {
+          "channel": {
+            "enum": [
+              "speech",
+              "action",
+              "expression"
+            ]
+          },
+          "text": {
+            "type": "string"
+          },
+          "act": {
+            "enum": [
+              "agree",
+              "disagree",
+              "ask",
+              "explain",
+              "praise",
+              "criticize",
+              "comfort",
+              "provoke",
+              "confide",
+              "joke",
+              "refuse",
+              "thank",
+              "apologize",
+              "greet",
+              "leave",
+              "ask_about_leo",
+              "ask_about_crate",
+              "ask_about_afternoon",
+              "ask_about_move",
+              "mention_car",
+              "mention_voicemail",
+              "accuse_julian",
+              "accuse_mia",
+              "threaten_to_tell",
+              "promise_silence",
+              "silence",
+              "observe"
+            ]
+          },
+          "addressee": {
+            "anyOf": [
+              {
+                "enum": [
+                  "julian",
+                  "mia",
+                  "both",
+                  "nora",
+                  "self"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "topics": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "enum": [
+                "crate",
+                "leo",
+                "money",
+                "afternoon",
+                "marriage",
+                "college"
+              ]
+            }
+          },
+          "action": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "verb",
+                  "target"
+                ],
+                "properties": {
+                  "verb": {
+                    "enum": [
+                      "go_to",
+                      "take_aside",
+                      "leave",
+                      "examine",
+                      "touch",
+                      "knock",
+                      "sit",
+                      "place",
+                      "open",
+                      "take",
+                      "eat",
+                      "drink",
+                      "pour",
+                      "toast",
+                      "look_out",
+                      "smell",
+                      "search",
+                      "listen_voicemail",
+                      "call",
+                      "text",
+                      "answer_call",
+                      "decline_call",
+                      "give_phone",
+                      "hug",
+                      "grab",
+                      "push",
+                      "hit"
+                    ]
+                  },
+                  "target": {
+                    "type": "string"
+                  },
+                  "arg": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+          "implausible": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "suspicion": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 3
+    },
+    "claims": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "car_downstairs",
+          "missed_call",
+          "leo_was_here",
+          "embezzlement",
+          "mia_called_leo",
+          "leo_wanted_money",
+          "leo_dead",
+          "body_in_crate",
+          "who_struck",
+          "nora_pushed_leo"
+        ]
+      }
+    },
+    "coverage": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "how well the current shelf can take this input; logged as an OOD label seed only"
+    }
+  }
+}

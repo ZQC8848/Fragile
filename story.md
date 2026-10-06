@@ -346,6 +346,9 @@
 | `turn` | 整数 | 回合数 |
 | `beat_step` `beat_turns` | 整数 | 当前 beat 的步指针、已用回合 |
 | `silence_streak` | 整数 | 连续沉默的回合数 |
+| `private_turns` | 整数 | 你和一个主人单独在一起、另一个不在场的连续回合数（跟随规则用） |
+| `police_called` | 布尔 | 你报警打通了（没被拦住）；结局判定按说了真话处理 |
+| `player_holding` | 列表 | 你手里拿着的工具：screwdriver / drill |
 | `claims` | 列表 | 你在台词里声称知道的事实、对谁说、第几回合；不进 `revealed` |
 | `heard_by` | 映射 | 每条私下的话被谁听到 |
 | `beat_history` `story_phase` `consecutive_generated` | | 沿用现有定义 |

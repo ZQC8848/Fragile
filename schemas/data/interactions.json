@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fragile.dev/schemas/data/interactions.json",
+  "title": "data/interactions.yaml",
+  "description": "World rules for action units. Cross-file checks (verbs vs schemas/llm/review.json, rooms vs state_v2 Room, DSL compiles, effects valid) live in backend/tests/test_contracts.py.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["block_cost", "rooms", "follow", "movement", "objects"],
+  "properties": {
+    "block_cost": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 },
+    "rooms": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["adjacent"],
+        "properties": {
+          "adjacent": { "type": "array", "items": { "type": "string" } },
+          "exit": { "type": "string" }
+        }
+      }
+    },
+    "follow": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "when", "move"],
+        "properties": {
+          "id": { "type": "string" },
+          "when": { "type": "string" },
+          "move": { "enum": ["julian", "mia"] },
+          "note": { "type": "string" }
+        }
+      }
+    },
+    "movement": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "go_to": { "type": "object", "additionalProperties": { "$ref": "#/$defs/Action" } },
+        "take_aside": { "type": "object", "additionalProperties": { "$ref": "#/$defs/Action" } },
+        "leave": { "type": "object", "additionalProperties": { "$ref": "#/$defs/Action" } }
+      }
+    },
+    "objects": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["actions"],
+        "properties": {
+          "where": { "type": "array", "items": { "type": "string" } },
+          "topic": { "enum": ["crate", "leo", "money", "afternoon", "marriage", "college"] },
+          "actions": { "type": "object", "additionalProperties": { "$ref": "#/$defs/Action" } }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "Action": {
+      "type": "object",
+      "properties": {
+        "when": { "type": "string" },
+        "needs": { "type": "string" },
+        "blockers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["who", "when"],
+            "properties": {
+              "who": { "enum": ["julian", "mia", "nora"] },
+              "when": { "type": "string" }
+            }
+          }
+        },
+        "blocked_note": { "type": "string" },
+        "fail_note": { "type": "string" },
+        "effects": { "type": "object" },
+        "note": { "type": "string" },
+        "arg": { "enum": ["required", "optional"] },
+        "classify": { "enum": ["nora_told"] },
+        "left_behind_composure": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

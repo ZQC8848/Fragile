@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fragile.dev/schemas/llm/judge.json",
+  "title": "LLM output: judge (offline pairwise)",
+  "description": "Pairwise preference between two candidate beats for the same state (backend-design.md §5).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "preference",
+    "reason"
+  ],
+  "properties": {
+    "preference": {
+      "enum": [
+        "A",
+        "B",
+        "tie"
+      ]
+    },
+    "reason": {
+      "type": "string"
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    }
+  }
+}

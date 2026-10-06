@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fragile.dev/schemas/llm/options.json",
+  "title": "LLM output: options",
+  "description": "Three player options in channel form, one per strategy (interaction-design.md §3.4).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "options"
+  ],
+  "properties": {
+    "options": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "speech": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          },
+          "expression": {
+            "type": "string"
+          },
+          "addressee": {
+            "anyOf": [
+              {
+                "enum": [
+                  "julian",
+                  "mia",
+                  "both",
+                  "nora",
+                  "self"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "strategy": {
+            "enum": [
+              "respond",
+              "probe",
+              "social"
+            ],
+            "description": "logged, never shown to the player"
+          }
+        },
+        "required": [
+          "strategy"
+        ]
+      }
+    }
+  }
+}

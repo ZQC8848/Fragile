@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fragile.dev/schemas/llm/tension.json",
+  "title": "LLM output: tension (M4 llm path)",
+  "description": "Dramatic tension of the last N turns, 0 to 5 (backend-design.md §4.4).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "tension",
+    "reason"
+  ],
+  "properties": {
+    "tension": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 5
+    },
+    "reason": {
+      "type": "string"
+    }
+  }
+}

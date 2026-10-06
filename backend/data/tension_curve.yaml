@@ -1,0 +1,11 @@
+# Target tension arc (story.md §6.2). x = story minutes, y = tension 0-5; linear between points.
+# The DM's target slope for a candidate beat = target(story_min + beat minutes) - current tension.
+axis: story_min
+points:
+  - [0, 1]      # warm surface
+  - [3, 1]
+  - [6, 2]      # details start to feel wrong
+  - [10, 4]     # private talks, the buzz, midpoint crisis
+  - [12, 3.5]   # a quiet stretch: pouring, remembering Leo
+  - [17, 5]     # showdown, the deal, Nora downstairs, the knock
+  - [19, 4]     # ending falls away

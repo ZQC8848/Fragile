@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fragile.dev/schemas/data/tension_curve.json",
+  "title": "data/tension_curve.yaml",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["axis", "points"],
+  "properties": {
+    "axis": { "const": "story_min" },
+    "points": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "array",
+        "prefixItems": [{ "type": "number", "minimum": 0 }, { "type": "number", "minimum": 0, "maximum": 5 }],
+        "minItems": 2,
+        "maxItems": 2
+      }
+    }
+  }
+}

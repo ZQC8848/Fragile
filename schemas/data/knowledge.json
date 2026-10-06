@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fragile.dev/schemas/data/knowledge.json",
+  "title": "data/knowledge/<character>.yaml",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["character", "persona", "facts"],
+  "properties": {
+    "character": { "enum": ["julian", "mia", "nora", "player"] },
+    "persona": { "type": "object" },
+    "facts": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "text", "knows"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+          "fact": {
+            "enum": ["car_downstairs", "missed_call", "leo_was_here", "embezzlement", "mia_called_leo", "leo_wanted_money", "leo_dead", "body_in_crate", "who_struck", "nora_pushed_leo"]
+          },
+          "text": { "type": "string", "minLength": 1 },
+          "knows": { "enum": [true, false, "suspects"] },
+          "may_say_when": { "type": "string", "minLength": 1 }
+        },
+        "if": { "properties": { "knows": { "const": false } } },
+        "else": { "required": ["may_say_when"] }
+      }
+    }
+  }
+}

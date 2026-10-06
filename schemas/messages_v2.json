@@ -1,0 +1,625 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fragile.dev/schemas/messages_v2.json",
+  "title": "Fragile WebSocket protocol v2",
+  "description": "Every message exchanged over /ws/{session} (interaction-design.md §11). Each message is a JSON object with a `type` discriminator. The frontend generates TypeScript types from this file (npm run gen:types); the backend validates against it in tests. The frontend never interprets the plot: it renders what it is sent and reports what the player typed.",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/ClientToServer"
+    },
+    {
+      "$ref": "#/$defs/ServerToClient"
+    }
+  ],
+  "$defs": {
+    "Room": {
+      "type": "string",
+      "enum": [
+        "outside",
+        "hall",
+        "living",
+        "kitchen",
+        "balcony",
+        "bathroom"
+      ]
+    },
+    "Npc": {
+      "type": "string",
+      "enum": [
+        "julian",
+        "mia",
+        "nora"
+      ]
+    },
+    "Addressee": {
+      "type": "string",
+      "enum": [
+        "julian",
+        "mia",
+        "both",
+        "nora",
+        "self"
+      ]
+    },
+    "Gender": {
+      "type": "string",
+      "enum": [
+        "female",
+        "male",
+        "nonbinary"
+      ]
+    },
+    "InputSource": {
+      "type": "string",
+      "enum": [
+        "typed_accepted",
+        "typed_edited",
+        "filled",
+        "option",
+        "option_edited"
+      ]
+    },
+    "ValidityLabel": {
+      "type": "string",
+      "enum": [
+        "ok",
+        "npc_action",
+        "npc_speech",
+        "outcome",
+        "perception",
+        "invention",
+        "stride",
+        "absurd",
+        "out_of_scope",
+        "meta"
+      ]
+    },
+    "Channels": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "One turn of player input split into channels (interaction-design.md §3.2). All empty = silence.",
+      "properties": {
+        "speech": {
+          "type": "string",
+          "maxLength": 600
+        },
+        "action": {
+          "type": "string",
+          "maxLength": 600
+        },
+        "expression": {
+          "type": "string",
+          "maxLength": 300
+        },
+        "addressee": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Addressee"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "Segment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "text"
+      ],
+      "description": "One piece of a passage (interaction-design.md §9.1); the frontend joins them into first-person prose.",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "me",
+            "me_speech",
+            "narration",
+            "speech"
+          ]
+        },
+        "speaker": {
+          "$ref": "#/$defs/Npc"
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "ClientToServer": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/SessionStart"
+        },
+        {
+          "$ref": "#/$defs/InputReview"
+        },
+        {
+          "$ref": "#/$defs/TurnSubmit"
+        },
+        {
+          "$ref": "#/$defs/OptionsRequest"
+        },
+        {
+          "$ref": "#/$defs/PhoneOpen"
+        },
+        {
+          "$ref": "#/$defs/Control"
+        }
+      ]
+    },
+    "SessionStart": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "name",
+        "gender"
+      ],
+      "properties": {
+        "type": {
+          "const": "session_start"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "gender": {
+          "$ref": "#/$defs/Gender"
+        }
+      }
+    },
+    "InputReview": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "mode"
+      ],
+      "description": "Before submitting: split / translate / validate (does not use up a turn).",
+      "properties": {
+        "type": {
+          "const": "input_review"
+        },
+        "mode": {
+          "type": "string",
+          "enum": [
+            "single",
+            "channels"
+          ]
+        },
+        "text": {
+          "type": "string",
+          "maxLength": 1200,
+          "description": "single mode"
+        },
+        "channels": {
+          "$ref": "#/$defs/Channels"
+        }
+      }
+    },
+    "TurnSubmit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "channels",
+        "source"
+      ],
+      "properties": {
+        "type": {
+          "const": "turn_submit"
+        },
+        "channels": {
+          "$ref": "#/$defs/Channels"
+        },
+        "source": {
+          "$ref": "#/$defs/InputSource"
+        },
+        "review_id": {
+          "type": "string",
+          "description": "The accepted review, so its classification can be reused."
+        }
+      }
+    },
+    "OptionsRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "const": "options_request"
+        }
+      }
+    },
+    "PhoneOpen": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type"
+      ],
+      "description": "Telemetry only: the player opened the phone drawer (free, no turn).",
+      "properties": {
+        "type": {
+          "const": "phone_open"
+        }
+      }
+    },
+    "Control": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "command"
+      ],
+      "description": "Console only.",
+      "properties": {
+        "type": {
+          "const": "control"
+        },
+        "command": {
+          "type": "string",
+          "enum": [
+            "start",
+            "reset",
+            "set_scorer",
+            "set_tau",
+            "force_beat",
+            "set_state",
+            "jump_clock",
+            "inject_turn",
+            "set_llm_live",
+            "set_llm_temperature"
+          ]
+        },
+        "args": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+    "ServerToClient": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/Hello"
+        },
+        {
+          "$ref": "#/$defs/SessionState"
+        },
+        {
+          "$ref": "#/$defs/InputReviewResult"
+        },
+        {
+          "$ref": "#/$defs/TurnAccepted"
+        },
+        {
+          "$ref": "#/$defs/Passage"
+        },
+        {
+          "$ref": "#/$defs/Options"
+        },
+        {
+          "$ref": "#/$defs/PhoneEvent"
+        },
+        {
+          "$ref": "#/$defs/RoomState"
+        },
+        {
+          "$ref": "#/$defs/DramaState"
+        },
+        {
+          "$ref": "#/$defs/TurnTrace"
+        },
+        {
+          "$ref": "#/$defs/ErrorMessage"
+        }
+      ]
+    },
+    "Hello": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "session"
+      ],
+      "properties": {
+        "type": {
+          "const": "hello"
+        },
+        "session": {
+          "type": "string"
+        }
+      }
+    },
+    "SessionState": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "phase"
+      ],
+      "properties": {
+        "type": {
+          "const": "session_state"
+        },
+        "phase": {
+          "type": "string",
+          "enum": [
+            "lobby",
+            "playing",
+            "ended"
+          ]
+        },
+        "turn": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "InputReviewResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "review_id",
+        "verdict",
+        "channels",
+        "translated"
+      ],
+      "properties": {
+        "type": {
+          "const": "input_review_result"
+        },
+        "review_id": {
+          "type": "string"
+        },
+        "verdict": {
+          "type": "string",
+          "enum": [
+            "ok",
+            "rejected"
+          ]
+        },
+        "channels": {
+          "$ref": "#/$defs/Channels"
+        },
+        "translated": {
+          "type": "boolean"
+        },
+        "category": {
+          "$ref": "#/$defs/ValidityLabel"
+        },
+        "message": {
+          "type": "string",
+          "description": "System-voice explanation when rejected."
+        },
+        "span": {
+          "type": "string",
+          "description": "The offending part of the input."
+        },
+        "rewrite": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Channels"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "One-click rewrite, when the category allows one."
+        }
+      }
+    },
+    "TurnAccepted": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "turn"
+      ],
+      "description": "Input locked; the frontend shows the generating state until the passage arrives.",
+      "properties": {
+        "type": {
+          "const": "turn_accepted"
+        },
+        "turn": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "Passage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "turn",
+        "segments"
+      ],
+      "properties": {
+        "type": {
+          "const": "passage"
+        },
+        "turn": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "player": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Channels"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The player's submitted input, shown as a muted line above the passage. Null for turn 0."
+        },
+        "segments": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/Segment"
+          }
+        },
+        "tableau": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Illustration id to show, if this passage reaches one."
+        },
+        "final": {
+          "type": "boolean",
+          "description": "true on the ending passage."
+        }
+      }
+    },
+    "Options": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "items"
+      ],
+      "properties": {
+        "type": {
+          "const": "options"
+        },
+        "items": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 3,
+          "items": {
+            "$ref": "#/$defs/Channels"
+          }
+        }
+      }
+    },
+    "PhoneEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "kind",
+        "from"
+      ],
+      "properties": {
+        "type": {
+          "const": "phone_event"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "missed_call",
+            "voicemail",
+            "text",
+            "call_incoming",
+            "call_ended"
+          ]
+        },
+        "from": {
+          "type": "string",
+          "enum": [
+            "leo",
+            "nora"
+          ]
+        },
+        "text": {
+          "type": "string",
+          "description": "Message body or voicemail transcript."
+        },
+        "id": {
+          "type": "string"
+        }
+      }
+    },
+    "RoomState": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "player_room",
+        "present"
+      ],
+      "properties": {
+        "type": {
+          "const": "room_state"
+        },
+        "player_room": {
+          "$ref": "#/$defs/Room"
+        },
+        "present": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/Npc"
+          }
+        }
+      }
+    },
+    "DramaState": {
+      "type": "object",
+      "required": [
+        "type"
+      ],
+      "additionalProperties": true,
+      "description": "Console only: state, current beat and step, shelf, last decision, tension curve.",
+      "properties": {
+        "type": {
+          "const": "drama_state"
+        }
+      }
+    },
+    "TurnTrace": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "turn",
+        "record"
+      ],
+      "description": "Console only: the full turn record (interaction-design.md §13) for the turn inspector.",
+      "properties": {
+        "type": {
+          "const": "turn_trace"
+        },
+        "turn": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "record": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+    "ErrorMessage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "code",
+        "message"
+      ],
+      "properties": {
+        "type": {
+          "const": "error"
+        },
+        "code": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

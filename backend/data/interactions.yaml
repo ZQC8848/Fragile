@@ -1,0 +1,249 @@
+# World rules: what an action unit (verb, target[, arg]) does to the WORLD
+# (interaction-design.md §6.6, §8; beat-script.md §5 rule 6).
+#
+# Division of labour:
+#   - this file changes physical state (rooms, objects, phone, what the player has discovered);
+#   - data/reactions.yaml changes social and emotional values (side, composure, tiers);
+#   - the one exception is blocking: whoever blocks an action loses `block_cost` composure.
+#
+# Per action:
+#   when      can it be attempted at all here (false -> the attempt fails in the world, `fail_note`)
+#   needs     world requirement (false -> blocked by the world, `blocked_note`)
+#   blockers  NPCs who may stop it, checked in order; the first whose `when` holds blocks it
+#   effects   applied on success (same effect syntax as beats)
+#   note      what the narrator renders on success; perception here is what the player may now see
+#   arg       required | optional (free text, e.g. a text message body)
+#   classify  the engine derives a value from the arg with M2 (e.g. nora_told from a text to Nora)
+# Rules are author-layer DSL over the state; `target` and `arg` are the action's own fields.
+
+block_cost: 0.15
+
+rooms:
+  hall:     { adjacent: [living, bathroom], exit: front_door }
+  living:   { adjacent: [hall, kitchen, balcony] }
+  kitchen:  { adjacent: [living] }      # open-plan, but treated as out of earshot (interaction-design.md I3)
+  balcony:  { adjacent: [living] }
+  bathroom: { adjacent: [hall] }
+
+# Hosts move on their own (interaction-design.md §8.2). `move` = put that NPC in the player's room.
+follow:
+  - id: julian_joins_balcony
+    when: "story_phase != 'early' and player_room == 'balcony' and julian_room != 'balcony' and mia_room != 'balcony'"
+    move: julian
+    note: "Julian steps out after you, already lighting a cigarette."
+  - id: mia_joins_kitchen
+    when: "story_phase != 'early' and player_room == 'kitchen' and mia_room != 'kitchen' and julian_room != 'kitchen'"
+    move: mia
+    note: "Mia follows you in and starts wiping the counter."
+  - id: julian_breaks_up_private_talk
+    when: "story_phase != 'early' and private_turns >= 3 and mia_room == player_room and julian_room != player_room"
+    move: julian
+    note: "Julian appears in the doorway: 'What are you two whispering about?'"
+  - id: mia_breaks_up_private_talk
+    when: "story_phase != 'early' and private_turns >= 3 and julian_room == player_room and mia_room != player_room"
+    move: mia
+    note: "Mia calls from inside, then comes to find you."
+
+movement:
+  go_to:
+    # target: a room in `rooms`; must be adjacent to player_room.
+    bathroom:
+      blockers:
+        - { who: julian, when: "julian_room in ['hall', 'living']" }
+        - { who: mia, when: "mia_room in ['hall', 'living']" }
+      blocked_note: "'The plumbing's packed.' A hand on the door, a smile."
+      effects: { player_room: bathroom }
+      note: "A bin bag of wet towels by the bath. The whole room smells of bleach."
+  take_aside:
+    # target: julian | mia; arg: kitchen | balcony | hall. You both go there; the one left behind minds.
+    julian: { when: "julian_room == player_room", arg: required, left_behind_composure: "-0.1" }
+    mia:    { when: "mia_room == player_room",    arg: required, left_behind_composure: "-0.1" }
+  leave:
+    front_door:
+      when: "player_room == 'hall'"
+      blockers:
+        - { who: mia, when: "story_phase != 'early' and mia_room == 'hall' and mia_composure >= 0.3" }
+      blocked_note: "Mia gets to the door first and leans back against it."
+      effects: { player_room: outside }   # the bon_voyage ending beat triggers on player_room == 'outside'
+      note: "The stairwell light clicks on. Behind you, the door closes softly."
+
+objects:
+  crate:
+    where: [living]
+    topic: crate
+    actions:
+      examine: { note: "A shipping crate under a tablecloth. Screwed shut. A customs sticker on one side." }
+      knock:   { note: "A dull, heavy sound. Not the sound of books." }
+      touch:   {}
+      sit:     { note: "The end Mia keeps steering you away from." }
+      place:   { arg: optional }
+      open:
+        needs: "has(player_holding, 'screwdriver') or has(player_holding, 'drill')"
+        blocked_note: "The lid is screwed down. You'd need a tool."
+        blockers:
+          - { who: julian, when: "julian_room == player_room and julian_composure >= 0.3" }
+          - { who: mia,    when: "mia_room == player_room and mia_composure >= 0.3" }
+        effects: { crate: opened, revealed: [add, body_in_crate] }
+        note: "The screws come out one by one. The cloth slides. A shoe."
+
+  takeaway:
+    where: [living]
+    topic: college
+    actions:
+      examine: { note: "Your old place, the one by campus. Leo's usual order is in there too." }
+      eat: {}
+
+  wine:
+    where: [living, kitchen, balcony]
+    actions:
+      drink: {}
+      pour: {}
+      toast: {}
+
+  photo:
+    where: [living]
+    topic: college
+    actions:
+      examine: { note: "The four of you, years ago. Leo is the one mid-laugh, out of focus." }
+      take:    { note: "It comes off the wall easily. The nail stays." }
+
+  boxes:
+    where: [living, hall]
+    topic: crate
+    actions:
+      examine: { note: "Labelled boxes. One marked KITCHEN is bowing at the sides." }
+      open:    { note: "The KITCHEN box is crammed with books, packed in a hurry." }
+
+  window:
+    where: [living]
+    topic: leo
+    actions:
+      look_out: { note: "The wet street. Under the streetlight, a dented yellow hatchback, two wheels up on the curb." }
+
+  car:
+    where: [balcony]
+    topic: leo
+    actions:
+      examine:  { note: "Leo's yellow hatchback. Two wheels on the curb. A parking ticket under the wiper." }
+      look_out: { note: "From up here the yellow hatchback is impossible to miss." }
+
+  kitchen_island:
+    where: [kitchen]
+    topic: afternoon
+    actions:
+      examine: { note: "Marble. One corner has been scrubbed paler than the rest." }
+      touch: {}
+
+  kitchen_floor:
+    where: [kitchen]
+    topic: afternoon
+    actions:
+      examine: { note: "A clean rectangle on the tiles where a mat used to be. Bleach." }
+      smell:   { note: "Bleach, strong enough to sting." }
+
+  trash_bag:
+    where: [kitchen]
+    topic: afternoon
+    actions:
+      examine: { note: "A knotted bin bag by the door, heavier than takeaway." }
+      open:
+        blockers:
+          - { who: mia,    when: "mia_room == player_room and mia_composure >= 0.3" }
+          - { who: julian, when: "julian_room == player_room and julian_composure >= 0.3" }
+        blocked_note: "'That's just rubbish. Leave it, it's disgusting.'"
+        # [待定] T2 clue: the broken whisky bottle wrapped in a dish towel. Does not add to `revealed`.
+        note: "Glass. The neck of a whisky bottle, wrapped in a dish towel."
+
+  bedroom_door:
+    where: [hall]
+    actions:
+      open: { needs: "false", blocked_note: "Locked." }
+
+  tools_box:
+    where: [hall]
+    actions:
+      examine: { note: "A box marked TOOLS. A screwdriver and a cordless drill on top." }
+
+  screwdriver:
+    where: [hall]
+    actions:
+      take: { when: "not has(player_holding, 'screwdriver')", effects: { player_holding: [add, screwdriver] } }
+
+  drill:
+    where: [hall]
+    actions:
+      take: { when: "not has(player_holding, 'drill')", effects: { player_holding: [add, drill] } }
+
+  tickets:
+    where: [hall]
+    topic: money
+    actions:
+      examine: { note: "Two boarding passes. 07:40. Two passports under them." }
+
+  movers_sign:
+    where: [hall]
+    actions:
+      examine: { note: "MOVERS 6 AM, in Julian's handwriting." }
+
+  julian_jacket:
+    where: [hall, living, kitchen, balcony]
+    topic: leo
+    actions:
+      search:
+        when: "julian_room == player_room"
+        blockers:
+          - { who: julian, when: "julian_composure >= 0.3" }
+        blocked_note: "Julian steps back, a hand flat over the pocket."
+        effects: { leo_phone: found, revealed: [add, leo_was_here] }
+        note: "A second phone, on silent. Leo's cracked case."
+
+  # People. Physical attempts need the person in the room; results and feelings come from the reaction
+  # layer. Phone actions on a person (call, text, answer, decline) work from anywhere.
+  # Objects without `where` are reachable from any room.
+  julian:
+    actions:
+      hug:   { when: "julian_room == player_room" }
+      touch: { when: "julian_room == player_room" }
+      grab:  { when: "julian_room == player_room" }
+      push:  { when: "julian_room == player_room" }
+      hit:   { when: "julian_room == player_room" }
+  mia:
+    actions:
+      hug:   { when: "mia_room == player_room" }
+      touch: { when: "mia_room == player_room" }
+      grab:  { when: "mia_room == player_room" }
+      push:  { when: "mia_room == player_room" }
+      hit:   { when: "mia_room == player_room" }
+  nora:
+    actions:
+      hug:   { when: "nora_room == player_room" }
+      touch: { when: "nora_room == player_room" }
+      grab:  { when: "nora_room == player_room" }
+      call:  { when: "nora_pressure >= 1 and nora_room == 'outside'", effects: { nora_call: answered } }
+      text:  { when: "nora_pressure >= 1", arg: required, classify: nora_told }
+      answer_call: { when: "nora_call == 'ringing'", effects: { nora_call: answered } }
+      decline_call:
+        when: "nora_call == 'ringing'"
+        effects: { nora_call: declined, leo_phone: buzzed }
+  leo:
+    actions:
+      call:
+        effects: { leo_phone: buzzed }
+        note: "It rings out. Somewhere close, something buzzes."
+
+  # The player's own phone. Opening the phone drawer is free; these use up the turn and the hosts see it.
+  phone:
+    actions:
+      listen_voicemail:
+        effects: { player_phone: voicemail_heard, revealed: [add, missed_call] }
+        note: "Hey, it's Leo. I'm heading over to Julian's now, early. Something's... I'll explain. Can you come early tonight? Like, really early. Call me back. Please."
+      give_phone: { arg: required, note: "Nobody takes it." }
+
+  police:
+    actions:
+      call:
+        blockers:
+          - { who: julian, when: "julian_room == player_room and julian_composure >= 0.3" }
+        blocked_note: "'Who are you calling, {name}?' Julian's hand closes over the phone."
+        effects: { police_called: true }
+        note: "A calm voice asks what your emergency is."

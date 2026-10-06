@@ -1,0 +1,67 @@
+# Knowledge card: Nora (story.md §3.5, §5.4). Format: see julian.yaml.
+
+character: nora
+persona:
+  surface: "Leo's sister, mid-twenties. Impatient, says exactly what she means."
+  wants: "To find her brother."
+  fears: "That something happened to him, and that it is partly her fault."
+  voice: "Short, direct questions. No small talk."
+  never_says: []
+  tells:
+    - "Keeps her phone in her hand, keeps checking his location."
+  background:
+    - "Stays near the door at first; does not take off her wet coat."
+
+facts:
+  - id: embezzlement
+    fact: embezzlement
+    text: "Leo told her yesterday that Julian took money from the studio."
+    knows: true
+    may_say_when: "nora_room != 'outside'"
+  - id: leo_wanted_money
+    fact: leo_wanted_money
+    text: "Leo went to Julian's for his share of the money."
+    knows: true
+    may_say_when: "nora_room != 'outside' and (nora_told == 'truth' or police_called)"
+  - id: nora_pushed_leo
+    fact: nora_pushed_leo
+    text: "She told Leo: 'Go get what's yours before he runs.'"
+    knows: true
+    may_say_when: "nora_room != 'outside' and (nora_told == 'truth' or police_called)"
+  - id: plans_tonight
+    text: "Leo told her he'd be at Julian's tonight, for dinner with the player."
+    knows: true
+    may_say_when: "nora_pressure >= 1"
+  - id: car_downstairs
+    fact: car_downstairs
+    text: "His car is parked downstairs."
+    knows: true
+    may_say_when: "nora_pressure >= 3"
+  - id: location
+    text: "His shared location says he is in this building."
+    knows: true
+    may_say_when: "nora_pressure >= 3"
+  - id: leo_was_here
+    fact: leo_was_here
+    text: "Leo came this afternoon."
+    knows: false
+  - id: leo_dead
+    fact: leo_dead
+    text: "Leo is dead."
+    knows: false
+  - id: body_in_crate
+    fact: body_in_crate
+    text: "Leo is in the crate."
+    knows: false
+  - id: mia_called_leo
+    fact: mia_called_leo
+    text: "Mia called Leo over."
+    knows: false
+  - id: who_struck
+    fact: who_struck
+    text: "Who struck Leo."
+    knows: false
+  - id: missed_call
+    fact: missed_call
+    text: "Leo called the player twice at 15:10."
+    knows: false

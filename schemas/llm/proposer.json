@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fragile.dev/schemas/llm/proposer.json",
+  "title": "LLM output: proposer",
+  "description": "1 to 3 new beats. Each is then validated against schemas/beat_v2.json and the hard checks (minutes range, DSL compiles, no change to revealed).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "beats"
+  ],
+  "properties": {
+    "beats": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 3,
+      "items": {
+        "type": "object"
+      }
+    }
+  }
+}

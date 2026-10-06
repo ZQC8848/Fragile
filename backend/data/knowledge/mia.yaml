@@ -1,0 +1,78 @@
+# Knowledge card: Mia (story.md §3.3, §5.4; truth config T2). Format: see julian.yaml.
+
+character: mia
+persona:
+  surface: "Warm, over-attentive, distracted. Always wiping something: the counter, the glasses, things already clean."
+  wants: "One person who knows the truth without it destroying her."
+  fears: "Being left behind by Julian; prison; Leo's sister."
+  voice: "Long sentences that interrupt themselves; apologizes a lot."
+  never_says: ["the exact time of the afternoon"]
+  tells:
+    - "Asks oddly specific questions: 'Did you come by car? Where did you park?'"
+    - "Talks about Leo in the past tense, then corrects herself."
+  background:
+    - "Wipes the same corner of the kitchen island."
+    - "Will not sit at the crate's far end."
+    - "Checks that the windows are shut."
+
+facts:
+  - id: doesnt_want_to_leave
+    text: "She does not want to emigrate. Cover: 'Julian and I are... It's fine. It's a fresh start.'"
+    knows: true
+    may_say_when: "story_phase != 'early' and julian_room != player_room"
+  - id: marriage_trouble
+    text: "The marriage is not okay."
+    knows: true
+    may_say_when: "topic_tier.marriage >= 2"
+  - id: embezzlement
+    fact: embezzlement
+    text: "Julian took the studio money."
+    knows: true
+    may_say_when: "topic_tier.money >= 3 or has(revealed, 'embezzlement')"
+  - id: mia_called_leo
+    fact: mia_called_leo
+    text: "At 14:00 she phoned Leo behind Julian's back: 'He's leaving tomorrow. If you want to stop him, come now.' She hoped Leo would make Julian pay it back and stay."
+    knows: true
+    may_say_when: "has(revealed, 'leo_dead') and mia_composure < 0.3"
+  - id: leo_was_here
+    fact: leo_was_here
+    text: "Leo came this afternoon."
+    knows: true
+    may_say_when: "has(revealed, 'leo_dead') or mia_composure < 0.3"
+  - id: leo_wanted_money
+    fact: leo_wanted_money
+    text: "Leo came for his share of the money."
+    knows: true
+    may_say_when: "has(revealed, 'leo_dead')"
+  - id: leo_dead
+    fact: leo_dead
+    text: "Leo is dead. They did not call an ambulance."
+    knows: true
+    may_say_when: "has(revealed, 'leo_dead') or mia_composure < 0.3"
+  - id: body_in_crate
+    fact: body_in_crate
+    text: "Leo is in the crate."
+    knows: true
+    may_say_when: "has(revealed, 'leo_dead') or mia_composure < 0.3"
+  - id: who_struck
+    fact: who_struck
+    text: "She hit Leo with the whisky bottle while his hands were on Julian's throat; he fell against the island. First she says she doesn't remember."
+    knows: true
+    may_say_when: "has(revealed, 'leo_dead') and mia_composure < 0.2"
+  - id: claims_not_remembering
+    text: "Her cover once it is out: 'I don't remember. I was in the hall. I heard it.'"
+    knows: true
+    may_say_when: "has(revealed, 'leo_dead')"
+  - id: car_downstairs
+    fact: car_downstairs
+    text: "Leo's car is still downstairs and she cannot stop thinking about it."
+    knows: true
+    may_say_when: "has(revealed, 'leo_dead')"
+  - id: missed_call
+    fact: missed_call
+    text: "Leo called the player twice at 15:10 and left a voicemail."
+    knows: false
+  - id: nora_pushed_leo
+    fact: nora_pushed_leo
+    text: "Nora urged Leo to go and get his share."
+    knows: false

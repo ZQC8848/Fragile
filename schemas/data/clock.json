@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fragile.dev/schemas/data/clock.json",
+  "title": "data/clock.yaml",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["phases", "generated_minutes_range", "safety_cap_turns", "fast_forward_gaps", "events"],
+  "properties": {
+    "phases": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["early", "mid", "late"],
+      "properties": {
+        "early": { "$ref": "#/$defs/Phase" },
+        "mid": { "$ref": "#/$defs/Phase" },
+        "late": { "$ref": "#/$defs/Phase" }
+      }
+    },
+    "generated_minutes_range": {
+      "type": "array",
+      "prefixItems": [{ "type": "number", "exclusiveMinimum": 0 }, { "type": "number", "exclusiveMinimum": 0 }],
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "safety_cap_turns": { "type": "integer", "minimum": 1 },
+    "fast_forward_gaps": { "type": "boolean" },
+    "events": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "at_min", "effects"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+          "at_min": { "type": "number", "minimum": 0 },
+          "effects": { "type": "object" },
+          "phone": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["kind", "from"],
+            "properties": {
+              "kind": { "enum": ["text", "call_incoming"] },
+              "from": { "enum": ["nora", "leo"] },
+              "text": { "type": "string" }
+            }
+          },
+          "hold_beat_choice": { "type": "boolean" },
+          "unanswered": { "type": "object" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "Phase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["until_min", "default_minutes", "passage_words"],
+      "properties": {
+        "until_min": { "type": ["number", "null"] },
+        "default_minutes": { "type": "number", "exclusiveMinimum": 0 },
+        "passage_words": {
+          "type": "array",
+          "prefixItems": [{ "type": "integer", "minimum": 1 }, { "type": "integer", "minimum": 1 }],
+          "minItems": 2,
+          "maxItems": 2
+        }
+      }
+    }
+  }
+}

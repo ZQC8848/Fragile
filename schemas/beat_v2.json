@@ -1,0 +1,429 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fragile.dev/schemas/beat_v2.json",
+  "title": "Beat v2",
+  "description": "One beat in data/beats/*.yaml (interaction-design.md §6, beat-script.md). Rule fields are author-layer DSL strings over the story state plus the transient `turn` namespace; they compile to JSON Logic at load time. Scorers never see `id`.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "title",
+    "type",
+    "origin",
+    "schema_version",
+    "preconditions",
+    "entries",
+    "tension_slope",
+    "effects",
+    "dramatic_intent",
+    "steps"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "spine",
+        "satellite",
+        "ending"
+      ]
+    },
+    "origin": {
+      "type": "string",
+      "enum": [
+        "authored",
+        "authored_assisted",
+        "generated"
+      ]
+    },
+    "author": {
+      "type": "string"
+    },
+    "created_at": {
+      "type": "string"
+    },
+    "schema_version": {
+      "const": 2
+    },
+    "phase_hint": {
+      "type": "string",
+      "enum": [
+        "early",
+        "mid",
+        "late",
+        "any"
+      ],
+      "description": "Informational, shown to scorers. Eligibility is decided by `preconditions`, not by phase."
+    },
+    "preconditions": {
+      "$ref": "#/$defs/Rule",
+      "description": "Common precondition. The beat is eligible when this holds AND at least one entry's `when` holds."
+    },
+    "entries": {
+      "type": "array",
+      "minItems": 1,
+      "description": "Ways into the beat, each with its own opening (e.g. invited / player_initiated, or one per trigger). The first entry whose `when` holds is used.",
+      "items": {
+        "$ref": "#/$defs/Entry"
+      }
+    },
+    "must_follow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "when",
+        "rank"
+      ],
+      "description": "Must-follow trigger (story.md §9.4): when `when` holds at a turn end, this beat is taken next without scoring. Lower rank wins when several trigger in the same turn.",
+      "properties": {
+        "when": {
+          "$ref": "#/$defs/Rule"
+        },
+        "rank": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "ending_rank": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Endings only: evaluation order of the ending table (beat-script.md §4). Lower is checked first."
+    },
+    "weight": {
+      "type": "number",
+      "minimum": 0,
+      "default": 1
+    },
+    "priority_test": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "when",
+          "add"
+        ],
+        "properties": {
+          "when": {
+            "$ref": "#/$defs/Rule"
+          },
+          "add": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "abort_if": {
+      "$ref": "#/$defs/Rule"
+    },
+    "tension_slope": {
+      "type": "number",
+      "minimum": -2,
+      "maximum": 2,
+      "description": "story.md §9 slope. The tension effect actually applied is slope x 0.5 (beat-script.md §5 rule 1) and is written explicitly in `effects`."
+    },
+    "effects": {
+      "$ref": "#/$defs/Effects",
+      "description": "Applied when the beat ends completed."
+    },
+    "minutes": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "maximum": 4,
+      "description": "Story minutes added when this beat ends (interaction-design.md §7.1). Omitted = phase default from data/clock.yaml."
+    },
+    "max_turns": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 6,
+      "default": 3
+    },
+    "dramatic_intent": {
+      "type": "string",
+      "minLength": 1
+    },
+    "steps": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 4,
+      "items": {
+        "$ref": "#/$defs/Step"
+      }
+    },
+    "outcomes": {
+      "type": "array",
+      "description": "Endings of the beat chosen from the player's answer to the asking step. For side questions use ids julian / mia / neutral and omit `when`: the reaction layer picks by side direction. Otherwise the first outcome whose `when` holds wins; an outcome without `when` is the default.",
+      "items": {
+        "$ref": "#/$defs/Outcome"
+      }
+    },
+    "mix_in": {
+      "type": "array",
+      "description": "Local mix-ins, priority 10 in the reaction layer (interaction-design.md §5.2).",
+      "items": {
+        "$ref": "#/$defs/MixIn"
+      }
+    },
+    "tableau": {
+      "type": "string",
+      "description": "Illustration id (story.md §12) shown at this beat."
+    },
+    "epilogue": {
+      "type": "string",
+      "description": "Endings only: the epilogue paragraph intent."
+    },
+    "closest_authored_ending": {
+      "type": "string",
+      "enum": [
+        "bon_voyage",
+        "the_witness",
+        "open_it",
+        "confession",
+        "second_crate"
+      ],
+      "description": "Generated endings only."
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "ending"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "ending_rank"
+        ]
+      },
+      "else": {
+        "required": [
+          "minutes"
+        ]
+      }
+    }
+  ],
+  "$defs": {
+    "Rule": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Author-layer DSL expression (backend-design.md / WrongestPerson docs §5)."
+    },
+    "Speaker": {
+      "type": "string",
+      "enum": [
+        "julian",
+        "mia",
+        "nora",
+        "both"
+      ]
+    },
+    "Effects": {
+      "type": "object",
+      "propertyNames": {
+        "pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)?$"
+      },
+      "additionalProperties": {
+        "oneOf": [
+          {
+            "type": "string",
+            "description": "\"+1\" / \"-0.15\" delta, or an enum value to assign"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "null"
+          },
+          {
+            "type": "array",
+            "prefixItems": [
+              {
+                "enum": [
+                  "add",
+                  "remove"
+                ]
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "minItems": 2,
+            "maxItems": 2
+          }
+        ]
+      }
+    },
+    "Entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "opening"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$"
+        },
+        "when": {
+          "$ref": "#/$defs/Rule"
+        },
+        "priority_add": {
+          "type": "number",
+          "description": "Extra priority when this entry is the one that applies."
+        },
+        "opening": {
+          "type": "string",
+          "minLength": 1,
+          "description": "What the narrator stages first when entering this way."
+        },
+        "invite": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "asker",
+            "to_room"
+          ],
+          "description": "The opening is an invitation; refusing aborts the beat (it stays re-enterable).",
+          "properties": {
+            "asker": {
+              "type": "string",
+              "enum": [
+                "julian",
+                "mia"
+              ]
+            },
+            "to_room": {
+              "type": "string",
+              "enum": [
+                "hall",
+                "living",
+                "kitchen",
+                "balcony"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "Step": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "do"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$"
+        },
+        "do": {
+          "type": "string",
+          "minLength": 1,
+          "description": "What must be delivered; sample lines are guidance for the narrator."
+        },
+        "asks": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "asker",
+            "kind"
+          ],
+          "properties": {
+            "asker": {
+              "$ref": "#/$defs/Speaker"
+            },
+            "kind": {
+              "type": "string",
+              "enum": [
+                "side",
+                "choice",
+                "answer"
+              ],
+              "description": "side = side question (moves `side`); choice = pick among outcomes; answer = free answer classified by rules (e.g. nora_told)."
+            },
+            "on_silence": {
+              "type": "string",
+              "description": "Outcome id that silence counts as."
+            }
+          }
+        },
+        "length": {
+          "type": "string",
+          "enum": [
+            "normal",
+            "long"
+          ],
+          "default": "normal"
+        },
+        "tableau": {
+          "type": "string"
+        }
+      }
+    },
+    "Outcome": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "text"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$"
+        },
+        "when": {
+          "$ref": "#/$defs/Rule"
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1
+        },
+        "effects": {
+          "$ref": "#/$defs/Effects"
+        }
+      }
+    },
+    "MixIn": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "when",
+        "do"
+      ],
+      "properties": {
+        "when": {
+          "$ref": "#/$defs/Rule"
+        },
+        "do": {
+          "type": "string",
+          "minLength": 1
+        },
+        "effects": {
+          "$ref": "#/$defs/Effects"
+        },
+        "once": {
+          "type": "boolean",
+          "default": true
+        }
+      },
+      "description": "`when` (not `on`): PyYAML reads a bare `on:` key as boolean True."
+    }
+  }
+}

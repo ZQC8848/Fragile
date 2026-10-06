@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fragile.dev/schemas/llm/selfplay.json",
+  "title": "LLM output: self-play player",
+  "description": "One turn of a self-play persona: raw single-box text (exercises the split) or channels.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "mode"
+  ],
+  "properties": {
+    "mode": {
+      "enum": [
+        "single",
+        "channels"
+      ]
+    },
+    "text": {
+      "type": "string"
+    },
+    "channels": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "speech": {
+          "type": "string"
+        },
+        "action": {
+          "type": "string"
+        },
+        "expression": {
+          "type": "string"
+        },
+        "addressee": {
+          "anyOf": [
+            {
+              "enum": [
+                "julian",
+                "mia",
+                "both",
+                "nora",
+                "self"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "deliberate_violation": {
+      "anyOf": [
+        {
+          "enum": [
+            "npc_action",
+            "npc_speech",
+            "outcome",
+            "perception",
+            "invention",
+            "stride",
+            "absurd",
+            "out_of_scope",
+            "meta"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "set when the persona was told to break a rule this turn"
+    }
+  }
+}
