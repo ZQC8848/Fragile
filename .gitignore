@@ -13,3 +13,4 @@ dist/
 *.tsbuildinfo
 .ruff_cache/
 .pytest_cache/
+.idea/

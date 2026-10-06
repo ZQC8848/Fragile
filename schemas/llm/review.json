@@ -13,7 +13,8 @@
     "units",
     "suspicion",
     "claims",
-    "coverage"
+    "coverage",
+    "nora_answer"
   ],
   "properties": {
     "channels": {
@@ -302,6 +303,21 @@
       "minimum": 0,
       "maximum": 1,
       "description": "how well the current shelf can take this input; logged as an OOD label seed only"
+    },
+    "nora_answer": {
+      "anyOf": [
+        {
+          "enum": [
+            "truth",
+            "lie",
+            "none"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Only when the input is addressed to Nora (speech, call or text): did the player tell her the truth (any known fact about Leo), lie (Leo never came / everything is fine), or neither. Null otherwise."
     }
   }
 }

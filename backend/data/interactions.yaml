@@ -189,6 +189,9 @@ objects:
     where: [hall, living, kitchen, balcony]
     topic: leo
     actions:
+      examine:
+        when: "julian_room == player_room"
+        note: "He hasn't taken his jacket off all night. Something weighs down one pocket."
       search:
         when: "julian_room == player_room"
         blockers:

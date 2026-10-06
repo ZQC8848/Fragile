@@ -4,8 +4,9 @@ Effect forms (docs/backend-design.md section 5):
     "+1" / "-0.1"        increment / decrement a numeric variable (clamped to the schema range)
     "moved"              assign an enum/string value
     3                    assign a number
-    ["add", "debt"]      add an item to a set-like list
-    ["remove", "debt"]   remove an item
+    ["add", "debt"]      add an item to a set-like list (more items may follow: ["add", "a", "b"])
+    ["remove", "debt"]   remove items
+Keys may be one level dotted into an object variable: "topic_tier.leo": "+1".
 """
 
 from __future__ import annotations
@@ -20,30 +21,41 @@ def apply_effects(state: dict[str, Any], effects: dict[str, Any], schema_props: 
     """Return a NEW state dict with effects applied. Unknown variables raise KeyError so a typo in a
     beat file fails at load/test time instead of silently doing nothing."""
     new = dict(state)
-    for var, eff in (effects or {}).items():
+    for key, eff in (effects or {}).items():
+        var, _, sub = key.partition(".")
         if var not in schema_props:
-            raise KeyError(f"effect targets unknown state variable {var!r}")
+            raise KeyError(f"effect targets unknown state variable {key!r}")
         prop = schema_props[var]
-        cur = new.get(var)
-        if isinstance(eff, str) and (m := _DELTA_RE.match(eff)):
-            sign, amount = m.group(1), float(m.group(2))
-            delta = amount if sign == "+" else -amount
-            val = (cur or 0) + delta
-            if "integer" in _types(prop):
-                val = int(round(val))
-            new[var] = _clamp(val, prop)
-        elif isinstance(eff, list) and len(eff) == 2 and eff[0] in ("add", "remove"):
-            items = list(cur or [])
-            if eff[0] == "add" and eff[1] not in items:
-                items.append(eff[1])
-            if eff[0] == "remove" and eff[1] in items:
-                items.remove(eff[1])
-            new[var] = items
-        else:
-            if "enum" in prop and eff not in prop["enum"]:
-                raise ValueError(f"effect {var}={eff!r} not in enum {prop['enum']}")
-            new[var] = _clamp(eff, prop) if isinstance(eff, (int, float)) and not isinstance(eff, bool) else eff
+        target = new
+        if sub:
+            nested = prop.get("properties") or {}
+            if sub not in nested:
+                raise KeyError(f"effect targets unknown state variable {key!r}")
+            target = new[var] = dict(new.get(var) or {})
+            var, prop = sub, nested[sub]
+        target[var] = _apply_one(target.get(var), eff, prop, key)
     return new
+
+
+def _apply_one(cur: Any, eff: Any, prop: dict[str, Any], key: str) -> Any:
+    if isinstance(eff, str) and (m := _DELTA_RE.match(eff)):
+        sign, amount = m.group(1), float(m.group(2))
+        delta = amount if sign == "+" else -amount
+        val = (cur or 0) + delta
+        if "integer" in _types(prop):
+            val = int(round(val))
+        return _clamp(val, prop)
+    if isinstance(eff, list) and len(eff) >= 2 and eff[0] in ("add", "remove"):
+        items = list(cur or [])
+        for item in eff[1:]:
+            if eff[0] == "add" and item not in items:
+                items.append(item)
+            if eff[0] == "remove" and item in items:
+                items.remove(item)
+        return items
+    if "enum" in prop and eff not in prop["enum"]:
+        raise ValueError(f"effect {key}={eff!r} not in enum {prop['enum']}")
+    return _clamp(eff, prop) if isinstance(eff, (int, float)) and not isinstance(eff, bool) else eff
 
 
 def _types(prop: dict[str, Any]) -> set[str]:

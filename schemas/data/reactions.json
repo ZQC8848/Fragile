@@ -1,0 +1,262 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fragile.dev/schemas/data/reactions.json",
+  "title": "data/reactions.yaml",
+  "description": "Reaction layer (interaction-design.md §5). Rules and effects are checked against state_v2 in backend/tests/test_beat_pool.py.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "priorities",
+    "phase_tier_cap",
+    "per_turn_cap",
+    "topic_owner",
+    "rules",
+    "reactions"
+  ],
+  "properties": {
+    "priorities": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "local",
+        "blocked",
+        "push_too_far",
+        "pattern",
+        "topic",
+        "object",
+        "social",
+        "deflect"
+      ],
+      "properties": {
+        "local": {
+          "const": 10
+        },
+        "blocked": {
+          "const": 9
+        },
+        "push_too_far": {
+          "const": 8
+        },
+        "pattern": {
+          "const": 6
+        },
+        "topic": {
+          "const": 5
+        },
+        "object": {
+          "const": 4
+        },
+        "social": {
+          "const": 3
+        },
+        "deflect": {
+          "const": 1
+        }
+      }
+    },
+    "phase_tier_cap": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "early",
+        "mid",
+        "late"
+      ],
+      "properties": {
+        "early": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 3
+        },
+        "mid": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 3
+        },
+        "late": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 3
+        }
+      }
+    },
+    "per_turn_cap": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "number",
+        "exclusiveMinimum": 0
+      }
+    },
+    "topic_owner": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "crate",
+        "leo",
+        "money",
+        "afternoon",
+        "marriage",
+        "college"
+      ],
+      "properties": {
+        "crate": {
+          "enum": [
+            "julian",
+            "mia",
+            "less_composed",
+            "any"
+          ]
+        },
+        "leo": {
+          "enum": [
+            "julian",
+            "mia",
+            "less_composed",
+            "any"
+          ]
+        },
+        "money": {
+          "enum": [
+            "julian",
+            "mia",
+            "less_composed",
+            "any"
+          ]
+        },
+        "afternoon": {
+          "enum": [
+            "julian",
+            "mia",
+            "less_composed",
+            "any"
+          ]
+        },
+        "marriage": {
+          "enum": [
+            "julian",
+            "mia",
+            "less_composed",
+            "any"
+          ]
+        },
+        "college": {
+          "enum": [
+            "julian",
+            "mia",
+            "less_composed",
+            "any"
+          ]
+        }
+      }
+    },
+    "rules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "when",
+          "effects"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$"
+          },
+          "when": {
+            "type": "string",
+            "minLength": 1
+          },
+          "effects": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    "reactions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "type",
+          "responder",
+          "when",
+          "do"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$"
+          },
+          "type": {
+            "enum": [
+              "blocked",
+              "push_too_far",
+              "pattern",
+              "topic",
+              "object",
+              "social",
+              "deflect"
+            ]
+          },
+          "topic": {
+            "enum": [
+              "crate",
+              "leo",
+              "money",
+              "afternoon",
+              "marriage",
+              "college"
+            ]
+          },
+          "tier": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 3
+          },
+          "responder": {
+            "enum": [
+              "julian",
+              "mia",
+              "nora",
+              "owner",
+              "addressee",
+              "any"
+            ]
+          },
+          "when": {
+            "type": "string",
+            "minLength": 1
+          },
+          "do": {
+            "type": "string",
+            "minLength": 1
+          },
+          "effects": {
+            "type": "object"
+          },
+          "once": {
+            "type": "boolean",
+            "default": true
+          }
+        },
+        "if": {
+          "properties": {
+            "type": {
+              "const": "topic"
+            }
+          }
+        },
+        "then": {
+          "required": [
+            "topic",
+            "tier"
+          ]
+        }
+      }
+    }
+  }
+}

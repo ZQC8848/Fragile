@@ -343,7 +343,7 @@
 | `nora_call` | none / ringing / answered / declined / missed | Nora 第 2 级的来电 |
 | `player_room` `julian_room` `mia_room` | living / kitchen / balcony / hall / bathroom | |
 | `story_min` | 浮点 | 剧情分钟，每过一个 beat +n；取代原来的 `clock_s` |
-| `turn` | 整数 | 回合数 |
+| `turn_count` | 整数 | 回合数（不叫 `turn`：`turn.*` 是每回合的临时命名空间） |
 | `beat_step` `beat_turns` | 整数 | 当前 beat 的步指针、已用回合 |
 | `silence_streak` | 整数 | 连续沉默的回合数 |
 | `private_turns` | 整数 | 你和一个主人单独在一起、另一个不在场的连续回合数（跟随规则用） |

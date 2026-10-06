@@ -1,0 +1,133 @@
+# Endings (beat-script.md §4).
+# Anytime: bon_voyage when you leave (must-follow rank 1), second_crate (rank 2), open_it when the
+# police call got through (rank 3). After testimony the DM takes the eligible ending with the lowest
+# ending_rank: confession 1, open_it 2, the_witness 3, bon_voyage 4 (fallback).
+
+- id: bon_voyage
+  title: "送别"
+  type: ending
+  origin: authored
+  author: "beat-script v0"
+  schema_version: 2
+  preconditions: "player_room == 'outside' or played('testimony')"
+  must_follow: { when: "player_room == 'outside'", rank: 1 }
+  ending_rank: 4
+  entries:
+    - id: left_early
+      when: "player_room == 'outside'"
+      opening: "You go down the stairs. The yellow car is still there, a parking ticket under the wiper."
+    - id: never_knew
+      when: "played('testimony')"
+      opening: "Julian and Mia tell Nora he never came. You are standing right there."
+  tension_slope: -2
+  effects: { tension: "-1", ending: bon_voyage }
+  dramatic_intent: "You leave, or you stay to the end without knowing: either way you become the witness to a normal evening."
+  steps:
+    - id: goodbye
+      do: "Left early: the street, the car, the ticket. Stayed: Nora looks at you once and leaves."
+  epilogue: "Six in the morning. The movers lift the crate. 'Heavy one.'"
+  tableau: ending_bon_voyage
+
+- id: the_witness
+  title: "证人"
+  type: ending
+  origin: authored
+  author: "beat-script v0"
+  schema_version: 2
+  preconditions: "played('testimony') and has(revealed, 'leo_dead') and nora_told != 'truth' and not police_called"
+  ending_rank: 3
+  entries:
+    - id: default
+      opening: "Nora leaves. The door closes behind her."
+  tension_slope: -1
+  effects: { tension: "-0.5", ending: the_witness }
+  dramatic_intent: "You knew, and you covered for them. You became their accomplice."
+  steps:
+    - id: after
+      do: "Julian folds the tablecloth. Mia doesn't move."
+  epilogue: "07:40: they board. Your phone lights up: Nora. You don't open it."
+  tableau: ending_the_witness
+
+- id: open_it
+  title: "开箱"
+  type: ending
+  origin: authored
+  author: "beat-script v0"
+  schema_version: 2
+  preconditions: "police_called or (played('testimony') and nora_told == 'truth')"
+  must_follow: { when: "police_called", rank: 3 }
+  ending_rank: 2
+  entries:
+    - id: police
+      when: "police_called"
+      opening: "Sirens, somewhere below. Then a knock that is not Nora's."
+    - id: told_nora
+      when: "nora_told == 'truth'"
+      opening: "Nora goes to the hall and comes back with the drill from the TOOLS box."
+  tension_slope: 2
+  effects: { tension: "+1", crate: opened, revealed: [add, body_in_crate], ending: open_it }
+  dramatic_intent: |
+    The three-person climax. Julian takes the blame first. If the two of them still stand together
+    (couple_unity >= 2) he holds to it; if not (he knows Mia called Leo) he stops protecting her. Whether
+    Mia admits it herself depends on side and her composure.
+  steps:
+    - id: the_screws
+      do: "Unless the crate is already open: the screws come out one by one onto the floor."
+    - id: the_shoe
+      do: "The cloth slides off. A shoe. Nora makes no sound."
+      tableau: ending_open_it
+    - id: who_did_it
+      do: "Julian: 'It was me. I did it.' If couple_unity < 2: 'Ask her. Ask her what she did with the bottle.' If you are on Mia's side and her composure is below 0.3: Mia: 'I hit him. He had his hands on Julian's throat.'"
+  epilogue: "Sirens somewhere below. Nora sits on the floor, her back against the crate."
+  tableau: ending_open_it
+
+- id: confession
+  title: "自首"
+  type: ending
+  origin: authored
+  author: "beat-script v0"
+  schema_version: 2
+  preconditions: "played('testimony') and nora_told != 'lie' and ((mia_composure < 0.15 and side >= 1) or (julian_composure < 0.15 and side <= -1))"
+  ending_rank: 1
+  entries:
+    - id: mia
+      when: "mia_composure < 0.15 and side >= 1"
+      opening: "Mia steps out of the kitchen doorway."
+    - id: julian
+      when: "julian_composure < 0.15 and side <= -1"
+      opening: "Julian puts his glass down on the crate, carefully, as if it might break."
+  tension_slope: -1
+  effects: { tension: "-0.5", ending: confession }
+  dramatic_intent: |
+    The best ending, Façade-style: the least composed one tells Nora themselves. Mia's is true. Julian's
+    is false: he is still taking the blame for Mia, and you know, or guess, it was not him.
+  steps:
+    - id: says_it
+      do: "Mia: 'It was me. I hit him. I'm sorry. I'm so sorry.' Or Julian: 'I did it, Nora. Me.'"
+    - id: nobody_stops_it
+      do: "The other one does not stop it."
+  epilogue: "No one says anything else. Nora sits beside the crate. Downstairs, the car is still there."
+  tableau: ending_confession
+
+- id: second_crate
+  title: "第二只箱子"
+  type: ending
+  origin: authored
+  author: "beat-script v0"
+  schema_version: 2
+  preconditions: "nora_room == 'outside' and julian_room == player_room and mia_room != player_room and julian_composure < 0.15 and side >= 1.5 and has(turn.acts, 'threaten_to_tell')"
+  must_follow:
+    when: "nora_room == 'outside' and julian_room == player_room and mia_room != player_room and julian_composure < 0.15 and side >= 1.5 and has(turn.acts, 'threaten_to_tell')"
+    rank: 2
+  ending_rank: 5
+  entries:
+    - id: default
+      opening: "Julian stops smiling."
+  tension_slope: 2
+  effects: { tension: "+1", ending: second_crate }
+  dramatic_intent: "A suspense ending. Imply, never show."
+  steps:
+    - id: the_lock
+      do: "He slides the balcony door shut, or closes the living room door. The latch clicks. 'Sit down, {name}.' End on your name."
+  epilogue: "Nothing more. The passage ends on your name."
+  tableau: ending_second_crate

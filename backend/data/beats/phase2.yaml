@@ -1,0 +1,281 @@
+# Phase 2 · 裂缝 (beat-script.md §2), plus the must-follow beats that can fire from phase 2 on.
+# Must-follow ranks follow story.md §9.4 with the two early endings in front:
+#   1 bon_voyage (left)  2 second_crate  3 open_it (police)  4 the_admission (crate opened)
+#   5 noras_call  6 the_buzz  7 dont_go_yet  8 downstairs  9 the_knock  10 testimony
+
+- id: mia_in_the_kitchen
+  title: "厨房里的 Mia"
+  type: spine
+  origin: authored
+  author: "beat-script v0"
+  schema_version: 2
+  phase_hint: mid
+  preconditions: "played('the_fourth_setting')"
+  entries:
+    - id: invited
+      when: "player_room == 'living' and mia_room == 'living'"
+      opening: "Mia picks up the takeaway boxes: 'Help me with these? He never does.'"
+      invite: { asker: mia, to_room: kitchen }
+    - id: player_initiated
+      when: "player_room == 'kitchen' and mia_room == 'kitchen' and julian_room != 'kitchen'"
+      opening: "When you come into the kitchen, Mia is wiping that corner of the island."
+  weight: 3.0
+  tension_slope: 1
+  effects: { tension: "+0.5", topic_tier.marriage: 2, player_room: living, mia_room: living, julian_room: living }
+  minutes: 1.5
+  max_turns: 3
+  dramatic_intent: |
+    Mia gets you alone over the dishes and uses a marriage in trouble as bait to explain why she is
+    off tonight (small secret L1: she doesn't want to go). She gets in first against Julian. Her cloth
+    keeps going over the same corner of the island. At the end Julian appears in the doorway and they
+    all drift back to the living room.
+  steps:
+    - id: the_tap
+      do: "Mia turns the tap on and lowers her voice. The cloth keeps working the same corner of the island."
+      tableau: kitchen_island
+    - id: the_bait
+      do: "'Julian and I are... It's fine. It's a fresh start.' A pause. 'I don't want to go. Isn't that stupid? Everything's packed and I don't want to go.'"
+    - id: the_warning
+      do: "'If he says anything about me tonight. About me not being well. You know me, right, {name}?'"
+      asks: { asker: mia, kind: side, on_silence: julian }
+  outcomes:
+    - id: mia
+      text: "'Thank you. God. Thank you.' She turns the tap off; her eyes are red. Julian appears in the doorway: 'What are you two whispering about?'"
+      effects: { side: "+1" }
+    - id: julian
+      text: "'Right. Of course.' She turns back and scrubs harder. Julian appears in the doorway: 'What are you two whispering about?'"
+      effects: { side: "-1", mia_composure: "-0.15" }
+  mix_in:
+    - when: "has(turn.topics, 'afternoon') or turn.action.target == 'kitchen_floor'"
+      do: "'We spilled wine. Red. It went everywhere.' Too fast."
+      effects: { mia_composure: "-0.1" }
+    - when: "has(turn.acts, 'ask_about_leo')"
+      do: "'Leo was always... is always late. God, listen to me.'"
+      effects: { topic_tier.leo: 2 }
+    - when: "has(turn.acts, 'ask_about_move')"
+      do: "'Because everyone I have is here.' She looks at the corner of the island."
+    - when: "has(turn.acts, 'mention_car')"
+      do: "'You saw it? The yellow one?' Then, at once: 'Never mind. Never mind.'"
+      effects: { mia_composure: "-0.15" }
+  tableau: kitchen_island
+
+- id: julian_on_the_balcony
+  title: "阳台上的 Julian"
+  type: spine
+  origin: authored
+  author: "beat-script v0"
+  schema_version: 2
+  phase_hint: mid
+  preconditions: "played('the_fourth_setting')"
+  entries:
+    - id: invited
+      when: "player_room == 'living' and julian_room == 'living'"
+      opening: "Julian: 'Keep me company? She hates the smoke.'"
+      invite: { asker: julian, to_room: balcony }
+    - id: player_initiated
+      when: "player_room == 'balcony' and julian_room == 'balcony' and mia_room != 'balcony'"
+      opening: "When you push the balcony door open, Julian is already leaning on the railing."
+  weight: 3.0
+  tension_slope: 1
+  effects: { tension: "+0.5", player_room: living, mia_room: living, julian_room: living }
+  minutes: 1.5
+  max_turns: 3
+  dramatic_intent: |
+    Julian smokes and talks about the move like a holiday ("Spontaneous. You know me."). He gets in
+    first with a warning about Mia. Looking down, you can see the car. At the end Mia calls them in.
+  steps:
+    - id: smoke
+      do: "Julian lights a cigarette and talks up the new life: 'Spontaneous. You know me. One day you wake up and think, why not.' He checks his watch."
+    - id: the_car
+      do: "You look down: the wet street, the yellow hatchback with two wheels up on the curb. Julian follows your eyes and says nothing."
+      tableau: balcony_car
+    - id: the_warning
+      do: "'Mia hasn't been well. If she says strange things tonight, be kind to her. Just don't take it to heart, {name}.'"
+      asks: { asker: julian, kind: side, on_silence: julian }
+  outcomes:
+    - id: julian
+      text: "'Knew I could count on you.' He pats your shoulder. From inside, Mia: 'Are you two coming back in?'"
+      effects: { side: "-1" }
+    - id: mia
+      text: "'Sure. Sure.' He flicks the ash too fast and drops the cigarette over the railing. From inside, Mia: 'Are you two coming back in?'"
+      effects: { side: "+1", julian_composure: "-0.1" }
+  mix_in:
+    - when: "has(turn.acts, 'mention_car')"
+      do: "'Lots of yellow cars in this city.' He flicks the ash too fast."
+      effects: { revealed: [add, car_downstairs], julian_composure: "-0.15" }
+    - when: "has(turn.topics, 'money') or has(turn.acts, 'ask_about_move')"
+      do: "'The studio's fine. The studio's great.' He says it twice."
+      effects: { topic_tier.money: 2 }
+    - when: "turn.action.target == 'julian_jacket' and turn.action.verb == 'examine'"
+      do: "'We cancelled the heating already.' From inside, Mia: 'No we didn't.'"
+  tableau: balcony_car
+
+- id: two_afternoons
+  title: "两个下午"
+  type: spine
+  origin: authored
+  author: "beat-script v0"
+  schema_version: 2
+  phase_hint: mid
+  preconditions: "(played('mia_in_the_kitchen') and played('julian_on_the_balcony')) or ((played('mia_in_the_kitchen') or played('julian_on_the_balcony')) and story_min >= 9)"
+  entries:
+    - id: default
+      when: "player_room == 'living' and julian_room == 'living' and mia_room == 'living'"
+      opening: "Back around the crate, the talk drifts to the packing."
+  weight: 3.0
+  tension_slope: 2
+  effects: { tension: "+1", topic_tier.afternoon: 2, couple_unity: "-1" }
+  minutes: 1.5
+  max_turns: 3
+  dramatic_intent: |
+    Midpoint crisis. In front of you, the two of them describe two afternoons that do not match, and
+    it blows up. Mia never names a time of the afternoon; Julian never says the word afternoon.
+  steps:
+    - id: two_stories
+      do: "Julian, complaining about the packing: 'We packed all day. Together. Didn't leave the flat once.' Almost at the same moment Mia says: 'I was lying down. I had a headache. I didn't see anything.' They both stop."
+    - id: the_quarrel
+      do: "It escalates, every line about the afternoon without saying so. Julian: 'You always make me clean up your mess.' Mia: 'I cleaned up yours.' A glass wobbles on the crate; Mia catches it."
+      tableau: two_afternoons
+    - id: tell_her
+      do: "Both turn to you. Julian: '{name}, tell her she's remembering it wrong.' Mia: 'Tell him.'"
+      asks: { asker: both, kind: side, on_silence: neutral }
+  outcomes:
+    - id: julian
+      text: "Mia puts the cloth down and goes into the kitchen."
+      effects: { side: "-1", mia_room: kitchen }
+    - id: mia
+      text: "Julian picks up his cigarettes and goes out to the balcony."
+      effects: { side: "+1", julian_room: balcony }
+    - id: neutral
+      text: "They both go quiet. Julian pours for everyone: 'Let's not do this tonight.'"
+      effects: { couple_unity: "-1" }
+  mix_in:
+    - when: "has(turn.acts, 'ask_about_afternoon')"
+      do: "Both, at once: 'No.' Too fast."
+      effects: { julian_composure: "-0.1", mia_composure: "-0.1" }
+    - when: "turn.addressee == 'mia' and has(turn.topics, 'afternoon')"
+      do: "Mia: 'Nothing. It's a thing people say.'"
+      effects: { mia_composure: "-0.15" }
+  tableau: two_afternoons
+
+- id: noras_call
+  title: "Nora 的电话"
+  type: spine
+  origin: authored
+  author: "beat-script v0"
+  schema_version: 2
+  phase_hint: mid
+  preconditions: "nora_call == 'answered'"
+  must_follow: { when: "nora_call == 'answered'", rank: 5 }
+  entries:
+    - id: default
+      opening: "Nora's voice, fast and close: 'Hey. Sorry.'"
+  weight: 1.0
+  tension_slope: 1
+  effects: { tension: "+0.5", leo_phone: buzzed }
+  minutes: 1
+  max_turns: 3
+  dramatic_intent: |
+    Nora is only a voice. Urgent, direct. She asks whether Leo is with you. Whoever shares your room
+    hears your side of it. What you tell her is your first answer to Nora. When she hangs up she starts
+    calling Leo, which is why his phone buzzes next.
+  steps:
+    - id: is_he_with_you
+      do: "Nora: 'Is Leo with you? He said he'd be at Julian's with you tonight. He's not picking up.' Anyone in the room with you goes quiet."
+    - id: anything_weird
+      do: "Nora presses: 'Did he say anything to you today? Anything weird?'"
+      asks: { asker: nora, kind: answer, on_silence: none }
+    - id: hang_up
+      do: "Nora: 'Okay. Okay. If you hear from him, call me.' She hangs up. If Julian is in the room: 'Who was that?'"
+  outcomes:
+    - id: truth
+      when: "turn.nora_answer == 'truth'"
+      text: "Nora: 'What? Then where is he?'"
+      effects: { nora_told: truth }
+    - id: lie
+      when: "turn.nora_answer == 'lie'"
+      text: "Nora breathes out. 'Okay. Okay.'"
+      effects: { nora_told: lie }
+    - id: none
+      text: "Nora: 'Right. Sure.' She doesn't sound sure."
+  mix_in:
+    - when: "turn.action.verb == 'give_phone'"
+      do: "Julian shakes his head. Mia takes a step back."
+    - when: "has(turn.acts, 'mention_car') and turn.addressee == 'nora' and (julian_room == player_room or mia_room == player_room)"
+      do: "Across the room, someone sets a glass down too hard."
+      effects: { julian_composure: "-0.2", mia_composure: "-0.2" }
+
+- id: the_buzz
+  title: "手机在震"
+  type: spine
+  origin: authored
+  author: "beat-script v0"
+  schema_version: 2
+  phase_hint: any
+  preconditions: "leo_phone == 'buzzed'"
+  must_follow: { when: "leo_phone == 'buzzed'", rank: 6 }
+  entries:
+    - id: same_room
+      when: "julian_room == player_room"
+      opening: "A buzzing, from inside Julian's jacket."
+    - id: other_room
+      when: "julian_room != player_room"
+      opening: "Somewhere in the flat a phone is buzzing. Julian's voice, low: 'Not now.'"
+  weight: 3.0
+  tension_slope: 2
+  effects: { tension: "+1", julian_composure: "-0.15", julian_room: balcony }
+  minutes: 1
+  max_turns: 2
+  dramatic_intent: |
+    Light inside the jacket. Julian finds an excuse to leave the room; Mia stares at the jacket.
+  steps:
+    - id: the_light
+      do: "The buzzing comes from Julian's jacket. His hand goes flat over the pocket; the screen glows through the cloth."
+      tableau: jacket_light
+    - id: excuse
+      do: "Julian stands: 'Work. Sorry. Australia's awake.' He goes out to the balcony. Mia watches him go, then turns to you: 'He has two phones now. For the move.'"
+  mix_in:
+    - when: "turn.addressee == 'julian' and has(turn.topics, 'leo')"
+      do: "'Nobody you know.'"
+      effects: { julian_composure: "-0.15" }
+    - when: "turn.action.verb == 'call' and turn.action.target == 'leo'"
+      do: "The jacket buzzes again. Julian stops. He doesn't turn around."
+      effects: { revealed: [add, leo_was_here], julian_composure: "-0.2" }
+  tableau: jacket_light
+
+- id: dont_go_yet
+  title: "别走"
+  type: satellite
+  origin: authored
+  author: "beat-script v0"
+  schema_version: 2
+  phase_hint: mid
+  preconditions: "player_room == 'hall' and mia_room == 'hall'"
+  must_follow: { when: "turn.blocked_action == 'leave' and turn.blocked_by == 'mia'", rank: 7 }
+  entries:
+    - id: before_truth
+      when: "not has(revealed, 'leo_dead')"
+      opening: "Mia leans back against the door: 'Stay. Please. Just till dessert.' Her hands are shaking. Julian is already there with your coat: 'Mia. Let them go. It's late.'"
+    - id: after_truth
+      when: "has(revealed, 'leo_dead')"
+      opening: "Mia leans back against the door: 'If you walk out that door, you're going to the police. Aren't you.' Julian doesn't bring your coat this time: 'Sit down, {name}.'"
+  weight: 1.0
+  tension_slope: 1
+  effects: { tension: "+0.5" }
+  minutes: 1
+  max_turns: 2
+  dramatic_intent: |
+    Mia begs you to stay; Julian would rather you left, as the witness to a normal evening, until you
+    know too much. Leaving for real takes another attempt next turn.
+  steps:
+    - id: at_the_door
+      do: "Mia against the door, Julian between you and the living room. Stay or go."
+      asks: { asker: both, kind: choice, on_silence: stay }
+  outcomes:
+    - id: go
+      when: "turn.action.verb == 'leave' or has(turn.acts, 'leave') or has(turn.acts, 'refuse')"
+      text: "Mia steps aside. The door is yours."
+      effects: { side: "-1" }
+    - id: stay
+      text: "'Thank you.' The three of you go back to the living room."
+      effects: { side: "+1", player_room: living, mia_room: living, julian_room: living }

@@ -1,0 +1,49 @@
+# Golden path (beat-script.md §0.4): a cooperative, curious player under T2. Each step lists the beat
+# the drama manager must pick next, what the player did before that pick (`patch` = world changes,
+# `turn` = this turn's M2 output), which outcome the player's answer led to, and story_min when the
+# beat ends. test_beat_pool.py replays it with the real DSL, effects and clock events.
+
+- beat: the_door
+  min_after: 1.5
+- beat: dinner_on_the_crate
+  min_after: 3.0
+- beat: the_fourth_setting
+  outcome: mia
+  min_after: 4.5
+- beat: mia_in_the_kitchen
+  outcome: mia
+  min_after: 6.0          # crosses 5: Nora's first text
+- beat: julian_on_the_balcony
+  outcome: mia
+  mix_in_effects: { revealed: [add, car_downstairs] }   # you said "Isn't that Leo's car?"
+  min_after: 7.5
+- beat: two_afternoons
+  outcome: neutral
+  min_after: 9.0          # crosses 9: Nora calls; this turn picks no new beat
+- beat: noras_call
+  patch: { nora_call: answered }                        # you answer
+  turn: { addressee: nora, nora_answer: truth }
+  outcome: truth
+  min_after: 10.0
+- beat: the_buzz
+  min_after: 11.0
+- beat: the_admission
+  patch: { julian_room: living, player_phone: voicemail_heard, revealed: [add, missed_call] }
+  turn: { acts: [mention_voicemail], addressee: both }
+  entry: confronted
+  min_after: 12.5
+- beat: the_versions
+  outcome: accept
+  min_after: 14.0         # crosses 13: Nora downstairs
+- beat: downstairs
+  min_after: 15.0
+- beat: the_offer
+  outcome: undecided
+  min_after: 16.5         # crosses 16: the knock
+- beat: the_knock
+  min_after: 17.5
+- beat: testimony
+  turn: { addressee: nora, nora_answer: truth }
+  outcome: truth
+  min_after: 18.5
+- ending: open_it

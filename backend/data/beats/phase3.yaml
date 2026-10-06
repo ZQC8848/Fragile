@@ -1,0 +1,255 @@
+# Phase 3 · 摊牌 (beat-script.md §3). Must-follow ranks: see phase2.yaml header.
+
+- id: the_admission
+  title: "他没走"
+  type: spine
+  origin: authored
+  author: "beat-script v0"
+  schema_version: 2
+  phase_hint: late
+  preconditions: "not has(revealed, 'leo_dead')"
+  must_follow: { when: "crate == 'opened' and not has(revealed, 'leo_dead')", rank: 4 }
+  entries:
+    - id: crate
+      when: "crate == 'opened'"
+      opening: "The screws lie on the floor. The cloth has slid off. A shoe."
+    - id: phone_found
+      when: "leo_phone == 'found' and (julian_room == player_room or mia_room == player_room)"
+      priority_add: 10
+      opening: "Leo's phone sits in your hand, cracked case and all. Nobody moves."
+    - id: accused
+      when: "played('the_buzz') and player_suspicion >= 2 and (has(turn.acts, 'accuse_julian') or has(turn.acts, 'accuse_mia')) and (julian_room == player_room or mia_room == player_room)"
+      priority_add: 5
+      opening: "The accusation hangs over the crate."
+    - id: confronted
+      when: "has(revealed, 'missed_call') and has(revealed, 'car_downstairs') and (has(turn.acts, 'mention_voicemail') or has(turn.acts, 'mention_car')) and (julian_room == player_room or mia_room == player_room)"
+      priority_add: 5
+      opening: "The voicemail, the car downstairs. You lay them on the table."
+    - id: mia_breaks
+      when: "mia_composure < 0.3 and mia_room == player_room"
+      opening: "Mia has stopped wiping. Her hands are flat on the counter."
+    - id: nora_downstairs
+      when: "played('downstairs') and mia_composure < 0.6 and mia_room == player_room"
+      opening: "Mia is at the window, looking down at the street."
+  weight: 3.0
+  tension_slope: 2
+  effects: { tension: "+1", revealed: [add, leo_was_here, leo_dead, body_in_crate], julian_composure: "-0.1", mia_composure: "-0.1" }
+  minutes: 1.5
+  max_turns: 3
+  dramatic_intent: |
+    The first admission that Leo is dead, said by whichever of the two is less composed (under T2,
+    usually Mia). Julian still avoids the words dead and body.
+  steps:
+    - id: it_comes_out
+      do: "The less composed one looks at the crate and says it. Mia: 'He's not late.' A long pause. 'He's here. He's been here the whole time.' Or Julian: 'He came by. Earlier. He's not leaving, {name}.' Entered by the crate: the opening already showed the shoe."
+      length: long
+    - id: take_it_back
+      do: "The other tries to stop it. Julian: 'Mia. Stop.' Or Mia: 'Julian, don't.'"
+    - id: on_the_table
+      do: "It is out: Leo is dead, he is in the crate. Both of them look at you."
+  mix_in:
+    - when: "has(turn.acts, 'threaten_to_tell')"
+      do: "Julian: 'Wait. Just wait. Let us explain.'"
+    - when: "has(turn.acts, 'ask_about_afternoon')"
+      do: "Julian: 'Sit down. I'll tell you. I'll tell you everything.'"
+
+- id: the_versions
+  title: "两个版本"
+  type: spine
+  origin: authored
+  author: "beat-script v0"
+  schema_version: 2
+  phase_hint: late
+  preconditions: "played('the_admission')"
+  entries:
+    - id: default
+      when: "julian_room == player_room"
+      opening: "Julian pulls a folding chair round to face you."
+  weight: 3.0
+  tension_slope: 1
+  effects: { tension: "+0.5", revealed: [add, leo_wanted_money] }
+  minutes: 1.5
+  max_turns: 3
+  dramatic_intent: |
+    In a Grove: each tells it their own way. Under T2 Julian takes the blame first; Mia says she
+    doesn't remember.
+  steps:
+    - id: julians_version
+      do: "Julian, as if rehearsed: 'He came for money. We argued. He grabbed me, I pushed him, he hit the counter. That's it. That's all it was.'"
+    - id: mias_version
+      do: "You look at Mia. 'I don't... I don't remember. I was in the hall. I heard it.' Julian watches her, nodding too hard."
+    - id: believe_it
+      do: "Julian: 'That's what happened, {name}.'"
+      asks: { asker: julian, kind: choice, on_silence: accept }
+  outcomes:
+    - id: doubt
+      when: "has(turn.acts, 'disagree') or has(turn.acts, 'accuse_julian') or has(turn.acts, 'accuse_mia') or has(turn.acts, 'criticize') or has(turn.acts, 'provoke')"
+      text: "Julian's hand stops on the bottle. Mia starts to shake."
+      effects: { julian_composure: "-0.2", mia_composure: "-0.2" }
+    - id: accept
+      text: "Julian breathes out and pours for everyone."
+      effects: { side: "-0.5", couple_unity: "+1" }
+  mix_in:
+    - when: "has(turn.acts, 'ask') and has(turn.topics, 'afternoon')"
+      do: "Mia: 'He wasn't breathing. He wasn't...' Julian: 'Mia.'"
+      effects: { mia_composure: "-0.2" }
+    - when: "has(turn.acts, 'accuse_mia') and mia_composure < 0.2"
+      do: "Mia: 'I hit him. With the bottle. He had his hands on Julian's throat.'"
+      effects: { revealed: [add, who_struck] }
+    - when: "has(turn.acts, 'accuse_mia') and mia_composure >= 0.2"
+      do: "Mia shakes her head. Julian steps between you: 'Leave her out of it.'"
+    - when: "has(turn.topics, 'money')"
+      do: "Julian: 'The studio money. He found out. He wanted his share.'"
+      effects: { revealed: [add, embezzlement] }
+
+- id: the_offer
+  title: "交易"
+  type: spine
+  origin: authored
+  author: "beat-script v0"
+  schema_version: 2
+  phase_hint: late
+  preconditions: "played('the_versions')"
+  entries:
+    - id: default
+      when: "julian_room == player_room"
+      opening: "Julian refills your glass. His voice goes calm, almost tender."
+  weight: 3.0
+  tension_slope: 1
+  effects: { tension: "+0.5", revealed: [add, embezzlement] }
+  minutes: 1.5
+  max_turns: 3
+  dramatic_intent: |
+    Julian wants you as their witness: tonight was dinner and Leo never came. Money if you want it,
+    a threat if you don't. Mia begs in her own way: she wants one person to know without it ruining her.
+  steps:
+    - id: the_plan
+      do: "'Here's what happens. Six o'clock the movers come. Seven forty we're gone. Tonight was dinner. He never showed.'"
+    - id: the_leverage
+      do: "'There's money. More than you'd think. The studio money.' If Julian has heard about the missed calls: 'Two missed calls from him, and you just happened to walk in at seven? Who do you think they'll believe?' Otherwise: 'You were here all night, {name}. You ate off that crate.'"
+    - id: mias_plea
+      do: "Mia: 'Please. Don't make it worse. For him. For me.'"
+      asks: { asker: both, kind: choice, on_silence: undecided }
+  outcomes:
+    - id: accept
+      when: "has(turn.acts, 'promise_silence') or has(turn.acts, 'agree')"
+      text: "Julian touches his glass to yours. Mia turns her face away."
+      effects: { side: "-1", couple_unity: "+1" }
+    - id: refuse
+      when: "has(turn.acts, 'threaten_to_tell') or has(turn.acts, 'refuse')"
+      text: "For the first time tonight they stand together, both looking at you."
+      effects: { couple_unity: "+1", julian_composure: "-0.2" }
+    - id: undecided
+      text: "Julian: 'Take your time. You've got till six.'"
+  mix_in:
+    - when: "has(turn.acts, 'ask') and has(turn.topics, 'money')"
+      do: "Julian names a figure. Mia: 'Julian.'"
+    - when: "turn.addressee != 'nora' and has(turn.topics, 'leo')"
+      do: "Julian: 'Nora doesn't need to know anything.'"
+
+- id: downstairs
+  title: "楼下"
+  type: spine
+  origin: authored
+  author: "beat-script v0"
+  schema_version: 2
+  phase_hint: late
+  preconditions: "nora_pressure >= 3"
+  must_follow: { when: "nora_pressure >= 3", rank: 8 }
+  entries:
+    - id: before_truth
+      when: "not has(revealed, 'leo_dead')"
+      opening: "Your phone buzzes on the crate."
+    - id: after_truth
+      when: "has(revealed, 'leo_dead')"
+      opening: "Your phone buzzes. All three of you look at it."
+  weight: 3.0
+  tension_slope: 2
+  effects: { tension: "+1", revealed: [add, car_downstairs], mia_composure: "-0.2" }
+  minutes: 1
+  max_turns: 2
+  dramatic_intent: |
+    Nora's text. Your screen lights up and the hosts read your face. Mia fears Leo's sister most of all.
+  steps:
+    - id: the_text
+      do: "Nora: 'I'm downstairs. His car is here. His location says he's in your building.'"
+    - id: their_faces
+      do: "Before the admission: Mia looks at the window; Julian: 'Who's texting you, {name}?' After it: Mia: 'She's here? She's here.' Julian: 'Don't answer it.'"
+  mix_in:
+    - when: "turn.action.verb == 'text' and turn.action.target == 'nora'"
+      do: "Julian watches you type and says nothing."
+    - when: "turn.action.verb == 'look_out'"
+      do: "Someone is standing by the yellow car, looking up at the building."
+
+- id: the_knock
+  title: "敲门"
+  type: spine
+  origin: authored
+  author: "beat-script v0"
+  schema_version: 2
+  phase_hint: late
+  preconditions: "nora_pressure >= 4 or turn_count >= 40"
+  must_follow: { when: "nora_pressure >= 4 or turn_count >= 40", rank: 9 }
+  entries:
+    - id: default
+      opening: "A knock at the door."
+  weight: 3.0
+  tension_slope: 2
+  effects: { tension: "+1", nora_pressure: 4, nora_room: living, player_room: living, julian_room: living, mia_room: living }
+  minutes: 1
+  max_turns: 1
+  dramatic_intent: |
+    The knock. Nora comes in. The three-person scene begins; testimony opens in the same passage.
+  steps:
+    - id: knock
+      do: "A knock. All three look at the door. Nobody moves. Another knock."
+    - id: nora_enters
+      do: "Julian opens it. Nora comes in, coat wet, phone in her fist. She sees the dinner on the crate, the glasses: 'Where is he? His car's downstairs. His phone's in this building.'"
+      tableau: nora_at_door
+  tableau: nora_at_door
+
+- id: testimony
+  title: "证词"
+  type: spine
+  origin: authored
+  author: "beat-script v0"
+  schema_version: 2
+  phase_hint: late
+  preconditions: "played('the_knock')"
+  must_follow: { when: "played('the_knock')", rank: 10 }
+  entries:
+    - id: default
+      opening: "Nora looks only at you."
+  weight: 3.0
+  tension_slope: 1
+  effects: { tension: "+0.5" }
+  minutes: 1
+  max_turns: 4
+  dramatic_intent: |
+    Every word you say is testimony. Nora asks you; the hosts stand behind her. Your answer here is
+    the final value of nora_told and leads into the ending table.
+  steps:
+    - id: did_he_come
+      do: "'{name}. You've been here all night. Did he come?' Julian behind her, Mia in the kitchen doorway."
+      asks: { asker: nora, kind: answer, on_silence: silence }
+    - id: close
+      do: "Whatever you said hangs there. Close the scene into the ending."
+  outcomes:
+    - id: truth
+      when: "turn.nora_answer == 'truth' or (turn.action.target == 'crate' and turn.action.verb in ['examine', 'touch', 'knock'])"
+      text: "Nora turns to the crate. Julian: 'Nora. Wait.'"
+      effects: { nora_told: truth }
+    - id: lie
+      when: "turn.nora_answer == 'lie'"
+      text: "Julian, behind her: 'Told you. Classic Leo.' Nora looks at you for a long time."
+      effects: { nora_told: lie }
+    - id: silence
+      text: "Nora turns to the one who fears her most: 'Mia?'"
+      effects: { nora_told: none }
+  mix_in:
+    - when: "has(turn.claims, 'leo_was_here') and turn.nora_answer != 'truth'"
+      do: "Nora: 'When? Where is he now?'"
+      once: false
+    - when: "turn.addressee in ['julian', 'mia', 'both']"
+      do: "Nora: 'I'm talking to you, {name}.'"
+      once: false

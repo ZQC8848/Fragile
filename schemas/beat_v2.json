@@ -262,7 +262,10 @@
               }
             ],
             "minItems": 2,
-            "maxItems": 2
+            "items": {
+              "type": "string"
+            },
+            "description": "[\"add\", item, ...] or [\"remove\", item, ...]"
           }
         ]
       }

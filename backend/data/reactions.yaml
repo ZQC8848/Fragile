@@ -1,0 +1,383 @@
+# Reaction layer v0 (interaction-design.md §5). Schema: schemas/data/reactions.json.
+#
+# Every turn:
+#   1. `rules` apply: social/emotional deltas from what the player did, whatever reaction is chosen.
+#   2. One primary reaction is chosen by priority among: the current beat's local mix-ins (10),
+#      `reactions` below whose `when` holds, and a deflection (1). At most one secondary reaction from
+#      a different responder with a lower priority. The chosen reaction's `effects` apply.
+# Constraints the engine enforces:
+#   - a fixed `responder` must be in the player's room, else the reaction is not available;
+#     responder `owner` = the topic's owner (below), `addressee` = whoever the player spoke to;
+#   - `once: true` (default) reactions are used once per session; deflections repeat;
+#   - each variable moves at most `per_turn_cap` per turn (rules + reaction effects combined);
+#   - topic tiers only rise one step at a time and never above the phase cap.
+
+priorities: { local: 10, blocked: 9, push_too_far: 8, pattern: 6, topic: 5, object: 4, social: 3, deflect: 1 }
+
+phase_tier_cap: { early: 1, mid: 2, late: 3 }
+
+per_turn_cap: { side: 1, couple_unity: 1, julian_composure: 0.2, mia_composure: 0.2, tension: 1 }
+
+# Who answers a topic when the player addressed both or nobody. less_composed = whichever host has
+# the lower composure; any = whoever spoke last.
+topic_owner: { crate: julian, leo: mia, money: julian, afternoon: less_composed, marriage: mia, college: any }
+
+rules:
+  - id: warm_to_mia
+    when: "(has(turn.acts, 'comfort') or has(turn.acts, 'praise') or has(turn.acts, 'agree')) and turn.addressee == 'mia'"
+    effects: { side: "+0.5", mia_composure: "+0.1" }
+  - id: warm_to_julian
+    when: "(has(turn.acts, 'comfort') or has(turn.acts, 'praise') or has(turn.acts, 'agree')) and turn.addressee == 'julian'"
+    effects: { side: "-0.5" }
+  - id: silence_to_julian
+    when: "has(turn.acts, 'promise_silence') and turn.addressee in ['julian', 'both']"
+    effects: { side: "-0.5", julian_composure: "+0.1" }
+  - id: hard_on_mia
+    when: "(has(turn.acts, 'criticize') or has(turn.acts, 'provoke') or has(turn.acts, 'accuse_mia')) and turn.addressee in ['mia', 'both']"
+    effects: { side: "-0.5", mia_composure: "-0.2" }
+  - id: hard_on_julian
+    when: "(has(turn.acts, 'criticize') or has(turn.acts, 'provoke') or has(turn.acts, 'accuse_julian')) and turn.addressee in ['julian', 'both']"
+    effects: { side: "+0.5", julian_composure: "-0.2" }
+  - id: evidence_to_julian
+    when: "(has(turn.acts, 'mention_car') or has(turn.acts, 'mention_voicemail')) and turn.addressee in ['julian', 'both']"
+    effects: { julian_composure: "-0.15" }
+  - id: leo_or_afternoon_to_mia
+    when: "(has(turn.acts, 'ask_about_leo') or has(turn.acts, 'ask_about_afternoon')) and turn.addressee in ['mia', 'both']"
+    effects: { mia_composure: "-0.15" }
+  - id: threaten_both
+    when: "has(turn.acts, 'threaten_to_tell') and turn.addressee == 'both'"
+    effects: { couple_unity: "+1" }
+  - id: claims_shake_julian
+    when: "count(turn.claims) > 0 and julian_room == player_room"
+    effects: { julian_composure: "-0.15" }
+  - id: claims_shake_mia
+    when: "count(turn.claims) > 0 and mia_room == player_room"
+    effects: { mia_composure: "-0.15" }
+  - id: tell_julian_mia_called
+    when: "has(turn.claims, 'mia_called_leo') and turn.addressee in ['julian', 'both']"
+    effects: { couple_unity: "-2" }
+  - id: relay_to_julian
+    when: "has(turn.acts, 'confide') and turn.addressee == 'julian' and has(turn.topics, 'marriage')"
+    effects: { couple_unity: "-1" }
+  - id: relay_to_mia
+    when: "has(turn.acts, 'confide') and turn.addressee == 'mia' and has(turn.topics, 'money')"
+    effects: { couple_unity: "-1" }
+
+reactions:
+  # ---- blocked (9): the world note says what happened; the blocker reacts in character
+  - id: blocked
+    type: blocked
+    responder: any
+    when: "turn.blocked_by != null"
+    once: false
+    do: "Render the block the way the world note describes; the one who blocked reacts in character and does not explain."
+
+  # ---- push too far (8)
+  - id: julian_snaps
+    type: push_too_far
+    responder: julian
+    when: "(has(turn.acts, 'accuse_julian') or has(turn.acts, 'provoke')) and turn.addressee in ['julian', 'both'] and julian_composure < 0.35 and nora_room == 'outside'"
+    do: "'Enough.' Julian takes his cigarettes out to the balcony."
+    effects: { julian_room: balcony, side: "+0.5" }
+  - id: mia_leaves
+    type: push_too_far
+    responder: mia
+    when: "(has(turn.acts, 'accuse_mia') or has(turn.acts, 'ask_about_afternoon') or has(turn.acts, 'ask_about_leo')) and turn.addressee in ['mia', 'both'] and mia_composure < 0.35 and nora_room == 'outside'"
+    do: "'I need some air. I need. Sorry.' Mia goes into the kitchen and turns the tap on."
+    effects: { mia_room: kitchen, side: "-0.5" }
+  - id: julian_crate_push
+    type: push_too_far
+    responder: julian
+    when: "has(turn.topics, 'crate') and topic_tier.crate >= 2 and story_phase != 'late'"
+    do: "'Can we talk about literally anything else?' The joke is gone from his voice."
+    effects: { julian_composure: "-0.1" }
+  - id: mia_leo_push
+    type: push_too_far
+    responder: mia
+    when: "has(turn.topics, 'leo') and topic_tier.leo >= 2 and story_phase != 'late'"
+    do: "Mia stops wiping. 'Please.'"
+    effects: { mia_composure: "-0.1" }
+
+  # ---- patterns (6)
+  - id: quiet_player
+    type: pattern
+    responder: julian
+    when: "silence_streak >= 2"
+    do: "'You're quiet tonight, {name}.'"
+  - id: only_talks_to_mia
+    type: pattern
+    responder: julian
+    when: "turn.streak_addressee == 'mia'"
+    do: "'You two and your secrets.'"
+  - id: only_talks_to_julian
+    type: pattern
+    responder: mia
+    when: "turn.streak_addressee == 'julian'"
+    do: "'Don't let him monopolize you. He does that.'"
+  - id: keeps_on_the_crate
+    type: pattern
+    responder: julian
+    when: "turn.streak_topic == 'crate'"
+    do: "'You're very interested in my furniture.'"
+
+  # ---- topic tiers (5): story.md §8.3; tier n needs the phase cap to allow n
+  - id: crate_t1
+    type: topic
+    topic: crate
+    tier: 1
+    responder: julian
+    when: "has(turn.topics, 'crate') and topic_tier.crate == 0"
+    do: "'Books. Customs paperwork is a nightmare.'"
+    effects: { topic_tier.crate: 1 }
+  - id: crate_t2
+    type: topic
+    topic: crate
+    tier: 2
+    responder: mia
+    when: "has(turn.topics, 'crate') and topic_tier.crate == 1 and story_phase != 'early'"
+    do: "Julian bristles when you touch it; Mia asks you not to put your glass on that end."
+    effects: { topic_tier.crate: 2 }
+  - id: crate_t3
+    type: topic
+    topic: crate
+    tier: 3
+    responder: owner
+    when: "has(turn.topics, 'crate') and topic_tier.crate == 2 and story_phase == 'late'"
+    do: "'Please. Not the crate.'"
+    effects: { topic_tier.crate: 3, julian_composure: "-0.1", mia_composure: "-0.1" }
+
+  - id: leo_t1
+    type: topic
+    topic: leo
+    tier: 1
+    responder: julian
+    when: "has(turn.topics, 'leo') and topic_tier.leo == 0"
+    do: "'He flaked.' Julian doesn't say his name."
+    effects: { topic_tier.leo: 1 }
+  - id: leo_t2
+    type: topic
+    topic: leo
+    tier: 2
+    responder: mia
+    when: "has(turn.topics, 'leo') and topic_tier.leo == 1 and story_phase != 'early'"
+    do: "Mia slips into the past tense about Leo and corrects herself; Julian still won't say his name."
+    effects: { topic_tier.leo: 2, mia_composure: "-0.1" }
+  - id: leo_t3
+    type: topic
+    topic: leo
+    tier: 3
+    responder: owner
+    when: "has(turn.topics, 'leo') and topic_tier.leo == 2 and story_phase == 'late'"
+    do: "'When did you last see him?' Their answers start to fight each other."
+    effects: { topic_tier.leo: 3, couple_unity: "-1" }
+
+  - id: money_t1
+    type: topic
+    topic: money
+    tier: 1
+    responder: julian
+    when: "has(turn.topics, 'money') and topic_tier.money == 0"
+    do: "'A fresh start. That's the whole story.'"
+    effects: { topic_tier.money: 1 }
+  - id: money_t2
+    type: topic
+    topic: money
+    tier: 2
+    responder: julian
+    when: "has(turn.topics, 'money') and topic_tier.money == 1 and story_phase != 'early'"
+    do: "'The studio's not doing great. Fine. It's not doing great.'"
+    effects: { topic_tier.money: 2 }
+  - id: money_t3
+    type: topic
+    topic: money
+    tier: 3
+    responder: mia
+    when: "has(turn.topics, 'money') and topic_tier.money == 2 and story_phase == 'late'"
+    do: "Mia, not looking at Julian: 'Tell them where the money went.' The studio account; the hole Julian filled with it."
+    effects: { topic_tier.money: 3, revealed: [add, embezzlement], couple_unity: "-1" }
+
+  - id: afternoon_t1
+    type: topic
+    topic: afternoon
+    tier: 1
+    responder: owner
+    when: "has(turn.topics, 'afternoon') and topic_tier.afternoon == 0"
+    do: "'We spent all day packing.'"
+    effects: { topic_tier.afternoon: 1 }
+  - id: afternoon_t2
+    type: topic
+    topic: afternoon
+    tier: 2
+    responder: owner
+    when: "has(turn.topics, 'afternoon') and topic_tier.afternoon == 1 and story_phase != 'early'"
+    do: "Their accounts of the day don't line up: Julian says together, all day; Mia says she was lying down."
+    effects: { topic_tier.afternoon: 2 }
+  - id: afternoon_t3
+    type: topic
+    topic: afternoon
+    tier: 3
+    responder: owner
+    when: "has(turn.topics, 'afternoon') and topic_tier.afternoon == 2 and story_phase == 'late'"
+    do: "Two versions of the afternoon, side by side, and neither will give ground."
+    effects: { topic_tier.afternoon: 3, couple_unity: "-1" }
+
+  - id: marriage_t1
+    type: topic
+    topic: marriage
+    tier: 1
+    responder: julian
+    when: "has(turn.topics, 'marriage') and topic_tier.marriage == 0"
+    do: "They trade jokes at each other's expense, a little too sharp."
+    effects: { topic_tier.marriage: 1 }
+  - id: marriage_t2
+    type: topic
+    topic: marriage
+    tier: 2
+    responder: mia
+    when: "has(turn.topics, 'marriage') and topic_tier.marriage == 1 and story_phase != 'early'"
+    do: "Mia: 'We're not okay.'"
+    effects: { topic_tier.marriage: 2 }
+  - id: marriage_t3
+    type: topic
+    topic: marriage
+    tier: 3
+    responder: julian
+    when: "has(turn.topics, 'marriage') and topic_tier.marriage == 2 and story_phase == 'late'"
+    do: "Julian: 'Ask her why he always calls her.'"
+    effects: { topic_tier.marriage: 3, couple_unity: "-1" }
+
+  - id: college_t1
+    type: topic
+    topic: college
+    tier: 1
+    responder: any
+    when: "has(turn.topics, 'college') and topic_tier.college == 0"
+    do: "The photo, the old takeaway place, who sat where."
+    effects: { topic_tier.college: 1, tension: "-0.5" }
+  - id: college_t2
+    type: topic
+    topic: college
+    tier: 2
+    responder: any
+    when: "has(turn.topics, 'college') and topic_tier.college == 1 and story_phase != 'early'"
+    do: "Leo stories: always late, always forgiven, the money he never paid back."
+    effects: { topic_tier.college: 2, tension: "-0.5" }
+  - id: college_t3
+    type: topic
+    topic: college
+    tier: 3
+    responder: mia
+    when: "has(turn.topics, 'college') and topic_tier.college == 2 and story_phase == 'late'"
+    do: "Mia: the night Leo drove two hours at midnight to help a friend. She cries, then stops herself."
+    effects: { topic_tier.college: 3, tension: "-0.5" }
+
+  # ---- objects (4)
+  - id: obj_crate
+    type: object
+    responder: mia
+    when: "turn.action.target == 'crate' and turn.action.verb in ['examine', 'knock', 'touch', 'sit', 'place']"
+    once: false
+    do: "Mia steers you and your glass away from that end of the crate."
+  - id: obj_photo
+    type: object
+    responder: mia
+    when: "turn.action.target == 'photo'"
+    do: "Mia: 'God, look at us.' She doesn't look at Leo."
+  - id: obj_car
+    type: object
+    responder: any
+    when: "turn.action.target in ['car', 'window']"
+    do: "Mia, too brightly: 'Is it still raining?' Julian says nothing."
+  - id: obj_tickets
+    type: object
+    responder: julian
+    when: "turn.action.target == 'tickets'"
+    do: "Julian checks his watch: 'Seven forty. Brutal, I know.'"
+  - id: obj_tools
+    type: object
+    responder: julian
+    when: "turn.action.target in ['tools_box', 'screwdriver', 'drill']"
+    do: "'Planning to build something, {name}?'"
+    effects: { julian_composure: "-0.1" }
+  - id: obj_phone
+    type: object
+    responder: julian
+    when: "turn.action.target in ['phone', 'nora', 'leo'] and turn.action.verb in ['listen_voicemail', 'call', 'text', 'answer_call', 'decline_call']"
+    once: false
+    do: "'Who's texting you, {name}?'"
+  - id: obj_kitchen_floor
+    type: object
+    responder: mia
+    when: "turn.action.target in ['kitchen_floor', 'kitchen_island']"
+    do: "'We spilled wine. Red. It went everywhere.'"
+    effects: { mia_composure: "-0.1" }
+  - id: obj_boxes
+    type: object
+    responder: julian
+    when: "turn.action.target == 'boxes' and turn.action.verb == 'open'"
+    do: "'Don't. They're taped for customs.'"
+  - id: obj_takeaway
+    type: object
+    responder: julian
+    when: "turn.action.target == 'takeaway'"
+    do: "'Our old place. Still the best noodles in the city.'"
+
+  # ---- social (3)
+  - id: comfort_mia
+    type: social
+    responder: mia
+    when: "has(turn.acts, 'comfort') and turn.addressee == 'mia'"
+    once: false
+    do: "'Thank you. Sorry. Thank you.'"
+  - id: comfort_julian
+    type: social
+    responder: julian
+    when: "has(turn.acts, 'comfort') and turn.addressee == 'julian'"
+    once: false
+    do: "'I'm fine. Everyone's fine.'"
+  - id: needle_julian
+    type: social
+    responder: julian
+    when: "(has(turn.acts, 'criticize') or has(turn.acts, 'provoke')) and turn.addressee == 'julian'"
+    once: false
+    do: "Julian answers with a joke, a better one than the moment deserves."
+  - id: physical_on_julian
+    type: social
+    responder: julian
+    when: "turn.action.target == 'julian' and turn.action.verb in ['grab', 'push', 'hit']"
+    once: false
+    do: "Julian takes it, steps back, straightens his jacket. 'Okay. Okay.'"
+    effects: { julian_composure: "-0.2", tension: "+0.5" }
+  - id: physical_on_mia
+    type: social
+    responder: mia
+    when: "turn.action.target == 'mia' and turn.action.verb in ['grab', 'push', 'hit']"
+    once: false
+    do: "Mia flinches back against the counter. Julian is between you in a second."
+    effects: { mia_composure: "-0.2", tension: "+0.5", couple_unity: "+1" }
+  - id: hug_someone
+    type: social
+    responder: addressee
+    when: "turn.action.verb == 'hug'"
+    once: false
+    do: "They let you, for a second longer than usual."
+
+  # ---- deflections (1): repeatable; the narrator picks one that fits the moment
+  - id: deflect_julian
+    type: deflect
+    responder: julian
+    when: "nora_room == 'outside'"
+    once: false
+    do: "Julian refills a glass, makes a joke, steers the talk back to 'our new life'."
+  - id: deflect_mia
+    type: deflect
+    responder: mia
+    when: "nora_room == 'outside'"
+    once: false
+    do: "Mia offers more food, asks if you're warm enough, wipes something already clean."
+  - id: deflect_nora
+    type: deflect
+    responder: nora
+    when: "nora_room != 'outside'"
+    once: false
+    do: "Nora: 'I don't care about that. Where is he?'"

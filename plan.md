@@ -183,11 +183,11 @@ log(turn_record)
 
 ### M2 · beat 池 v0 和全局反应 v0（10/8–10/10）· 负责 #6
 
-- [ ] **20 个 beat**：
+- [x] **20 个 beat**（`backend/data/beats/phase1/2/3.yaml`、`endings.yaml`）：
   - 主干 14 个：`the_door`、`dinner_on_the_crate`、`the_fourth_setting`、`mia_in_the_kitchen`、`julian_on_the_balcony`、`the_buzz`、`two_afternoons`、`noras_call`、`the_admission`、`the_versions`、`the_offer`、`downstairs`、`the_knock`、`testimony`；
   - 必接卫星拍 `dont_go_yet`；
   - 5 个结局。
-- [ ] **`data/reactions.yaml` v0**：
+- [x] **`data/reactions.yaml` v0**（校验用 `schemas/data/reactions.json`）：
   - 六个话题 × 三层的全局 mix-in；
   - 物件反应：箱子、合影、车、机票、外套、浴室门、TOOLS 箱、手机；
   - 行为模式：连续沉默、只跟一个人说话、反复提同一个话题；
@@ -195,21 +195,21 @@ log(turn_record)
   - 社交行为反应；
   - 每人一组岔开话题的说法；
   - 数值规则（interaction-design.md §5.4）。
-- [ ] **写法**：先让 LLM 按 story.md 的意图起草 YAML，再人工逐条审。
-- [ ] **golden path**：一名合作型玩家应该经过的 beat 序列，写成测试脚本（Baseline check）。
-- [ ] **测试**：
+- [ ] **写法**：先让 LLM 按 story.md 的意图起草 YAML，再人工逐条审。（起草完成，按 beat-script.md 转写；**人工审还没做**）
+- [x] **golden path**：`tests/fixtures/golden_path.yaml`，由 `test_beat_pool.py` 用真实 DSL、effects 和时钟事件重放。用 scorer A 走一遍的 Baseline check 等 M3 的 DM 做好再补
+- [x] **测试**（`tests/test_beat_pool.py`）：
   - 无死局：随机走状态，任何可达状态下，要么有可选的 beat，要么有时钟事件可以快进（beat-script.md §5 第 3 条）；
   - 每个结局都有一条脚本化的路径能到；
   - 必接拍表（story.md §9.4）逐条触发；
   - 每个 beat 都声明了 `minutes`。
 
-**验收**：beat 测试全绿；DM 用 scorer A 能按 golden path 走完。
+**验收**：beat 测试全绿（已达成）；DM 用 scorer A 能按 golden path 走完（等 M3）。
 
 ### M3 · 回合引擎（10/8–10/11）· 负责 #1，#3 协助
 
 - [ ] `engine/clock/`：beat 结束时 +n，计算跨过的 Nora 事件，安全上限，空档快进；来电那一回合不选新拍
 - [ ] `engine/beats/`：v2 加载、步指针、`plan_steps`、`outcomes` 选择、`max_turns`；"中止"和"演过"分开记，中止的拍可以再选
-- [ ] `engine/state/` 和 `engine/dsl/`：初始状态改从 `state_v2.json` 的 `default` 生成；`story_phase` 按剧情分钟推导；effects 和变量检查支持点号路径（`topic_tier.leo`）；`played()` 只算演完的拍；去掉 beat 加载器里 `on:` 的兼容处理
+- [ ] `engine/state/` 和 `engine/dsl/`：初始状态改从 `state_v2.json` 的 `default` 生成；`story_phase` 按剧情分钟推导；去掉 beat 加载器里 `on:` 的兼容处理。（M2 里已做：effects 支持点号路径和一次加多项；`played()` 只算演完的拍）
 - [ ] `engine/dm/`：优先级分层、必接拍、目标弧按剧情分钟、`GENERATE_NEW`（proposer 按 v2 生成）
 - [ ] `engine/world/`：执行动作单元，包括换房间、跟随、阻拦（被拦的人镇定值下降）、手机动作、`heard_by`
 - [ ] `engine/reactions/`：收集候选、按优先级选、确定谁来回应、只用一次、每变量每回合限一步、说法记录

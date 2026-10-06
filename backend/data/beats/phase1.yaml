@@ -1,0 +1,119 @@
+# Phase 1 · 表演正常 (beat-script.md §1). Schema: schemas/beat_v2.json.
+# Tension effects = slope x 0.5 (beat-script.md §5 rule 1). Lines are samples for the narrator.
+
+- id: the_door
+  title: "迎客"
+  type: spine
+  origin: authored
+  author: "beat-script v0"
+  schema_version: 2
+  phase_hint: early
+  preconditions: "count(beat_history) == 0"
+  entries:
+    - id: default
+      opening: "The door opens almost before the bell has finished ringing."
+  weight: 3.0
+  tension_slope: 0
+  effects: { player_room: living, mia_room: living, julian_room: living }
+  minutes: 1.5
+  max_turns: 2
+  dramatic_intent: |
+    The surface is too warm. Mia opens the door too fast and holds you too long; Julian comes out with two
+    glasses of wine, every inch the host. You see the emptied flat for the first time.
+  steps:
+    - id: mia_at_the_door
+      do: "Mia hugs you a beat too long: 'You came. You actually came.' Her hands are cold and damp, as if she has just washed something."
+      tableau: door_mia
+    - id: julian_with_wine
+      do: "Julian appears with two glasses: 'There they are. Keep your shoes on, we've got nothing left to scratch.' He leads you into the living room: one photo left on the wall, boxes everywhere. Mia suddenly asks: 'Did you drive? Where did you park?' Julian cuts in and puts a glass in your hand."
+  mix_in:
+    - when: "has(turn.acts, 'ask_about_leo')"
+      do: "Julian answers first: 'Not yet. He'll turn up. He always turns up late and apologizes beautifully.' Mia looks at her shoes."
+    - when: "has(turn.acts, 'mention_car')"
+      do: "Mia's smile stalls. Julian: 'Half this street drives a yellow something.'"
+      effects: { mia_composure: "-0.1" }
+    - when: "has(turn.acts, 'comfort') and turn.addressee == 'mia'"
+      do: "She holds on tighter, then lets go all at once: 'Sorry. Sorry. Long week.'"
+  tableau: door_mia
+
+- id: dinner_on_the_crate
+  title: "木箱上的晚餐"
+  type: spine
+  origin: authored
+  author: "beat-script v0"
+  schema_version: 2
+  phase_hint: early
+  preconditions: "played('the_door')"
+  entries:
+    - id: default
+      when: "player_room == 'living' and julian_room == 'living' and mia_room == 'living'"
+      opening: "Dinner is laid out on a shipping crate under a tablecloth, four folding chairs around it."
+  weight: 3.0
+  tension_slope: 1
+  effects: { tension: "+0.5" }
+  minutes: 1.5
+  max_turns: 3
+  dramatic_intent: |
+    The core image. The table has been shipped; dinner sits on a screwed-down crate under a tablecloth.
+    The takeaway is from your old college place, Leo's favourite. Julian jokes and pours; Mia will not
+    sit at the crate's far end.
+  steps:
+    - id: the_table
+      do: "Julian presents the 'table': 'The table left on Tuesday. The crate is sturdier anyway.' The takeaway boxes open: the old place."
+      tableau: dinner_on_crate
+    - id: wobbly_end
+      do: "Seating. Mia steers you to the other side: 'Don't sit there. That end is wobbly.' She stays standing, away from that end."
+    - id: fresh_starts
+      do: "Julian raises his glass: 'To fresh starts.' Mia's glass stays down. Julian turns to you: 'So. What have you been doing with yourself, {name}?'"
+  mix_in:
+    - when: "has(turn.acts, 'ask_about_crate') and story_phase == 'early'"
+      do: "Julian: 'Books. And the bodies of my enemies.' He laughs first. Mia doesn't."
+    - when: "turn.action.target == 'crate' and turn.action.verb in ['touch', 'knock', 'sit', 'place']"
+      do: "Mia moves your glass before you can stop her: 'Not there. Sorry. It's, it's wobbly.'"
+      effects: { mia_composure: "-0.1" }
+    - when: "has(turn.topics, 'college') and has(turn.acts, 'praise')"
+      do: "Julian: 'Our old place. Ordered extra. In case.' Mia stops eating."
+  tableau: dinner_on_crate
+
+- id: the_fourth_setting
+  title: "第四副碗筷"
+  type: spine
+  origin: authored
+  author: "beat-script v0"
+  schema_version: 2
+  phase_hint: early
+  preconditions: "played('dinner_on_the_crate')"
+  entries:
+    - id: default
+      when: "player_room == 'living' and julian_room == 'living' and mia_room == 'living'"
+      opening: "Julian checks his watch. The fourth place setting is still laid."
+  weight: 3.0
+  tension_slope: 1
+  effects: { tension: "+0.5" }
+  minutes: 1.5
+  max_turns: 2
+  dramatic_intent: |
+    The 'Leo stood us up' performance, staged for you. When Julian clears the setting, Mia flinches.
+  steps:
+    - id: the_watch
+      do: "Julian checks his watch at the empty fourth place: 'Seven forty. Even for him that's ambitious.'"
+    - id: clear_it
+      do: "Julian clears the fourth setting: 'He's not coming. Classic Leo.' Mia flinches as he does it. Then: 'He does this every time, doesn't he, {name}?'"
+      asks: { asker: julian, kind: side, on_silence: neutral }
+      tableau: fourth_setting
+  outcomes:
+    - id: julian
+      text: "'See? She thinks I'm being harsh.' He drops the setting in the sink. Mia starts wiping a counter that is already clean."
+      effects: { side: "-1" }
+    - id: mia
+      text: "Mia, quietly: 'He might still come.' Julian smiles; the setting goes anyway."
+      effects: { side: "+1" }
+    - id: neutral
+      text: "Julian shrugs and takes the setting away without another word."
+  mix_in:
+    - when: "has(turn.acts, 'ask') and has(turn.topics, 'leo') and turn.action == null"
+      do: "Julian: 'Don't bother calling. He's probably asleep on someone's couch.'"
+    - when: "has(turn.acts, 'ask_about_leo')"
+      do: "Mia: 'This morning. No. Yesterday.' The two of them exchange a look."
+      effects: { mia_composure: "-0.1" }
+  tableau: fourth_setting

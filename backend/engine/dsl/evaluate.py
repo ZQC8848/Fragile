@@ -138,8 +138,15 @@ def evaluate(node: JsonLogic, data: Mapping[str, Any]) -> Any:
     if op == "abs":
         return abs(args[0])
     if op == "played":
+        # Completed beats only: an aborted beat can be entered again (interaction-design.md §6.2).
         wanted = str(args[0])
-        return any((h.get("beat_id") if isinstance(h, dict) else h) == wanted for h in (data.get("beat_history") or []))
+        for h in data.get("beat_history") or []:
+            if isinstance(h, dict):
+                if h.get("beat_id") == wanted and h.get("completed", True) is not False:
+                    return True
+            elif h == wanted:
+                return True
+        return False
     raise EvalError(f"unknown op {op!r}")
 
 

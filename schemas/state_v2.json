@@ -2,13 +2,13 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://fragile.dev/schemas/state_v2.json",
   "title": "Story state v2",
-  "description": "The story state document of Fragile (story.md §8.2, interaction-design.md §14.1). Every top-level property is addressable from the rule DSL by name; nested ones by dotted path (topic_tier.leo). Each property carries a `default`: the initial state is built from these defaults. During one turn the evaluator also sees a transient `turn` namespace (turn.acts, turn.addressee, turn.topics, turn.claims, turn.action) that is NOT part of the stored state.",
+  "description": "The story state document of Fragile (story.md §8.2, interaction-design.md §14.1). Every top-level property is addressable from the rule DSL by name; nested ones by dotted path (topic_tier.leo). Each property carries a `default`: the initial state is built from these defaults. During one turn the evaluator also sees a transient `turn` namespace, described by $defs.Turn, that is NOT part of the stored state.",
   "type": "object",
   "additionalProperties": false,
   "required": [
     "schema_version",
     "story_min",
-    "turn",
+    "turn_count",
     "story_phase",
     "tension",
     "julian_composure",
@@ -52,14 +52,20 @@
       "default": 0,
       "description": "Story minutes. Advances by the ending beat's `minutes` when a beat ends (interaction-design.md §7.1), never by real time."
     },
-    "turn": {
+    "turn_count": {
       "type": "integer",
       "minimum": 0,
-      "default": 0
+      "default": 0,
+      "description": "Turns played so far. (Named turn_count because `turn` is the transient per-turn namespace.)"
     },
     "story_phase": {
       "type": "string",
-      "enum": ["early", "mid", "late", "ended"],
+      "enum": [
+        "early",
+        "mid",
+        "late",
+        "ended"
+      ],
       "default": "early",
       "description": "Derived from story_min: < 6 early, < 12 mid, else late; ended once `ending` is set."
     },
@@ -105,21 +111,61 @@
     "topic_tier": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["crate", "leo", "money", "afternoon", "marriage", "college"],
+      "required": [
+        "crate",
+        "leo",
+        "money",
+        "afternoon",
+        "marriage",
+        "college"
+      ],
       "properties": {
-        "crate": { "$ref": "#/$defs/Tier" },
-        "leo": { "$ref": "#/$defs/Tier" },
-        "money": { "$ref": "#/$defs/Tier" },
-        "afternoon": { "$ref": "#/$defs/Tier" },
-        "marriage": { "$ref": "#/$defs/Tier" },
-        "college": { "$ref": "#/$defs/Tier" }
+        "crate": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 3
+        },
+        "leo": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 3
+        },
+        "money": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 3
+        },
+        "afternoon": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 3
+        },
+        "marriage": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 3
+        },
+        "college": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 3
+        }
       },
-      "default": { "crate": 0, "leo": 0, "money": 0, "afternoon": 0, "marriage": 0, "college": 0 }
+      "default": {
+        "crate": 0,
+        "leo": 0,
+        "money": 0,
+        "afternoon": 0,
+        "marriage": 0,
+        "college": 0
+      }
     },
     "revealed": {
       "type": "array",
       "uniqueItems": true,
-      "items": { "$ref": "#/$defs/Fact" },
+      "items": {
+        "$ref": "#/$defs/Fact"
+      },
       "default": [],
       "description": "Facts the PLAYER now knows. Only authored beats and a few named topic tiers may add to it (interaction-design.md §5.4)."
     },
@@ -131,38 +177,76 @@
     },
     "nora_told": {
       "type": "string",
-      "enum": ["none", "lie", "truth"],
+      "enum": [
+        "none",
+        "lie",
+        "truth"
+      ],
       "default": "none",
       "description": "Latest answer the player gave Nora; testimony sets the final value."
     },
     "nora_call": {
       "type": "string",
-      "enum": ["none", "ringing", "answered", "declined", "missed"],
+      "enum": [
+        "none",
+        "ringing",
+        "answered",
+        "declined",
+        "missed"
+      ],
       "default": "none"
     },
     "crate": {
       "type": "string",
-      "enum": ["sealed", "opened"],
+      "enum": [
+        "sealed",
+        "opened"
+      ],
       "default": "sealed"
     },
     "leo_phone": {
       "type": "string",
-      "enum": ["in_jacket", "buzzed", "found"],
+      "enum": [
+        "in_jacket",
+        "buzzed",
+        "found"
+      ],
       "default": "in_jacket"
     },
     "player_phone": {
       "type": "string",
-      "enum": ["unchecked", "voicemail_heard"],
+      "enum": [
+        "unchecked",
+        "voicemail_heard"
+      ],
       "default": "unchecked"
     },
-    "player_room": { "$ref": "#/$defs/Room", "default": "hall" },
-    "julian_room": { "$ref": "#/$defs/Room", "default": "living" },
-    "mia_room": { "$ref": "#/$defs/Room", "default": "hall" },
-    "nora_room": { "$ref": "#/$defs/Room", "default": "outside" },
+    "player_room": {
+      "$ref": "#/$defs/Room",
+      "default": "hall"
+    },
+    "julian_room": {
+      "$ref": "#/$defs/Room",
+      "default": "living"
+    },
+    "mia_room": {
+      "$ref": "#/$defs/Room",
+      "default": "hall"
+    },
+    "nora_room": {
+      "$ref": "#/$defs/Room",
+      "default": "outside"
+    },
     "player_holding": {
       "type": "array",
       "uniqueItems": true,
-      "items": { "type": "string", "enum": ["screwdriver", "drill"] },
+      "items": {
+        "type": "string",
+        "enum": [
+          "screwdriver",
+          "drill"
+        ]
+      },
       "default": []
     },
     "private_turns": {
@@ -183,11 +267,22 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["fact", "to", "turn"],
+        "required": [
+          "fact",
+          "to",
+          "turn"
+        ],
         "properties": {
-          "fact": { "$ref": "#/$defs/Fact" },
-          "to": { "$ref": "#/$defs/Addressee" },
-          "turn": { "type": "integer", "minimum": 0 }
+          "fact": {
+            "$ref": "#/$defs/Fact"
+          },
+          "to": {
+            "$ref": "#/$defs/Addressee"
+          },
+          "turn": {
+            "type": "integer",
+            "minimum": 0
+          }
         }
       }
     },
@@ -195,15 +290,22 @@
       "type": "object",
       "default": {},
       "description": "Who was present when something was said. Keys are disclosure ids (a Fact id, or a free id such as mia_kitchen_talk); values are the characters who heard it.",
-      "propertyNames": { "pattern": "^[a-z][a-z0-9_]*$" },
+      "propertyNames": {
+        "pattern": "^[a-z][a-z0-9_]*$"
+      },
       "additionalProperties": {
         "type": "array",
         "uniqueItems": true,
-        "items": { "$ref": "#/$defs/Npc" }
+        "items": {
+          "$ref": "#/$defs/Npc"
+        }
       }
     },
     "current_beat": {
-      "type": ["string", "null"],
+      "type": [
+        "string",
+        "null"
+      ],
       "default": null
     },
     "beat_step": {
@@ -223,19 +325,53 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["beat_id", "origin", "completed"],
+        "required": [
+          "beat_id",
+          "origin",
+          "completed"
+        ],
         "properties": {
-          "beat_id": { "type": "string" },
-          "origin": { "type": "string", "enum": ["authored", "authored_assisted", "generated"] },
+          "beat_id": {
+            "type": "string"
+          },
+          "origin": {
+            "type": "string",
+            "enum": [
+              "authored",
+              "authored_assisted",
+              "generated"
+            ]
+          },
           "completed": {
             "type": "boolean",
             "description": "false = aborted; aborted beats may be chosen again (interaction-design.md §6.2)."
           },
-          "aborted_by": { "type": ["string", "null"] },
-          "entry": { "type": ["string", "null"] },
-          "outcome": { "type": ["string", "null"] },
-          "turns": { "type": "integer", "minimum": 0 },
-          "story_min_end": { "type": "number", "minimum": 0 }
+          "aborted_by": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "entry": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "outcome": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "turns": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "story_min_end": {
+            "type": "number",
+            "minimum": 0
+          }
         }
       }
     },
@@ -250,27 +386,42 @@
       "default": 0
     },
     "ending": {
-      "type": ["string", "null"],
+      "type": [
+        "string",
+        "null"
+      ],
       "default": null
     }
   },
   "$defs": {
-    "Tier": {
-      "type": "integer",
-      "minimum": 0,
-      "maximum": 3
-    },
     "Room": {
       "type": "string",
-      "enum": ["outside", "hall", "living", "kitchen", "balcony", "bathroom"]
+      "enum": [
+        "outside",
+        "hall",
+        "living",
+        "kitchen",
+        "balcony",
+        "bathroom"
+      ]
     },
     "Npc": {
       "type": "string",
-      "enum": ["julian", "mia", "nora"]
+      "enum": [
+        "julian",
+        "mia",
+        "nora"
+      ]
     },
     "Addressee": {
       "type": "string",
-      "enum": ["julian", "mia", "both", "nora", "self"]
+      "enum": [
+        "julian",
+        "mia",
+        "both",
+        "nora",
+        "self"
+      ]
     },
     "Fact": {
       "type": "string",
@@ -286,6 +437,86 @@
         "who_struck",
         "nora_pushed_leo"
       ]
+    },
+    "Turn": {
+      "type": "object",
+      "description": "Transient per-turn namespace visible to rules as turn.<field>. Built by the engine from M2's output and the world rules; never stored.",
+      "additionalProperties": false,
+      "properties": {
+        "acts": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "discourse acts of this turn's units"
+        },
+        "addressee": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "julian | mia | both | nora | self"
+        },
+        "topics": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "claims": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "facts asserted in speech this turn"
+        },
+        "action": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "description": "{verb, target, arg} of this turn's action unit, if any"
+        },
+        "blocked_by": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "who blocked the action this turn"
+        },
+        "blocked_action": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "verb of the blocked action"
+        },
+        "silent": {
+          "type": "boolean",
+          "description": "all channels empty"
+        },
+        "nora_answer": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "truth | lie | none, when the input is addressed to Nora (speech, call or text)"
+        },
+        "streak_addressee": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "set when the last 3 turns all addressed the same person"
+        },
+        "streak_topic": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "set when the last 3 turns all raised the same topic"
+        }
+      }
     }
   }
 }

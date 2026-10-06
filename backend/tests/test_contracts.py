@@ -4,114 +4,30 @@ DSL inside them compiles and only reads known state, and the files agree with ea
 
 from __future__ import annotations
 
-import json
 from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
 import jsonschema
 import pytest
-import yaml
+from helpers import (
+    DATA,
+    FACTS,
+    FIXTURES,
+    ROOMS,
+    SCHEMAS,
+    STATE,
+    STATE_PROPS,
+    check_effects,
+    check_rule,
+    default_state,
+    errors,
+    load_json,
+    load_yaml,
+)
 
-from engine.dsl import compile_expr, referenced_vars
-
-BACKEND = Path(__file__).resolve().parents[1]
-REPO = BACKEND.parent
-SCHEMAS = REPO / "schemas"
-DATA = BACKEND / "data"
-FIXTURES = Path(__file__).parent / "fixtures"
-
-# Transient namespace the evaluator adds during a turn (state_v2.json description).
-TRANSIENT = {"turn"}
-
-
-def load_json(path: Path) -> dict[str, Any]:
-    return json.loads(path.read_text(encoding="utf-8"))
-
-
-def load_yaml(path: Path) -> Any:
-    return yaml.safe_load(path.read_text(encoding="utf-8"))
-
-
-def validator(schema: dict[str, Any]) -> jsonschema.Draft202012Validator:
-    return jsonschema.Draft202012Validator(schema)
-
-
-def errors(schema: dict[str, Any], doc: Any) -> list[str]:
-    return [f"{list(e.absolute_path)}: {e.message}" for e in validator(schema).iter_errors(doc)]
-
-
-STATE = load_json(SCHEMAS / "state_v2.json")
-STATE_PROPS: dict[str, Any] = STATE["properties"]
-FACTS = set(STATE["$defs"]["Fact"]["enum"])
-ROOMS = set(STATE["$defs"]["Room"]["enum"])
 REVIEW = load_json(SCHEMAS / "llm" / "review.json")
 REVIEW_VERBS = set(REVIEW["properties"]["units"]["items"]["properties"]["action"]["anyOf"][1]["properties"]["verb"]["enum"])
-
-
-def default_state() -> dict[str, Any]:
-    return {name: deepcopy(prop["default"]) for name, prop in STATE_PROPS.items()}
-
-
-def check_rule(src: str, where: str) -> None:
-    node = compile_expr(src)
-    unknown = referenced_vars(node) - set(STATE_PROPS) - TRANSIENT
-    assert not unknown, f"{where}: rule {src!r} reads unknown variables {sorted(unknown)}"
-    for path in _dotted_vars(node):
-        head, _, tail = path.partition(".")
-        if head in TRANSIENT or not tail:
-            continue
-        sub = STATE_PROPS[head].get("properties", {})
-        assert tail in sub, f"{where}: rule {src!r} reads unknown nested variable {path!r}"
-
-
-def _dotted_vars(node: Any) -> set[str]:
-    out: set[str] = set()
-    if isinstance(node, dict):
-        for k, v in node.items():
-            if k == "var":
-                out.add(str(v if not isinstance(v, list) else v[0]))
-            else:
-                out |= _dotted_vars(v)
-    elif isinstance(node, list):
-        for v in node:
-            out |= _dotted_vars(v)
-    return out
-
-
-def check_effects(effects: dict[str, Any], where: str) -> None:
-    """Apply effects to the default state (dotted keys into nested objects) and validate the result."""
-    state = default_state()
-    for key, eff in (effects or {}).items():
-        head, _, tail = key.partition(".")
-        assert head in STATE_PROPS, f"{where}: effect targets unknown variable {key!r}"
-        container, name, prop = state, head, STATE_PROPS[head]
-        if tail:
-            assert tail in prop.get("properties", {}), f"{where}: effect targets unknown nested variable {key!r}"
-            container, name = state[head], tail
-            prop = STATE["$defs"]["Tier"] if prop["properties"][tail].get("$ref") else prop["properties"][tail]
-        cur = container[name]
-        if isinstance(eff, str) and eff[:1] in "+-" and eff[1:].replace(".", "", 1).isdigit():
-            container[name] = (cur or 0) + float(eff)
-            if prop.get("type") == "integer":
-                container[name] = int(round(container[name]))
-            lo, hi = prop.get("minimum"), prop.get("maximum")
-            if lo is not None:
-                container[name] = max(lo, container[name])
-            if hi is not None:
-                container[name] = min(hi, container[name])
-        elif isinstance(eff, list):
-            op, item = eff
-            items = list(cur)
-            if op == "add" and item not in items:
-                items.append(item)
-            if op == "remove" and item in items:
-                items.remove(item)
-            container[name] = items
-        else:
-            container[name] = eff
-    errs = errors(STATE, state)
-    assert not errs, f"{where}: effects {effects} produce an invalid state: {errs}"
 
 
 # --------------------------------------------------------------------------- schemas
@@ -253,7 +169,7 @@ LLM_SAMPLES = {
              "action": {"verb": "look_out", "target": "car"}, "implausible": False},
             {"channel": "speech", "act": "mention_car", "addressee": "julian", "topics": ["leo"], "action": None, "implausible": False},
         ],
-        "suspicion": 1.5, "claims": ["car_downstairs"], "coverage": 0.9,
+        "suspicion": 1.5, "claims": ["car_downstairs"], "coverage": 0.9, "nora_answer": None,
     },
     "narrator": {"segments": [{"kind": "me", "text": "I lean over the railing."},
                               {"kind": "speech", "speaker": "julian", "text": "Lots of yellow cars in this city."}],

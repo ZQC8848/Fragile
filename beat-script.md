@@ -14,7 +14,7 @@
 
 | 变量 | 初值 | 说明 |
 |---|---|---|
-| `story_min` / `turn` | 0 / 0 | |
+| `story_min` / `turn_count` | 0 / 0 | |
 | `tension` | 1 | |
 | `julian_composure` | 0.8 | Julian 更稳 |
 | `mia_composure` | 0.6 | Mia 更容易崩 |
