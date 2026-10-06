@@ -1,0 +1,126 @@
+@import "tailwindcss";
+@import "./tokens.css";
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  overflow: hidden;
+}
+
+.backstage {
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--ink);
+}
+
+.backstage h2 {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  margin: 0 0 6px 0;
+}
+
+.backstage button,
+.backstage select,
+.backstage input[type="text"],
+.backstage input[type="number"],
+.backstage textarea {
+  font-family: var(--mono);
+  font-size: 12px;
+  background: var(--bg-elev);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  padding: 4px 8px;
+}
+
+.backstage button {
+  cursor: pointer;
+}
+.backstage button:hover:not(:disabled) {
+  background: var(--bg-elev-2);
+}
+.backstage button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.backstage button.is-active {
+  border-color: var(--ink);
+}
+.backstage button.is-danger {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.backstage input[type="range"] {
+  accent-color: var(--accent);
+}
+
+.backstage table {
+  border-collapse: collapse;
+  width: 100%;
+}
+.backstage th,
+.backstage td {
+  text-align: left;
+  padding: 4px 6px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+.backstage th {
+  color: var(--ink-dim);
+  font-weight: normal;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 10px;
+}
+
+.panel-section {
+  border-bottom: 1px solid var(--line);
+  padding: 10px 12px;
+}
+
+pre.json {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--ink);
+}
+
+/* Play route UI (not backstage): keep it minimal and unstyled by backstage tokens. */
+.play-input {
+  font-family: var(--sans);
+  font-size: 15px;
+  background: rgba(22, 18, 15, 0.85);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  padding: 8px 10px;
+  outline: none;
+  width: 100%;
+}
+.play-input:focus {
+  border-color: var(--ink-dim);
+}
+
+.suggestion-btn {
+  font-family: var(--sans);
+  font-size: 13px;
+  background: rgba(22, 18, 15, 0.8);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+.suggestion-btn:hover {
+  background: rgba(42, 34, 28, 0.9);
+}

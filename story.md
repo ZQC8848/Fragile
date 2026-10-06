@@ -262,7 +262,7 @@
 |---|---|---|
 | 0 | 开局 | 无 |
 | 1 | 5 | 给你发短信："Hey, is Leo with you? He's not picking up." |
-| 2 | 9 | 给你打电话。下一回合你决定接不接；接了由必接拍 `noras_call` 接上，Nora 只有声音，不在场。她也开始反复打 Leo 的电话，Leo 的手机因此在 Julian 的外套里震 |
+| 2 | 9 | 给你打电话。来电那一回合不选新拍，下一回合你决定接不接；接了由必接拍 `noras_call` 接上，Nora 只有声音，不在场。她也开始反复打 Leo 的电话，Leo 的手机因此在 Julian 的外套里震 |
 | 3 | 13 | 短信："I'm downstairs. His car is here. His location says he's in your building."（必接拍 `downstairs`） |
 | 4 | 16 | 敲门（必接拍 `the_knock`）。Nora 进门，三人戏开始 |
 
@@ -367,7 +367,7 @@
 
 ## 9. Beat 池（初稿）
 
-斜率是对 `tension` 的作用。前置条件这里只写大意，正式写成 DSL 时再细化。正式写的时候，每个 beat 写成 2 到 4 步，并声明自己占多少剧情分钟（`minutes`），结构见 interaction-design.md §6–7。标"必接"的拍在触发条件成立时直接接上，不经过打分器（§9.4）。
+斜率是对 `tension` 的作用，实际效果按"斜率 × 0.5"换算，这样一局十几拍能从 1 走到 5（beat-script.md §5）。前置条件这里只写大意，正式写成 DSL 时再细化。正式写的时候，每个 beat 写成 2 到 4 步，并声明自己占多少剧情分钟（`minutes`），结构见 interaction-design.md §6–7。标"必接"的拍在触发条件成立时直接接上，不经过打分器（§9.4）。
 
 ### 9.1 第一阶段：表演正常
 
@@ -448,7 +448,7 @@
 | `bon_voyage` | 送别 | Nora 敲门时你还不知道真相，或者你提前离开了 | 两人对 Nora 说"他根本没来"，你在场，成了不知情的证人。尾声：清晨六点，木箱被抬走 |
 | `the_witness` | 证人 | 你知道真相，偏向主人，对 Nora 撒了谎或者沉默（`nora_told == 'lie'`） | 你成了共犯。尾声：两人登机，你的手机亮了 |
 | `open_it` | 开箱 | 当着 Nora 的面揭穿 | 三人戏的高潮。Julian 先把罪揽到自己身上。`couple_unity` 高时他顶到底；低时，比如他已经知道是 Mia 叫的 Leo，他不再护着她，说出是 Mia 砸的。Mia 会不会自己承认，取决于 `side` 和她的镇定值 |
-| `confession` | 自首 | 敲门前后，某个人的 composure 被你推到临界点，而你站在他那边 | 由他自己对 Nora 说出来。对应 Façade 的最好结局 |
+| `confession` | 自首 | 敲门前后，某个人的 composure 被你推到临界点，而你站在他那边 | 由他自己对 Nora 说出来。对应 Façade 的最好结局。Mia 说的是真话；Julian 先崩溃时，他的"自首"是假的，还在替 Mia 顶罪 |
 | `second_crate` | 第二只箱子 | 你单独和 Julian 在一起时把他逼得太紧（`julian_composure` 接近 0，`side` 强烈反他，你威胁要说出去） | 悬念收尾：Julian 锁上门，叫了你的名字。只暗示，不描写 |
 
 生成的结局沿用 Wrongest Person `docs/backend-design.md` §8 的规则：必须标注 `closest_authored_ending`。

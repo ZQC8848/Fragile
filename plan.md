@@ -1,0 +1,308 @@
+# Fragile：开发计划（到 LLM mock 跑通全流程）
+
+> v0.1 · 2026-10-06
+> 目标日期：2026-10-18（对应 backend-design.md §10 时间线的第 2 周末）
+> 依据：[story.md](story.md)、[interaction-design.md](interaction-design.md)、[backend-design.md](backend-design.md)。本文只管"怎么做、按什么顺序做、做到什么算完"，设计本身以那三份为准。
+
+---
+
+## 0. 目标与验收
+
+### 0.1 两种 mock
+
+| 叫法 | 是什么 | 用在哪 |
+|---|---|---|
+| **LLM mock** | 用真实的 LLM API 顶替将来自训练的 M1–M4，也就是每个模块的 `llm` 那一路 | 本计划的目标：游戏用它跑通 |
+| **离线 mock** | 不联网、确定性的假实现（沿用 Wrongest Person 的 `mock` provider） | 单元测试和 CI；没有 API key 也能跑 |
+
+每个 LLM 角色两种都要有。
+
+### 0.2 "跑通"的定义（10/18 验收清单）
+
+- [ ] **浏览器里从开局玩到结局**：输入名字和性别 → 开场 → 三种输入方式都能用（单框整理、分栏、选项） → 不合规的输入被拒并能一键改写 → 第一人称段落 → 换房间 → 用手机 → Nora 四级依次到来 → 敲门 → `testimony` → 结局。
+- [ ] **四个模块都走 `llm` 路径**，`rule` 路径在影子模式下同时运行并记日志；`trained` 路径是占位，委托给 `llm`，日志里标明。
+- [ ] **五个结局**都能用脚本化的路径到达。
+- [ ] **自博弈**：5 种人格无头连跑 50 局不崩，产出完整日志和一份统计。
+- [ ] **日志**：回合日志和决策日志齐全，能导出四个模块的数据集 v0。
+- [ ] **Console**：回合检查器、决策日志、拍子架、状态、控制面板可用。
+- [ ] **测试**：离线 mock 下 `pytest` 全绿，包括 golden path、无死局、每个结局可达。
+
+### 0.3 不在本计划里
+
+训练 M1–M4 和 `ml/` 包；新的标注界面（沿用现有的 pairwise）；插图生成（只做占位）；用户研究；剩下的约 15 个卫星拍（和本计划并行写，不卡验收）。
+
+---
+
+## 1. 起点：从 Wrongest Person 拿什么
+
+代码放在 Fragile 仓库里（backend-design.md 待定项 B1 的建议）。Wrongest Person 仓库只读，不在那边改。
+
+### 1.1 后端（`D:\OtherProjects\WrongestPerson\backend`）
+
+| 模块 | 处理 | 说明 |
+|---|---|---|
+| `engine/dsl/`（parser、evaluate、effects） | 直接拷 | 标识符支持点号，`topic_tier.leo`、`turn.acts` 可以直接用；要加的内置函数在 M3 里补 |
+| `engine/state/schema.py` | 直接拷 | 换成读 `state_v2.json` |
+| `engine/llm/client.py` | 拷后改 | 加响应缓存、prompt 版本号、JSON 输出校验和重试 |
+| `engine/beats/`（loader、pool） | 拷后改 | goals 换成步；加 `minutes`、`max_turns`、两种开场、`asks`、`outcomes`；去掉 `repeatable`；`shelf()` 保留 |
+| `engine/dm/`（manager、scorers、tension） | 拷后改 | 加优先级分层和必接拍；目标弧按剧情分钟；scorer A / B / random 保留，C 占位 |
+| `engine/generate/proposer.py` | 拷后改 | 按 beat v2 生成；硬检查加 `minutes` 范围 |
+| `engine/journal/` | 拷后改 | 加回合日志 |
+| `engine/world/rules.py` | 拷后改 | 区域换成房间；加阻拦、跟随、手机动作、`heard_by` |
+| `engine/performer/` | 不要 | 由 `engine/narrator/` 重写 |
+| `engine/tts/` | 不要 | |
+| `app/main.py` | 拷后改 | REST 大体沿用，WebSocket 换成新协议 |
+| `app/session.py` | 重写 | 订阅分发、生命周期和控制命令可以照搬；主循环换成回合循环 |
+| `selfplay/` | 拷后改 | 5 种人格，输出分栏或单框，注入违规输入 |
+| `tests/test_dsl.py` | 直接拷 | 其余测试按新故事重写 |
+| `llm_providers.env` | **不要拷** | Wrongest Person 把 key 提交进了 git。Fragile 的 key 只放在被 gitignore 的 `.env` 里 |
+
+### 1.2 前端（`D:\OtherProjects\WrongestPerson\frontend`）
+
+| 模块 | 处理 |
+|---|---|
+| Vite + React + TS + Zustand + Tailwind 脚手架、`scripts/gen-types.mjs`、`net/ws.ts`、`net/api.ts`、`hooks/` | 直接拷 |
+| `store/session.ts` | 拷后改，适配新协议 |
+| `console/BeatShelf`、`tabs/DecisionLogTab`、`ControlTab`、`StateTab`、`AnnotateTab`、`panel/TensionCurve`、`JsonTree`、`CandidateList` | 拷后改 |
+| `game/`（Phaser）、`portrait/`、`performance/`、`ui/DialogueUI`、`tabs/PerformanceTab`、`tabs/BeatGraphTab` | 不要 |
+| Play 界面、Console 的回合检查器 | 新写（M5） |
+
+---
+
+## 2. 目标目录
+
+```
+Fragile/
+├── story.md  interaction-design.md  backend-design.md  plan.md
+├── schemas/
+│   ├── state_v2.json  beat_v2.json  messages_v2.json
+│   └── llm/                       每个 LLM 角色输出的 JSON Schema
+├── backend/
+│   ├── app/                       main.py  session.py（回合循环）
+│   ├── engine/
+│   │   ├── state/ dsl/ llm/ journal/          拷
+│   │   ├── beats/ dm/ generate/ world/        拷后改
+│   │   ├── clock/                 剧情时钟、Nora 事件
+│   │   ├── input/                 整理（M2 llm）、选项生成
+│   │   ├── reactions/             反应层
+│   │   ├── narrator/              叙述者
+│   │   ├── models/                scorer / encoder / guard / tension 三路适配
+│   │   └── illustrate/            占位：只发 tableau id
+│   ├── prompts/                   每个角色一个 <role>_v<N>.md；evals/<role>.jsonl
+│   ├── data/
+│   │   ├── beats/                 phase1.yaml phase2.yaml phase3.yaml endings.yaml
+│   │   ├── knowledge/             julian.yaml mia.yaml nora.yaml player.yaml
+│   │   ├── interactions.yaml  reactions.yaml  clock.yaml  tension_curve.yaml
+│   │   ├── logs/  cache/          git 忽略
+│   │   └── candidate_pool/
+│   ├── selfplay/
+│   ├── tools/                     play_cli.py  eval_prompts.py  export_datasets.py  selfplay_report.py
+│   └── tests/
+└── frontend/
+```
+
+---
+
+## 3. 关键实现约定
+
+设计文档没写到、但写代码前必须定下来的几件事。
+
+### 3.1 一回合的执行顺序
+
+```
+review   = 整理结果（单框原样确认时复用发送前的结果，否则重新调 M2）
+units    = review.units                                  # M2
+world    = rules.apply(state, units)                     # 动作、换房间、跟随、阻拦、手机、heard_by
+reaction = reactions.select(state, units, world)         # 主反应 + 附带反应
+state    = apply(world.effects + reaction.effects)       # 每个变量每回合最多动一步
+plan     = beats.plan_steps(beat, reaction)              # 主反应优先级 ≥ 8 时本回合不排步
+if beat 在本回合结束（最后一步已排上，或用到 max_turns，或必接拍触发）:
+    state.story_min += beat.minutes                      # 剧情时钟
+    events = clock.crossed(old_min, new_min)             # Nora 事件
+    next   = dm.decide(state)                            # 必接拍 → 直接接；否则优先级分层 → scorer
+segments = narrator.write(input, reaction, plan, events, next.opening, knowledge_slice)
+verdicts = guard.check(segments)                         # M3，不过就重写，最多 2 次
+log(turn_record)
+```
+
+- **步指针由引擎推进，不由叙述者决定。** 引擎事先排好本回合要交代的步，叙述者回报的 `steps_delivered` 只用来核对；核对不上就重写一次，再不上也照常推进并记日志。这样 DM 才能在叙述之前就选好下一拍，把它的开场写进同一段文字（interaction-design.md §6.4）。
+- **M4 不挡路。** 张力估计在段落发出之后异步计算，结果在下一次 DM 决策时才用到。
+- **选项生成不挡路。** 玩家点了才调。
+
+### 3.2 LLM 调用的统一处理
+
+- **输出校验**：每个角色的输出都有一份 JSON Schema（`schemas/llm/`）。解析失败就带上错误信息重试一次，再失败就走兜底：叙述者用岔开话题的话，M2 判为合规并给空单元，M3 判为通过。每次兜底都记日志。
+- **缓存**：键是 (角色, 模型, prompt 版本, system, user, 温度) 的 hash，存在 `data/cache/`。自博弈默认开，真人游玩默认关。
+- **prompt 文件化**：`prompts/<role>_v<N>.md`，版本号写进每条日志。
+- **离线 mock**：每个角色一个确定性的假实现，`LLM_PROVIDER_<ROLE>=mock` 时启用。
+- **上线开关**（2026-10-06 定为保留）：某个角色配了真实供应商以后，还要列进 `LLM_LIVE_ROLES`，或者在 Console 里打开，才会真的调 API；否则仍然走它的离线 mock。这样测试和自博弈不会意外花钱。
+
+### 3.3 角色与供应商（建议，对应待定项 B3）
+
+| 角色 | 属于 | 要求 | 建议 |
+|---|---|---|---|
+| `review`（切分、翻译、合规、改写、分类） | M2 | 快、结构化输出稳 | 便宜快模型（如 DeepSeek） |
+| `narrator` | 内容 | 文笔、遵守规则 | 质量更好的模型（如 Kimi） |
+| `guard` | M3 | 快、判得准 | 便宜快模型 |
+| `tension` | M4 | 稳定打分 | 便宜快模型 |
+| `scorer`（B） | M1 | 结构化输出 | 便宜快模型 |
+| `proposer` | 内容 | 推理 | 便宜快模型 |
+| `options` | 内容 | 快 | 便宜快模型 |
+| `selfplay` | 自博弈玩家 | 便宜 | 便宜模型 |
+| `judge` | 离线标注 | 强，而且**和上面所有老师不是同一家** | 另一家强模型 |
+
+---
+
+## 4. 里程碑
+
+建议的负责人按 backend-design.md §9 的分工：#1 M1 与 DM，#2 M2，#3 M3，#4 M4 与评估，#5 数据，#6 故事与前端。
+
+### M0 · 骨架（10/7）
+
+- [ ] 建 `backend/`、`frontend/`、`schemas/`，按 §1 拷代码；`.gitignore` 加上 `.env`、`data/logs/`、`data/cache/`
+- [ ] `uv sync` 能装；`npm install && npm run dev` 能起
+- [ ] `engine/llm/client.py` 加缓存、prompt 版本、输出校验与重试（§3.2）
+- [ ] `.env.example` 列出每个角色的 `LLM_PROVIDER_<ROLE>` / `LLM_MODEL_<ROLE>` / `LLM_API_KEY_<ROLE>`
+
+**验收**：`uv run pytest` 跑通拷过来的 DSL 测试；前端空页面能连上 WebSocket。
+
+### M1 · 数据契约（10/7–10/8）
+
+- [ ] `schemas/state_v2.json`：story.md §8.2 的全部变量
+- [ ] `schemas/beat_v2.json`：步、`minutes`、`max_turns`、`transition_in.invited / player_initiated`、`asks`、`on_silence`、`outcomes`、本地 `mix_in`、`length`
+- [ ] `schemas/messages_v2.json`：interaction-design.md §11；跑 `gen:types` 生成前端类型
+- [ ] `schemas/llm/*.json`：每个 LLM 角色的输出格式
+- [ ] `data/clock.yaml`：各阶段默认 n、Nora 四级的分钟数、40 回合安全上限
+- [ ] `data/tension_curve.yaml`：按剧情分钟（story.md §6.2）
+- [ ] `data/interactions.yaml`：公寓的封闭动作表，包括房间移动（`go_to`）、物件动作、手机动作、`blocked_when`（interaction-design.md §6.6、§8），以及 beat-script.md §5 第 6 条的新动作：搜 Julian 的外套、看窗外、把手机递给别人、回短信
+- [ ] `data/knowledge/*.yaml`：每个人的知识卡，每条事实带解锁条件（story.md §5.4，按 T2）
+
+**验收**：所有 schema 和 YAML 都能加载并通过校验（测试覆盖）。
+
+### M2 · beat 池 v0 和全局反应 v0（10/8–10/10）· 负责 #6
+
+- [ ] **20 个 beat**：
+  - 主干 14 个：`the_door`、`dinner_on_the_crate`、`the_fourth_setting`、`mia_in_the_kitchen`、`julian_on_the_balcony`、`the_buzz`、`two_afternoons`、`noras_call`、`the_admission`、`the_versions`、`the_offer`、`downstairs`、`the_knock`、`testimony`；
+  - 必接卫星拍 `dont_go_yet`；
+  - 5 个结局。
+- [ ] **`data/reactions.yaml` v0**：
+  - 六个话题 × 三层的全局 mix-in；
+  - 物件反应：箱子、合影、车、机票、外套、浴室门、TOOLS 箱、手机；
+  - 行为模式：连续沉默、只跟一个人说话、反复提同一个话题；
+  - 每人两条逼过头的反应；
+  - 社交行为反应；
+  - 每人一组岔开话题的说法；
+  - 数值规则（interaction-design.md §5.4）。
+- [ ] **写法**：先让 LLM 按 story.md 的意图起草 YAML，再人工逐条审。
+- [ ] **golden path**：一名合作型玩家应该经过的 beat 序列，写成测试脚本（Baseline check）。
+- [ ] **测试**：
+  - 无死局：随机走状态，任何可达状态下，要么有可选的 beat，要么有时钟事件可以快进（beat-script.md §5 第 3 条）；
+  - 每个结局都有一条脚本化的路径能到；
+  - 必接拍表（story.md §9.4）逐条触发；
+  - 每个 beat 都声明了 `minutes`。
+
+**验收**：beat 测试全绿；DM 用 scorer A 能按 golden path 走完。
+
+### M3 · 回合引擎（10/8–10/11）· 负责 #1，#3 协助
+
+- [ ] `engine/clock/`：beat 结束时 +n，计算跨过的 Nora 事件，安全上限，空档快进；来电那一回合不选新拍
+- [ ] `engine/beats/`：v2 加载、步指针、`plan_steps`、`outcomes` 选择、`max_turns`；"中止"和"演过"分开记，中止的拍可以再选
+- [ ] `engine/dm/`：优先级分层、必接拍、目标弧按剧情分钟、`GENERATE_NEW`（proposer 按 v2 生成）
+- [ ] `engine/world/`：执行动作单元，包括换房间、跟随、阻拦（被拦的人镇定值下降）、手机动作、`heard_by`
+- [ ] `engine/reactions/`：收集候选、按优先级选、确定谁来回应、只用一次、每变量每回合限一步、说法记录
+- [ ] `engine/narrator/`：组装 prompt（知识切片、反应指令、本回合的步、事件、下一拍开场、玩家原文），输出分段，核对 `steps_delivered`
+- [ ] `engine/input/`：整理（调 M2）、选项生成
+- [ ] `engine/models/`：四个统一接口（backend-design.md §7.2），各自的 rule / llm / trained(占位) 三路，影子模式
+- [ ] `app/session.py`：回合循环（§3.1）；整理、提交、选项三个入口；控制命令：强制换拍、改状态、调时钟、换 scorer、注入一回合
+- [ ] `engine/journal/`：回合日志（interaction-design.md §13）、决策日志、会话汇总
+- [ ] `tools/play_cli.py`：在终端里玩，支持 `/channels`、`/options`、`/phone`、`/state`、`/trace`
+
+**验收（里程碑 A，10/11）**：离线 mock 下，用 `play_cli.py` 在终端里从开局玩到结局；`test_session` 用脚本输入跑完整局。
+
+### M4 · LLM mock 接入（10/10–10/13）· 负责 #2、#3、#4、#1 各管自己的模块
+
+- [ ] 写 prompt v1：`review`、`narrator`、`guard`、`tension`、`scorer`、`proposer`、`options`、`selfplay`、`judge`
+- [ ] 每个模块一套小评测集 `prompts/evals/<role>.jsonl`，每套 20–30 条手写样例：
+  - review：interaction-design.md §4.2 的九类违规各 2 条、合规 10 条，再加切分和翻译样例；
+  - guard：四类各 5 条；
+  - tension：10 个对话窗口；
+  - scorer：10 个决策点。
+- [ ] `tools/eval_prompts.py`：一条命令跑完所有评测集，输出准确率
+- [ ] 按 §3.3 配好供应商，用 `LLM_LIVE_ROLES` 打开（§3.2 的上线开关）；离线 mock 和真实 LLM 都能切换
+- [ ] 各阶段延迟写进日志，`play_cli.py /trace` 能看到
+
+**验收（里程碑 B，10/13）**：真实 LLM 下用 `play_cli.py` 玩完一局；评测集结果入库，作为 prompt 的回归基线。
+
+### M5 · 前端（10/11–10/16）· 负责 #6
+
+- [ ] Play 界面（interaction-design.md §10）：
+  - 开局页（名字、性别）、正文记录（分段拼成文字，上面一行玩家原文）；
+  - 输入区：单框和分栏切换，草稿确认（含翻译），被拒提示和一键改写；
+  - 生成选项按钮、手机抽屉、房间和在场人物条、插图占位、"生成中"状态、结束页。
+- [ ] Console：拍子架、决策日志、状态、控制面板沿用；新增回合检查器；张力曲线横轴改成剧情分钟
+- [ ] 前端不理解剧情：只显示后端给的内容，只上报玩家输入（沿用 Wrongest Person 的规矩）
+
+**验收**：浏览器里玩到结局；Console 能逐回合看到完整链路。
+
+### M6 · 自博弈（10/13–10/16）· 负责 #5
+
+- [ ] 5 种人格（backend-design.md §5.1）；一部分回合写单框原文、一部分给分栏；约 10% 的回合故意写违规输入
+- [ ] 批量运行：并发数、预算上限（局数、token、金额），中断后可以续跑
+- [ ] `tools/selfplay_report.py` 输出统计：
+  - beat 覆盖率、每局回合数和拍数、结局分布；
+  - 被拒率、M3 重写率和兜底率；
+  - 各阶段延迟、每局成本。
+
+**验收**：50 局不崩；至少 4 种结局出现过；统计报告入库。
+
+### M7 · 跑通验收与数据导出（10/17–10/18）· 负责 #5，全员
+
+- [ ] `tools/export_datasets.py`：从日志导出数据集 v0（backend-design.md §5.2 的五个子集），附带 `data_version` 和 `schema_version`
+- [ ] 小批量跑一次离线 judge 预标注（pairwise），检查格式
+- [ ] 按 §0.2 逐条验收，写一页验收记录（数字和截图）
+
+**验收（里程碑 C，10/18）**：§0.2 全部打勾。
+
+### 并行：beat 池补全（10/12–10/18）· 负责 #6
+
+- [ ] 剩下的约 15 个卫星拍，用同样的"LLM 起草 + 人审"流程补完
+- [ ] 从中挑出留出 beat 测试集的 3 个（backend-design.md §5.3）
+
+---
+
+## 5. 依赖与关键路径
+
+```
+M0 ─► M1 ─┬─► M2（beat 池 v0）──┐
+          └─► M3（回合引擎）────┴─► 里程碑 A ─► M4 ─► 里程碑 B ─┬─► M5（前端）───┬─► M7 ─► 里程碑 C
+                                                              └─► M6（自博弈）─┘
+                                    beat 池补全（并行，不卡验收）
+```
+
+- 关键路径是 M1 → M3 → M4 → M6：自博弈产数据，数据是整个课设的关键路径（backend-design.md §10）。
+- 前端不在关键路径上。里程碑 A 之前，前端只需要搭好脚手架和协议类型。
+
+---
+
+## 6. 风险
+
+| 风险 | 对策 |
+|---|---|
+| 每回合 6–10 秒太慢 | 记录各阶段延迟；整理结果复用；M4 和选项异步；M2 和 M3 用快模型 |
+| LLM 输出的 JSON 不合格 | 输出校验、重试一次、兜底，每次兜底都记日志（§3.2） |
+| 叙述者替玩家写东西或说漏秘密 | 知识切片 + M3；评测集里专门放这两类 |
+| beat 池写不完 | 先 20 个跑通；其余用 LLM 起草、人审，和验收并行 |
+| 自博弈成本超支 | 便宜模型、缓存、批量运行带预算上限 |
+| API key 泄漏 | key 只放 `.env`，不入库；不拷 Wrongest Person 的 `llm_providers.env` |
+| 玩家名字等个人信息进入 LLM | 真人游玩一律用化名（backend-design.md §5.5） |
+
+---
+
+## 7. 开工前要定的
+
+| # | 问题 | 本计划的默认 |
+|---|---|---|
+| P1 | 代码放在哪（backend-design.md B1） | Fragile 仓库，Wrongest Person 只读 |
+| P2 | 每个角色用哪家 LLM（backend-design.md B3） | §3.3 的建议 |
+| P3 | 每个里程碑由谁负责 | §4 按 backend-design.md §9 的分工 |
+| P4 | 步指针由引擎推进、叙述者只回报核对（§3.1），这是对 interaction-design.md §6.2 的细化 | 采用 |

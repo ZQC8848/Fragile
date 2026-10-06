@@ -1,0 +1,213 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://wrongestperson.dev/schemas/state_v1.json",
+  "title": "Story state v1",
+  "description": "The story state document. Expected to change after playtests; bump the version, add a migration in backend/engine/state/migrations.py, and re-textualize. Every variable listed here is addressable from the rule DSL by name.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "tension",
+    "lin_composure",
+    "may_suspicion",
+    "may_trust_lin",
+    "danger_proximity",
+    "guest_pressure",
+    "revealed",
+    "glass",
+    "gun",
+    "envelope",
+    "door",
+    "may_zone",
+    "lin_zone",
+    "guest_zone",
+    "beat_history",
+    "consecutive_generated",
+    "story_phase",
+    "clock_s"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "tension": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 5
+    },
+    "lin_composure": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "may_suspicion": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 3
+    },
+    "may_trust_lin": {
+      "type": "integer",
+      "minimum": -2,
+      "maximum": 2
+    },
+    "danger_proximity": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 3,
+      "description": "0 far, 1 same table, 2 touching, 3 raised to drink"
+    },
+    "guest_pressure": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 3,
+      "description": "0 none, 1 phone/hint, 2 bentley outside, 3 entered"
+    },
+    "revealed": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": [
+          "trap",
+          "debt",
+          "target_identity",
+          "gun",
+          "poison"
+        ]
+      }
+    },
+    "glass": {
+      "type": "string",
+      "enum": [
+        "on_table",
+        "moved",
+        "in_may_hand",
+        "at_lips",
+        "at_bar",
+        "drunk",
+        "spilled"
+      ]
+    },
+    "gun": {
+      "type": "string",
+      "enum": [
+        "hidden",
+        "seen",
+        "taken"
+      ]
+    },
+    "envelope": {
+      "type": "string",
+      "enum": [
+        "sealed",
+        "opened",
+        "papers_seen"
+      ]
+    },
+    "door": {
+      "type": "string",
+      "enum": [
+        "closed",
+        "open"
+      ]
+    },
+    "may_zone": {
+      "$ref": "#/$defs/Zone"
+    },
+    "lin_zone": {
+      "$ref": "#/$defs/Zone"
+    },
+    "guest_zone": {
+      "type": "string",
+      "enum": [
+        "absent",
+        "street",
+        "entrance",
+        "guest_table",
+        "bar",
+        "counter",
+        "kitchen_door",
+        "back_corner"
+      ]
+    },
+    "beat_history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "beat_id",
+          "origin"
+        ],
+        "properties": {
+          "beat_id": {
+            "type": "string"
+          },
+          "origin": {
+            "type": "string"
+          },
+          "completed": {
+            "type": "boolean"
+          },
+          "aborted_by": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "duration_s": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "consecutive_generated": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "story_phase": {
+      "type": "string",
+      "enum": [
+        "early",
+        "mid",
+        "late",
+        "ended"
+      ]
+    },
+    "clock_s": {
+      "type": "number",
+      "minimum": 0
+    },
+    "ending": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "last_discourse_act": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "last_interaction": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "additionalProperties": true
+    }
+  },
+  "$defs": {
+    "Zone": {
+      "type": "string",
+      "enum": [
+        "street",
+        "entrance",
+        "guest_table",
+        "bar",
+        "counter",
+        "kitchen_door",
+        "back_corner"
+      ]
+    }
+  }
+}

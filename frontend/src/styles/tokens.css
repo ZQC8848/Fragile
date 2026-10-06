@@ -1,0 +1,13 @@
+/* Backstage design tokens: "stage manager's cue sheet". Single dark theme. */
+:root {
+  --bg: #16120f;          /* near-black warm base (dark wood / slate) */
+  --bg-elev: #201a16;     /* elevated panels */
+  --bg-elev-2: #2a221c;   /* hover / selected rows */
+  --line: #4a3a2c;        /* thin wood-toned dividers */
+  --ink: #f2e8d8;         /* paper-white primary text */
+  --ink-dim: #a08f7a;     /* secondary text */
+  --accent: #b8332b;      /* restrained red: chosen candidate, tension spikes, danger */
+  --cool: #6e8ea3;        /* window blue-cyan for the target curve and outdoor */
+  --mono: ui-monospace, "JetBrains Mono", "Cascadia Code", Consolas, monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
