@@ -1,11 +1,11 @@
 # 易碎品 Fragile
 
-> 剧情设定文档 v0.1 · 2026-10-05
+> 剧情设定文档 v0.2 · 2026-10-06（按 interaction-design.md 改成回合制）
 > 状态：故事方向已定。标【待定】的项还没拍板，文档里先写了默认值。
 > 来源：以《夺魂索》Rope（Patrick Hamilton 1929 剧本 / Hitchcock 1948 电影）为骨架，拼接《罪恶之家》An Inspector Calls（人人有份）和《竹林中》（各说各话）的结构。
 > 取代：Wrongest Person 仓库（`D:\OtherProjects\WrongestPerson`）里的 `story/WrongestPerson_Screenplay_BiyingZeng.pdf`。玉楼酒家场景、地图和美术整体弃用。
-> 配套：[backend-design.md](backend-design.md)（后端与学习模块设计）。
-> 交互形态：纯文字，加上关键画面的插图。玩家只输入名字和性别。
+> 配套：[interaction-design.md](interaction-design.md)（交互设计）、[backend-design.md](backend-design.md)（后端与学习模块设计）。
+> 交互形态：回合制纯文字。玩家每回合写自己的言行，系统写一段第一人称的故事，关键画面配插图。开局只输入名字和性别。详见 [interaction-design.md](interaction-design.md)。
 
 ---
 
@@ -19,13 +19,13 @@
 
 | 架构要求 | 本故事怎么满足 |
 |---|---|
-| 一个场景、实时、一幕 | 一套搬空的公寓，一顿晚饭，15 到 20 分钟 |
+| 一个场景、一幕 | 一套搬空的公寓，一顿晚饭；剧情时间约 18 分钟，约 26 回合 |
 | 情节放在过去，现在只是对话 | 命案在下午已经发生，晚上只有吃饭、聊天和私下谈话 |
 | 2 到 3 个同场 NPC，拉玩家站队 | Julian 和 Mia 全程在场，各自想把你拉进自己的版本；Nora 在最后登场 |
 | 每个 NPC 都有秘密，分层且互相咬合 | 每人三层秘密，先用小秘密掩护大秘密 |
 | 玩家身份很薄 | 大学时的朋友，只输入名字和性别 |
 | 结局由累积状态决定 | 你站在谁那边、揭开了多少、谁先崩溃、你对 Nora 说了什么 |
-| 外部时钟 | Nora 先发消息，再打电话，然后到楼下，最后敲门 |
+| 剧情时钟 | Nora 先发消息，再打电话，然后到楼下，最后敲门；按剧情分钟走，不按真实时间 |
 | 物件是话题的触发器 | 木箱、两部手机、楼下的车、合影、第四副碗筷 |
 
 和 Façade 的继承关系：Grace 和 Trip 在客人面前表演"我们婚姻很好"，Julian 和 Mia 在你面前表演"今晚什么都没发生"。整场戏就是这层表面一点点裂开。
@@ -60,6 +60,7 @@
 ### 3.1 你（玩家）
 
 - 只输入名字和性别。NPC 用名字称呼你，代词跟随性别。
+- 每回合只写自己的言行：台词、动作、神态，以及对谁说。别人的言行、世界里有什么、尝试的结果都由系统决定（interaction-design.md §3–4）。
 - 身份：大学时的朋友，这几年联系少了。故事不替你写性格，也不替你写经历。
 - 唯一写好的过去：今天 15:10，Leo 给你打了两次电话，你没接。他留了一条语音，你还没听（全文见 §7.4）。【待定 D3】
 - Leo 最信任的人是你。这一点只通过那条语音透露。
@@ -140,7 +141,7 @@
 | 区域 | 有什么 | 戏剧用途 |
 |---|---|---|
 | 客厅 | 木箱（当餐桌用，铺着桌布，四把折叠椅）、一摞纸箱、墙上唯一没摘的合影（你们四个，大学时）、窗外的街 | 主舞台，第一阶段几乎都在这里 |
-| 开放式厨房 | 大理石岛台（Leo 撞上的就是那个角）、漂白水味、少了一块地垫、一袋垃圾 | 和 Mia 私下说话 |
+| 开放式厨房 | 大理石岛台（Leo 撞上的就是那个角）、漂白水味、少了一块地垫、一袋垃圾 | 和 Mia 私下说话。她会先打开水龙头，再压低声音（interaction-design.md 待定 I3） |
 | 阳台 | 能看见楼下的街和那辆黄色旧车；Julian 在这里抽烟 | 和 Julian 私下说话 |
 | 玄关 | 前门、门上贴着 "MOVERS 6 AM"、标着 TOOLS 的纸箱（电钻和螺丝刀）、柜台上的机票和护照 | Nora 敲门的地方；开箱的工具在这里 |
 | 浴室、卧室 | 门关着。浴室里有一袋湿毛巾 | 主人会把你挡回去（"The plumbing's packed."） |
@@ -180,7 +181,7 @@
 
 - 除了"谁动的手"这一层，所有事实在三种配置下都一样。配置在开局时定一次，写进状态，玩家看不到。
 - 不管哪种配置，都有一份共同的罪责：没叫救护车、藏尸、对你撒谎。所以最后的道德判断始终有分量。
-- performer 只拿到当前配置下每个人"知道什么、会说什么"。
+- 叙述者只拿到当前配置下每个人"知道什么、会说什么"，并且每回合只拿到其中已经可以说的部分（interaction-design.md §9.3）。
 
 ### 5.3 人人有份
 
@@ -194,7 +195,7 @@
 
 ### 5.4 谁知道什么
 
-这张表是 performer 保持一致的依据。任何人都不能说出自己不知道的事。
+这张表是叙述者和 M3 保持一致的依据。任何人都不能说出自己不知道的事，也不能对自己没听到的话作出反应。
 
 | 事实 | Julian | Mia | Nora | 你（开局时） |
 |---|---|---|---|---|
@@ -213,35 +214,37 @@
 
 ### 6.1 三个阶段
 
-**第一阶段：表演正常（约 0–6 分钟）**
+**第一阶段：表演正常（剧情第 0–6 分钟，约 6 回合）**
 
 - 迎客，在木箱上吃晚饭，撤掉第四副碗筷，打包时拌嘴，回忆大学。
 - 你不知道箱子里有什么，紧张感来自你从细节里察觉出的不对劲。
 - 两个人拌嘴逼你站边，拌的内容全都暗指下午的事，比如 "You always make me clean up your mess."
 - 你可能注意到的：楼下的车、Julian 不脱外套、Mia 不坐木箱那一头、手机里有未接来电。
 
-**第二阶段：裂缝（约 6–12 分钟）**
+**第二阶段：裂缝（剧情第 6–12 分钟，约 8 回合）**
 
-- 两人轮流把你拉进厨房或阳台私下说话，各抛一个小秘密作掩护，并抢先给对方打预防针。两场私谈的顺序可以互换。
+- 两人轮流把你拉进厨房或阳台私下说话，各抛一个小秘密作掩护，并抢先给对方打预防针。两场私谈的顺序可以互换。你也可以主动叫其中一个人去私下说话。
 - 线索：漂白水味、少了的地垫、浴室的门、手机在震、机票。
 - 中点危机：两人当着你的面说出了两个对不上的下午。
 
-**第三阶段：摊牌（约 12–18 分钟）**
+**第三阶段：摊牌（剧情第 12–18 分钟，约 12 回合）**
 
 - "Leo 死了"被说出来或被你发现。揭开的路径有好几条（见 §8 的 `the_admission`）。
 - 两人各给一个版本，就像《竹林中》。
 - 然后是交易：Julian 要你当证人，必要时威胁说"我们会说你下午也在"；Mia 求你。
-- Nora 到了楼下，然后敲门。三人戏。结局。
+- Nora 到了楼下，然后敲门，问你 Leo 在哪。你的回答就是证词。结局。
 
 ### 6.2 目标张力弧（给 `tension_curve.yaml`）
 
-| 时间 | 张力 | 说明 |
+横轴是剧情分钟，不是真实时间，也不是决策序号。
+
+| 剧情分钟 | 张力 | 说明 |
 |---|---|---|
-| 0–3 分钟 | 1 | 热情的表面 |
-| 3–6 分钟 | 1 → 2 | 细节开始不对 |
-| 6–10 分钟 | 2 → 4 | 私谈、手机震动，中点危机冲到 4 |
-| 10–12 分钟 | 回落到约 3.5 | 一段安静：倒酒、回忆 Leo |
-| 12–17 分钟 | 4 → 5 | 摊牌、交易、Nora 在楼下、敲门 |
+| 0–3 | 1 | 热情的表面 |
+| 3–6 | 1 → 2 | 细节开始不对 |
+| 6–10 | 2 → 4 | 私谈、手机震动，中点危机冲到 4 |
+| 10–12 | 回落到约 3.5 | 一段安静：倒酒、回忆 Leo |
+| 12–17 | 4 → 5 | 摊牌、交易、Nora 在楼下、敲门 |
 | 结局 | 回落 | 尾声 |
 
 ---
@@ -250,16 +253,16 @@
 
 ### 7.1 Nora 线（`nora_pressure` 0–4）时间线不是现实的时间 而是时间本身是一个变量 每过一个beat 当前时间+n
 
-| 等级 | 大约在 | 发生什么 |
+| 等级 | 剧情分钟 | 发生什么 |
 |---|---|---|
 | 0 | 开局 | 无 |
-| 1 | 约 5 分钟 | 给你发短信："Hey, is Leo with you? He's not picking up." |
-| 2 | 约 9 分钟 | 给你打电话。你接了就是一段实时通话，Nora 只有声音，不在场。她也开始反复打 Leo 的电话，Leo 的手机因此在 Julian 的外套里震 |
-| 3 | 约 13 分钟 | 短信："I'm downstairs. His car is here. His location says he's in your building." |
-| 4 | 约 16 分钟（硬上限） | 敲门。Nora 进门，三人戏开始 |
+| 1 | 5 | 给你发短信："Hey, is Leo with you? He's not picking up." |
+| 2 | 9 | 给你打电话。下一回合你决定接不接；接了由必接拍 `noras_call` 接上，Nora 只有声音，不在场。她也开始反复打 Leo 的电话，Leo 的手机因此在 Julian 的外套里震 |
+| 3 | 13 | 短信："I'm downstairs. His car is here. His location says he's in your building."（必接拍 `downstairs`） |
+| 4 | 16 | 敲门（必接拍 `the_knock`）。Nora 进门，三人戏开始 |
 
-- 每一级都有软下限和硬上限，沿用 `min_clock_s` / `force_after_clock_s`。
-- 你怎么回 Nora 是全剧最重的动作之一，会写进 `nora_told`：没回、撒谎、说了真话。
+- 每一级到了对应的剧情分钟就触发。事件写进当回合的正文，短信和来电也同时出现在你的手机里（interaction-design.md §7.3）。第 40 回合是安全上限，到了直接敲门。
+- 你怎么回 Nora 是全剧最重的动作之一，会写进 `nora_told`：没回、撒谎、说了真话。给 Nora 发短信用的是你自己的手机，没人拦得住。
 - 主人会注意到你在看手机："Who's texting you?"
 
 ### 7.2 Leo 的手机（`leo_phone`）
@@ -267,15 +270,14 @@
 - 状态：in_jacket / buzzed / found。
 - 任何人打 Leo 的电话，Julian 的外套就会震。可能是你主动打的，也可能是 Nora 到了第 2 级以后在打。
 - Julian 的反应：找借口离开房间，或者去阳台"接个工作电话"。
-- 你第一分钟就打，第一分钟就会出事。DM 必须能处理这种提前引爆。
+- 你第一分钟就打，第一分钟就会出事：外套一震，就由必接拍 `the_buzz` 接上（interaction-design.md §6.5）。
 
 ### 7.3 木箱（`crate`）
 
-- 状态：sealed / being_opened / opened。
-- 螺丝拧死了，要用玄关 TOOLS 箱里的螺丝刀或电钻。
-- 开箱拆成两步，沿用 Wrongest Person 后端里喝毒酒的 `at_lips` 打断机制：
-  1. 试图开箱，状态变成 `being_opened`，触发打断 beat `not_the_crate`（可重复）；
-  2. 只有从 `being_opened` 才能真的打开，而且不可逆。
+- 状态：sealed / opened。
+- 螺丝拧死了，要用玄关 TOOLS 箱里的螺丝刀或电钻，空手拧不开。
+- 开箱在一回合内结算，没有确认步骤。Julian 或 Mia 在场、而且镇定值不低于阈值时，会拦住你；被拦的人镇定值下降，所以一再尝试会越来越难被拦住（interaction-design.md §6.6）。
+- 打开以后不可逆，由必接拍 `the_admission` 接上。
 - 开箱后的描写停在"一只鞋"。
 
 ### 7.4 你的手机
@@ -286,6 +288,7 @@
   > "Hey, it's Leo. I'm heading over to Julian's now, early. Something's... I'll explain. Can you come early tonight? Like, really early. Call me back. Please."
 
 - 它会引起怀疑，但不直接揭露什么。听完以后，`revealed` 加入 `missed_call`。之后 Nora 的消息也从这部手机进来。
+- 打开手机看列表不用掉回合；听语音、回短信、打电话都要用掉一回合，主人看得见你在用手机（interaction-design.md §3.6）。
 
 ### 7.5 其他物件
 
@@ -313,6 +316,8 @@
 | 话题深挖 | Façade 的 hot-button，三层 | 木箱、Leo、钱和移民、下午、婚姻、大学 |
 | 坦白 | Façade 的 therapy 游戏 | 每个人离开口还有多远 |
 
+这四个游戏的数值怎么随你的输入变化，由反应层定义，见 interaction-design.md §5。
+
 ### 8.2 状态变量（草稿，将来写成 `schemas/state_v2.json`）
 
 | 变量 | 类型 | 说明 |
@@ -328,12 +333,18 @@
 | `truth_config` | T1 / T2 / T3 | 开局定，玩家看不到 |
 | `nora_pressure` | 0–4 | 见 §7.1 |
 | `nora_told` | none / lie / truth | 你对 Nora 说了什么 |
-| `crate` | sealed / being_opened / opened | |
+| `crate` | sealed / opened | |
 | `leo_phone` | in_jacket / buzzed / found | |
 | `player_phone` | unchecked / voicemail_heard | |
-| `player_call` | idle / dialing / connected | 打电话的中间态，用于打断 |
+| `nora_call` | none / ringing / answered / declined / missed | Nora 第 2 级的来电 |
 | `player_room` `julian_room` `mia_room` | living / kitchen / balcony / hall / bathroom | |
-| `clock_s` `beat_history` `story_phase` `consecutive_generated` | | 沿用现有定义 |
+| `story_min` | 浮点 | 剧情分钟，取代原来的 `clock_s` |
+| `turn` | 整数 | 回合数 |
+| `beat_step` `beat_turns` | 整数 | 当前 beat 的步指针、已用回合 |
+| `silence_streak` | 整数 | 连续沉默的回合数 |
+| `claims` | 列表 | 你在台词里声称知道的事实、对谁说、第几回合；不进 `revealed` |
+| `heard_by` | 映射 | 每条私下的话被谁听到 |
+| `beat_history` `story_phase` `consecutive_generated` | | 沿用现有定义 |
 
 ### 8.3 话题的三层
 
@@ -346,11 +357,13 @@
 | 婚姻 | 互相开玩笑 | Mia："We're not okay." | Julian："Ask her why he always calls her."（转移视线） |
 | 大学 | 合影、旧店的外卖 | Leo 的旧事 | Leo 半夜开两小时车来帮朋友。这个话题只降温，不升温 |
 
+层级怎么推进、每个阶段的上限是多少，见 interaction-design.md §5.4。
+
 ---
 
 ## 9. Beat 池（初稿）
 
-斜率是对 `tension` 的作用。前置条件这里只写大意，正式写成 DSL 时再细化。
+斜率是对 `tension` 的作用。前置条件这里只写大意，正式写成 DSL 时再细化。正式写的时候，每个 beat 写成 2 到 4 步，结构见 interaction-design.md §6。标"必接"的拍在触发条件成立时直接接上，不经过打分器（§9.4）。
 
 ### 9.1 第一阶段：表演正常
 
@@ -372,7 +385,8 @@
 |---|---|---|---|---|
 | `mia_in_the_kitchen` | 厨房里的 Mia | 主干 | +1 | 借洗碗把你拉走；用婚姻问题当诱饵；一直擦岛台的那个角 |
 | `julian_on_the_balcony` | 阳台上的 Julian | 主干 | +1 | 抽烟，抢先给 Mia 打预防针；你往下看能看见那辆车 |
-| `the_buzz` | 手机在震 | 主干 | +2 | 由 `nora_pressure >= 2` 或你打 Leo 的电话触发；Julian 离席 |
+| `the_buzz` | 手机在震 | 主干（必接） | +2 | Julian 外套里的手机一震就接上：Nora 到第 2 级后在打，或者你打了 Leo 的电话；Julian 离席 |
+| `noras_call` | Nora 的电话 | 主干（必接） | +1 | 你接了 Nora 的电话。她问 Leo 在哪，两个主人在旁边听着。你在电话里说的话会写进 `nora_told` |
 | `two_afternoons` | 两个下午 | 主干（中点危机） | +2 | 两人当着你的面对不上口径，场面爆掉 |
 | `bleach` | 漂白水 | 卫星 | +1 | 气味、少了的地垫、"we spilled wine" |
 | `whose_car` | 谁的车 | 卫星 | +1 | Mia 问你停在哪。你一提黄色的车，两人都僵住 |
@@ -380,39 +394,50 @@
 | `the_tickets` | 机票 | 卫星 | 0 | 07:40，Julian 看表 |
 | `ask_her_why` | 你去问她 | 卫星 | +1 | Julian 把话题引到 Mia 和 Leo 的关系上，用来离间 |
 | `the_long_drive` | 两小时的车程 | 卫星 | −1 | Mia 讲 Leo 半夜开车帮朋友，哭了，又收住 |
+| `dont_go_yet` | 别走 | 卫星（必接） | +1 | 你想离开，Mia 挡在门口求你留下；Julian 反而帮你拿外套 |
 
 ### 9.3 第三阶段：摊牌
 
 | id | 名称 | 类型 | 斜率 | 戏剧意图 |
 |---|---|---|---|---|
-| `the_admission` | 他没走 | 主干 | +2 | 第一次承认 Leo 死了，由更不镇定的那个人说出来。可能的触发：Mia 的镇定跌破阈值、你开了箱、手机震过之后你当面质问、你拿语音和车去对质 |
+| `the_admission` | 他没走 | 主干 | +2 | 第一次承认 Leo 死了，由更不镇定的那个人说出来。可能的触发：Mia 的镇定跌破阈值、你开了箱（这时它是必接拍）、手机震过之后你当面质问、你拿语音和车去对质 |
 | `the_versions` | 两个版本 | 主干 | +1 | 按 `truth_config` 各说各的 |
 | `the_offer` | 交易 | 主干 | +1 | Julian：当我们的证人，要钱可以给，不然"我们会说你下午也在"。Mia 用另一种方式求你 |
 | `who_called_him` | 谁叫他来的 | 卫星 | +2 | 是 Mia 叫 Leo 来的，Julian 知道了。离间到顶 |
 | `what_he_wanted` | 他要的是什么 | 卫星 | ±1 | Leo 是来要钱的。打破对 Leo 的单纯同情 |
 | `the_quiet` | 安静 | 卫星 | −1 | 承认之后的沉默。Julian 给每个人倒酒，有一种奇怪的温柔 |
-| `downstairs` | 楼下 | 主干（由时钟强制） | +2 | Nora 的短信 |
-| `the_knock` | 敲门 | 主干（由时钟强制） | +2 | Nora 进门，三人戏，接各个结局 |
+| `downstairs` | 楼下 | 主干（必接，剧情第 13 分钟） | +2 | Nora 的短信 |
+| `the_knock` | 敲门 | 主干（必接，剧情第 16 分钟） | +2 | Nora 进门："Where is he?" 三人戏开始 |
+| `testimony` | 证词 | 主干 | +1 | Nora 当面问你。你说的每一句都是证词，回答决定 `nora_told`，然后接各个结局 |
 
-### 9.4 打断拍（全部可重复）
+### 9.4 必接拍（取代原来的打断拍）
 
-| id | 触发的中间态 | 内容 |
-|---|---|---|
-| `not_the_crate` | `crate == 'being_opened'` | Julian 用身体挡住，Mia 求你 |
-| `give_me_the_phone` | `player_call == 'dialing'`（打给警察或 Nora 说真话） | Julian："Who are you calling, {name}?" |
-| `dont_go_in_there` | 你走到浴室或卧室门口 | 被叫回来 |
+回合制下没有打断（interaction-design.md §1）。原来的三个打断拍删除：
 
-按 Wrongest Person `docs/backend-design.md` §4.1 的规矩：其他所有拍的 `abort_if` 都要加上这三个中间态。
+- `not_the_crate`：改成开箱时的 NPC 阻拦（§7.3）；
+- `give_me_the_phone`：改成报警时 Julian 的阻拦；
+- `dont_go_in_there`：改成一条"动作受阻"的全局反应："The plumbing's packed."
+
+取而代之的是必接拍。触发条件成立时，当前这拍在回合末结束，下一拍直接接上，不经过打分器（interaction-design.md §6.5）。同一回合触发多个时，按下表从上到下取第一个。
+
+| 触发 | 接上的拍 |
+|---|---|
+| 箱子被打开 | `the_admission` |
+| 你接了 Nora 的电话 | `noras_call` |
+| Julian 外套里的手机震了 | `the_buzz` |
+| Mia 把你拦在门口 | `dont_go_yet` |
+| 剧情第 13 分钟 | `downstairs` |
+| 剧情第 16 分钟，或者第 40 回合 | `the_knock` |
 
 ### 9.5 Façade 式全局插入
 
-不属于任何 beat。玩家一提起相应话题，就按 §8.3 的层级插一段，可以插进任何 beat。来源：玩家提到木箱、Leo、钱、下午、婚姻、大学，或者查看合影、车、手机。
+不属于任何 beat。玩家一提起相应话题，就按 §8.3 的层级插一段，可以插进任何 beat。来源：玩家提到木箱、Leo、钱、下午、婚姻、大学，或者查看合影、车、手机。怎么选、谁来回应、数值怎么变，由反应层决定，见 interaction-design.md §5。
 
 ---
 
 ## 10. 结局
 
-结局由累积状态决定，不由某一个动作决定。
+结局由累积状态决定，不由某一个动作决定。结局判定发生在 `testimony` 之后；提前离开公寓直接进入 `bon_voyage`。
 
 | id | 名称 | 大致条件 | 内容 |
 |---|---|---|---|
@@ -426,16 +451,17 @@
 
 ---
 
-## 11. 写给 performer 的规则
+## 11. 写给叙述者的规则
 
 1. 前半场每个人的最高目标是表演正常。任何直接的问题，先用礼节和玩笑挡回去（Façade 式的转移），不要承认。
 2. 不越层。一个人只能说出自己当前层已经解锁的秘密，由 `revealed` 和 `topic_tier` 决定。即兴不得引入新的事实，生成的 beat 也不能改 `revealed`。
 3. 每个人只按自己知道的说话（§5.4）。
 4. 不直接描写尸体。
-5. 不替玩家决定行动，不描写玩家的内心。
+5. 玩家写了什么就演什么，可以润色，但不替玩家添加新的话、动作、决定、情绪或内心。感知可以加，但受 `topic_tier` 和 `revealed` 约束（interaction-design.md §9.2）。
 6. 用名字称呼玩家，代词跟随玩家选的性别。故事里没有任何情节取决于玩家的性别。
 7. 后台行为要持续：Julian 倒酒、穿外套、看表；Mia 擦东西、不坐那一头、看窗户。
 8. 台词里不用破折号。
+9. 只演反应层选出的反应和当前这一步，不自己挑反应，也不提前演后面的步。
 
 ---
 
@@ -465,13 +491,15 @@
 
 ## 13. 开场旁白（草稿）
 
+第一人称。这是第 0 段的开头，后面接 `the_door` 的开场。
+
 > It stopped raining an hour ago. The street still shines. Out front, a dented yellow hatchback sits under the streetlight with two wheels up on the curb.
 >
-> Your phone buzzed a few times this afternoon. You haven't checked it.
+> My phone buzzed a few times this afternoon. I haven't checked it.
 >
 > Upstairs, someone has taped a sign to Julian and Mia's door: MOVERS 6 AM.
 >
-> You ring the bell.
+> I ring the bell.
 
 ---
 
