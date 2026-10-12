@@ -196,31 +196,44 @@ log(turn_record)
   - 每人一组岔开话题的说法；
   - 数值规则（interaction-design.md §5.4）。
 - [ ] **写法**：先让 LLM 按 story.md 的意图起草 YAML，再人工逐条审。（起草完成，按 beat-script.md 转写；**人工审还没做**）
-- [x] **golden path**：`tests/fixtures/golden_path.yaml`，由 `test_beat_pool.py` 用真实 DSL、effects 和时钟事件重放。用 scorer A 走一遍的 Baseline check 等 M3 的 DM 做好再补
+- [x] **golden path**：`tests/fixtures/golden_path.yaml`，由 `test_beat_pool.py` 用真实 DSL、effects 和时钟事件重放。用 scorer A 走一遍的 Baseline check 在 `test_session.py`（M3）
 - [x] **测试**（`tests/test_beat_pool.py`）：
   - 无死局：随机走状态，任何可达状态下，要么有可选的 beat，要么有时钟事件可以快进（beat-script.md §5 第 3 条）；
   - 每个结局都有一条脚本化的路径能到；
   - 必接拍表（story.md §9.4）逐条触发；
   - 每个 beat 都声明了 `minutes`。
 
-**验收**：beat 测试全绿（已达成）；DM 用 scorer A 能按 golden path 走完（等 M3）。
+**验收**：beat 测试全绿（已达成）；DM 用 scorer A 能按 golden path 走完（M3 已达成）。
 
-### M3 · 回合引擎（10/8–10/11）· 负责 #1，#3 协助
+### M3 · 回合引擎（10/8–10/11，实际完成 10/12）· 负责 #1，#3 协助
 
-- [ ] `engine/clock/`：beat 结束时 +n，计算跨过的 Nora 事件，安全上限，空档快进；来电那一回合不选新拍
-- [ ] `engine/beats/`：v2 加载、步指针、`plan_steps`、`outcomes` 选择、`max_turns`；"中止"和"演过"分开记，中止的拍可以再选
-- [ ] `engine/state/` 和 `engine/dsl/`：初始状态改从 `state_v2.json` 的 `default` 生成；`story_phase` 按剧情分钟推导；去掉 beat 加载器里 `on:` 的兼容处理。（M2 里已做：effects 支持点号路径和一次加多项；`played()` 只算演完的拍）
-- [ ] `engine/dm/`：优先级分层、必接拍、目标弧按剧情分钟、`GENERATE_NEW`（proposer 按 v2 生成）
-- [ ] `engine/world/`：执行动作单元，包括换房间、跟随、阻拦（被拦的人镇定值下降）、手机动作、`heard_by`
-- [ ] `engine/reactions/`：收集候选、按优先级选、确定谁来回应、只用一次、每变量每回合限一步、说法记录
-- [ ] `engine/narrator/`：组装 prompt（知识切片、反应指令、本回合的步、事件、下一拍开场、玩家原文），输出分段，核对 `steps_delivered`
-- [ ] `engine/input/`：整理（调 M2）、选项生成
-- [ ] `engine/models/`：四个统一接口（backend-design.md §7.2），各自的 rule / llm / trained(占位) 三路，影子模式
-- [ ] `app/session.py`：回合循环（§3.1）；整理、提交、选项三个入口；控制命令：强制换拍、改状态、调时钟、换 scorer、注入一回合
-- [ ] `engine/journal/`：回合日志（interaction-design.md §13）、决策日志、会话汇总
-- [ ] `tools/play_cli.py`：在终端里玩，支持 `/channels`、`/options`、`/phone`、`/state`、`/trace`
+- [x] `engine/clock/`：beat 结束时 +n，计算跨过的 Nora 事件，安全上限，空档快进；来电那一回合不选新拍
+- [x] `engine/beats/`：v2 加载（按 `beat_v2.json` 校验）、步指针、`plan_steps`、`outcomes` 选择、`max_turns`；"中止"和"演过"分开记，中止的拍可以再选（`runner.py`）
+- [x] `engine/state/` 和 `engine/dsl/`：初始状态改从 `state_v2.json` 的 `default` 生成；`story_phase` 按剧情分钟推导；去掉 beat 加载器里 `on:` 的兼容处理
+- [x] `engine/dm/`：优先级分层、必接拍、结局表、目标弧按剧情分钟（每个候选按自己的 `minutes` 算目标斜率）、`GENERATE_NEW`（proposer 按 v2 生成，M1 排序）
+- [x] `engine/world/`：执行动作单元，包括换房间（一次一间）、跟随、阻拦（被拦的人镇定值下降）、手机动作、`heard_by`
+- [x] `engine/reactions/`：收集候选、按优先级选、确定谁来回应、只用一次、每变量每回合限一步、说法记录
+- [x] `engine/narrator/`：组装 prompt（知识切片、反应指令、本回合的步、事件、下一拍开场、玩家原文），输出分段，核对 `steps_delivered`
+- [x] `engine/input/`：整理（规则预检 + M2）、选项生成、`turn` 命名空间
+- [x] `engine/models/`：四个统一接口（backend-design.md §7.2），各自的 rule / llm / trained(占位) 三路，影子模式
+- [x] `app/session.py`：回合循环（§3.1）；整理、提交、选项三个入口；控制命令：强制换拍、改状态、调时钟、换 scorer、注入一回合
+- [x] `engine/journal/`：回合日志（interaction-design.md §13）、决策日志、会话汇总
+- [x] `tools/play_cli.py`：在终端里玩，支持 `/channels`、`/options`、`/phone`、`/state`、`/trace`
 
-**验收（里程碑 A，10/11）**：离线 mock 下，用 `play_cli.py` 在终端里从开局玩到结局；`test_session` 用脚本输入跑完整局。
+**验收（里程碑 A）**：离线 mock 下，用 `play_cli.py` 在终端里从开局玩到结局；`test_session` 用脚本输入跑完整局（已达成：`tests/test_session.py`、`tests/test_play_cli.py`；60 局随机脚本玩家全部走到结局，四种结局都出现）。
+
+实现时定下的细化（2026-10-12）：
+
+| # | 细化 | 理由 |
+|---|---|---|
+| R1 | 主反应打断步只看**类型**：只有"逼过头"让本回合不排步。§3.1 写的"优先级 ≥ 8"会让每条本地 mix-in（10）和每次动作受阻（9）都卡住 beat | mix-in 和受阻本来就是顺带回应，回应完接着演 |
+| R2 | 本地 mix-in 当主反应时不配附带反应；岔开话题永远不当附带反应 | 同一件事不演两遍；岔开只会添噪音 |
+| R3 | 提问的步在最后一个允许的回合抛出时，回答那一回合不算进 `max_turns` | 否则问题抛出后没有机会回答 |
+| R4 | 结局拍在选中的那一段里整拍演完（开场、全部步、尾声） | 结局不需要玩家再输入 |
+| R5 | 生成拍的收敛规则改成"连续生成两拍后 `GENERATE_NEW` 退出候选"，不强制生成结局 | 时钟事件一直在，第 16 分钟必接 `the_knock`，不会卡死 |
+| R6 | M3 两次重写都不过时，只替换出问题的分段（NPC 台词换成岔开、旁白换成中性句、玩家分段按原文重写），不整段替换 | 整段替换会丢掉玩家的言行和本回合的步 |
+| R7 | 每个 LLM 角色没有 prompt 文件时用内置的 v0 短 prompt（`engine/models/prompts.py`），M4 的 `<role>_v1.md` 落地后自动接管 | 让 llm 路径在 M4 之前就能接真供应商 |
+| R8 | 离线 mock 的 review / guard / tension 直接用各自的 rule 路径作答 | 一份规则实现同时当 baseline 和离线 mock |
 
 ### M4 · LLM mock 接入（10/10–10/13）· 负责 #2、#3、#4、#1 各管自己的模块
 

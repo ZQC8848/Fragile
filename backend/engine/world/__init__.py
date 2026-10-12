@@ -1,3 +1,3 @@
-from .rules import INDOOR_ZONES, InteractionOutcome, WorldRules
+from .rules import WorldResult, WorldRules
 
-__all__ = ["INDOOR_ZONES", "InteractionOutcome", "WorldRules"]
+__all__ = ["WorldResult", "WorldRules"]

@@ -1,8 +1,7 @@
-"""Target tension arc.
+"""Target tension arc over story minutes (story.md §6.2, data/tension_curve.yaml).
 
-The authored arc is a list of target tension values indexed by decision number (0 = the first
-beat). `target_slope(k)` is what Façade's scoring compares each candidate's `tension_slope` to.
-Loaded from backend/data/tension_curve.yaml so the writer can reshape it without code changes.
+The curve is a list of (story_min, tension) points, linear in between. The DM's target for a candidate beat
+is the tension the arc wants when that beat would end, minus the tension now (tension_curve.yaml header).
 """
 
 from __future__ import annotations
@@ -11,33 +10,35 @@ from pathlib import Path
 
 import yaml
 
-DEFAULT_CURVE = [1, 1, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 4, 3, 2, 2, 2]
+from engine.paths import DATA_DIR
 
 
 class TensionArc:
-    def __init__(self, targets: list[float] | None = None):
-        self.targets = [float(t) for t in (targets or DEFAULT_CURVE)]
+    def __init__(self, points: list[tuple[float, float]]):
+        if not points:
+            raise ValueError("tension arc needs at least one point")
+        self.points = sorted((float(x), float(y)) for x, y in points)
 
     @classmethod
-    def from_file(cls, path: Path) -> TensionArc:
-        if not path.exists():
-            return cls()
-        data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
-        return cls(data.get("targets"))
+    def from_file(cls, path: Path | None = None) -> TensionArc:
+        data = yaml.safe_load((path or DATA_DIR / "tension_curve.yaml").read_text(encoding="utf-8")) or {}
+        return cls([tuple(p) for p in data["points"]])
 
-    def target_at(self, k: int) -> float:
-        if k < 0:
-            return self.targets[0]
-        if k >= len(self.targets):
-            return self.targets[-1]
-        return self.targets[k]
+    def target_at(self, story_min: float) -> float:
+        pts = self.points
+        if story_min <= pts[0][0]:
+            return pts[0][1]
+        for (x0, y0), (x1, y1) in zip(pts, pts[1:], strict=False):
+            if story_min <= x1:
+                return y0 + (y1 - y0) * (story_min - x0) / (x1 - x0)
+        return pts[-1][1]
 
-    def target_slope(self, k: int) -> float:
-        """Desired change in tension produced by the beat chosen at decision k."""
-        return self.target_at(k + 1) - self.target_at(k)
+    def target_delta(self, story_min: float, minutes: float, tension_now: float) -> float:
+        """Desired tension change if a beat of `minutes` starts now."""
+        return self.target_at(story_min + minutes) - tension_now
 
-    def distance(self, actual: list[float]) -> float:
-        """Mean absolute deviation between an actual per-decision tension trace and the target."""
-        if not actual:
+    def distance(self, trace: list[tuple[float, float]]) -> float:
+        """Mean absolute deviation of a (story_min, tension) trace from the arc."""
+        if not trace:
             return 0.0
-        return sum(abs(a - self.target_at(i)) for i, a in enumerate(actual)) / len(actual)
+        return sum(abs(t - self.target_at(m)) for m, t in trace) / len(trace)

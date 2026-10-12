@@ -1,4 +1,4 @@
-"""Load beat YAML files, validate against schemas/beat.json, compile rule strings to JSON Logic."""
+"""Load beat YAML files, validate against schemas/beat_v2.json, compile rule strings to JSON Logic."""
 
 from __future__ import annotations
 
@@ -11,15 +11,15 @@ import jsonschema
 import yaml
 
 from engine.dsl import compile_expr, referenced_vars
-from engine.state.schema import SCHEMAS_DIR
+from engine.paths import SCHEMAS_DIR
 
-# TODO(M3): load schemas/beat_v2.json (written in M1). Wrongest Person's schemas/beat.json was not
-# copied, so until then beats are not schema-validated (an empty schema accepts everything).
-_BEAT_SCHEMA_PATH = SCHEMAS_DIR / "beat.json"
-BEAT_SCHEMA = json.loads(_BEAT_SCHEMA_PATH.read_text(encoding="utf-8")) if _BEAT_SCHEMA_PATH.exists() else {}
+BEAT_SCHEMA = json.loads((SCHEMAS_DIR / "beat_v2.json").read_text(encoding="utf-8"))
 _beat_validator = jsonschema.Draft202012Validator(BEAT_SCHEMA)
 
 GENERATE_NEW_ID = "GENERATE_NEW"
+
+#: rules may read these besides state variables: the transient per-turn namespace
+RULE_NAMESPACES = {"turn"}
 
 
 @dataclass
@@ -59,74 +59,117 @@ class Beat:
 
     @property
     def intent(self) -> str:
-        return self.raw.get("dramatic_intent", "")
+        return self.raw.get("dramatic_intent", "").strip()
 
     @property
-    def goals(self) -> dict[str, Any]:
-        return self.raw.get("beat_goals", {}) or {}
+    def steps(self) -> list[dict[str, Any]]:
+        return self.raw["steps"]
+
+    @property
+    def minutes(self) -> float | None:
+        m = self.raw.get("minutes")
+        return float(m) if m is not None else None
+
+    @property
+    def max_turns(self) -> int:
+        return int(self.raw.get("max_turns", 3))
+
+    @property
+    def outcomes(self) -> list[dict[str, Any]]:
+        return self.raw.get("outcomes") or []
+
+    @property
+    def entries(self) -> list[dict[str, Any]]:
+        return self.raw["entries"]
+
+    @property
+    def must_follow_rank(self) -> int | None:
+        mf = self.raw.get("must_follow")
+        return int(mf["rank"]) if mf else None
+
+    @property
+    def ending_rank(self) -> int | None:
+        r = self.raw.get("ending_rank")
+        return int(r) if r is not None else None
 
     @property
     def is_ending(self) -> bool:
         return self.type == "ending"
 
+    @property
+    def tableau(self) -> str | None:
+        return self.raw.get("tableau")
+
+    @property
+    def epilogue(self) -> str | None:
+        return self.raw.get("epilogue")
+
+    def reveals(self) -> set[str]:
+        """Facts this beat may put into `revealed` (its own effects, outcomes and mix-ins). The narrator may
+        speak of them while the beat runs, before the end-of-beat effects land."""
+        out: set[str] = set()
+        for eff in [self.effects, *(o.get("effects") for o in self.outcomes), *(m.get("effects") for m in self.raw.get("mix_in") or [])]:
+            rev = (eff or {}).get("revealed")
+            if isinstance(rev, list) and rev and rev[0] == "add":
+                out |= set(rev[1:])
+        return out
+
     def text_for_scorer(self) -> str:
-        """Content-only description (constraint A: no ids as features)."""
-        eff = ", ".join(f"{k} {v}" for k, v in self.effects.items())
+        """Content-only description: scorers never see the id (backend-design.md §4.1)."""
+        eff = ", ".join(f"{k} {v}" for k, v in self.effects.items() if k not in ("player_room", "julian_room", "mia_room"))
+        steps = " | ".join(s["do"] for s in self.steps)
+        minutes = f"{self.minutes:g}" if self.minutes is not None else "default"
         return (
-            f"type={self.type}; slope={self.tension_slope:+.0f}; effects=[{eff}]; "
-            f"intent: {self.intent.strip()}"
+            f"type={self.type}; slope={self.tension_slope:+.0f}; minutes={minutes}; effects=[{eff}]; "
+            f"intent: {self.intent} steps: {steps}"
         )
 
     def public(self) -> dict[str, Any]:
-        return {**self.raw, "compiled": self.compiled, "source_path": self.source_path}
+        return {**self.raw, "source_path": self.source_path}
 
 
 class BeatLoadError(ValueError):
     pass
 
 
-def _normalize(raw: dict[str, Any]) -> dict[str, Any]:
-    """PyYAML (YAML 1.1) reads the bare key `on:` as boolean True. Authors and the proposer write
-    `on:`, so map it back before validation."""
-    goals = raw.get("beat_goals")
-    if isinstance(goals, dict) and isinstance(goals.get("mix_in"), list):
-        fixed = []
-        for m in goals["mix_in"]:
-            if isinstance(m, dict) and True in m and "on" not in m:
-                m = {("on" if k is True else k): v for k, v in m.items()}
-            fixed.append(m)
-        goals["mix_in"] = fixed
-    return raw
+def _rule_vars(nodes: list[Any]) -> set[str]:
+    used: set[str] = set()
+    for n in nodes:
+        used |= referenced_vars(n)
+    return used
 
 
 def compile_beat(raw: dict[str, Any], state_vars: set[str] | None = None, source: str | None = None) -> Beat:
-    raw = _normalize(raw)
-    errs = [e.message for e in _beat_validator.iter_errors(raw)]
+    errs = [f"{list(e.absolute_path)}: {e.message}" for e in _beat_validator.iter_errors(raw)]
     if errs:
         raise BeatLoadError(f"{source or raw.get('id')}: " + "; ".join(errs))
-    compiled: dict[str, Any] = {
-        "preconditions": compile_expr(raw.get("preconditions")),
-        "abort_if": compile_expr(raw.get("abort_if")) if raw.get("abort_if") else False,
-        "priority_test": [
-            {"when": compile_expr(p["when"]), "add": float(p["add"])} for p in (raw.get("priority_test") or [])
-        ],
-        "mix_in": [
-            {"on": compile_expr(m["on"]), "do": m["do"]} for m in ((raw.get("beat_goals") or {}).get("mix_in") or [])
-        ],
-    }
+
+    def rule(src: str | None, default: Any = True) -> Any:
+        return compile_expr(src) if src else default
+
+    try:
+        compiled: dict[str, Any] = {
+            "preconditions": rule(raw["preconditions"]),
+            "abort_if": rule(raw.get("abort_if"), False),
+            "priority_test": [{"when": rule(p["when"]), "add": float(p["add"])} for p in raw.get("priority_test") or []],
+            "entries": [rule(e.get("when")) for e in raw["entries"]],
+            "must_follow": rule(raw["must_follow"]["when"]) if raw.get("must_follow") else False,
+            "mix_in": [rule(m["when"]) for m in raw.get("mix_in") or []],
+            "outcomes": [rule(o.get("when"), None) for o in raw.get("outcomes") or []],
+        }
+    except ValueError as e:
+        raise BeatLoadError(f"{source or raw.get('id')}: {e}") from e
     if state_vars is not None:
-        used: set[str] = set()
-        used |= referenced_vars(compiled["preconditions"])
-        used |= referenced_vars(compiled["abort_if"])
-        for p in compiled["priority_test"]:
-            used |= referenced_vars(p["when"])
-        # mix_in rules may read `discourse_act` / `interaction.*` which are event fields, not state
-        unknown = {u for u in used if u not in state_vars and u not in ("discourse_act", "interaction", "objects")}
+        nodes = [compiled["preconditions"], compiled["abort_if"], compiled["must_follow"], *compiled["entries"], *compiled["mix_in"]]
+        nodes += [p["when"] for p in compiled["priority_test"]] + [o for o in compiled["outcomes"] if o is not None]
+        unknown = _rule_vars(nodes) - state_vars - RULE_NAMESPACES
         if unknown:
             raise BeatLoadError(f"{source or raw.get('id')}: rules reference unknown state variables {sorted(unknown)}")
-        for var in (raw.get("effects") or {}):
-            if var not in state_vars:
-                raise BeatLoadError(f"{source or raw.get('id')}: effects target unknown variable {var!r}")
+        effects = [raw.get("effects"), *(o.get("effects") for o in raw.get("outcomes") or []), *(m.get("effects") for m in raw.get("mix_in") or [])]
+        for eff in effects:
+            for key in eff or {}:
+                if key.split(".")[0] not in state_vars:
+                    raise BeatLoadError(f"{source or raw.get('id')}: effects target unknown variable {key!r}")
     return Beat(raw=raw, compiled=compiled, source_path=source)
 
 
@@ -139,7 +182,7 @@ def load_beats(directory: Path, state_vars: set[str] | None = None) -> list[Beat
             continue
         docs = raw if isinstance(raw, list) else [raw]
         for doc in docs:
-            beat = compile_beat(doc, state_vars, source=str(path.relative_to(directory.parent.parent)))
+            beat = compile_beat(doc, state_vars, source=f"{directory.name}/{path.name}")
             if beat.id in seen:
                 raise BeatLoadError(f"duplicate beat id {beat.id!r} in {path}")
             seen.add(beat.id)

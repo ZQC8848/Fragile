@@ -1,8 +1,10 @@
-"""JSONL logs per session (docs/backend-design.md section 10).
+"""JSONL logs per session (interaction-design.md §13, backend-design.md §7.3).
 
-    data/logs/<session>/decisions.jsonl   one line per DM decision (all three scorers' scores)
-    data/logs/<session>/events.jsonl      performer I/O, player inputs, commands, generated beats
-    data/logs/<session>/session.json      written at end: tension curve, ending, counts
+    data/logs/<session>/turns.jsonl       one line per turn: input, M2, world, reactions, beat, clock, narrator,
+                                          guard, options, latencies, model and prompt versions
+    data/logs/<session>/decisions.jsonl   one line per DM decision (every scorer's scores in shadow mode)
+    data/logs/<session>/events.jsonl      rejected inputs, options, commands, generated beats, fallbacks
+    data/logs/<session>/session.json      written at the end: ending, tension trace, counts
 """
 
 from __future__ import annotations
@@ -12,24 +14,28 @@ import time
 from pathlib import Path
 from typing import Any
 
-from engine.state.schema import REPO_ROOT
+from engine.paths import DATA_DIR, REPO_ROOT
 
-LOGS_DIR = REPO_ROOT / "backend" / "data" / "logs"
+LOGS_DIR = DATA_DIR / "logs"
 
 
 class SessionLogger:
     def __init__(self, session_id: str, root: Path = LOGS_DIR):
         self.session_id = session_id
-        self.dir = root / session_id
+        self.dir = Path(root) / session_id
         self.dir.mkdir(parents=True, exist_ok=True)
         self._decisions = self.dir / "decisions.jsonl"
         self._events = self.dir / "events.jsonl"
+        self._turns = self.dir / "turns.jsonl"
 
     def reset(self) -> None:
         """A (re)started session starts a fresh log; earlier runs under the same id are discarded."""
-        for p in (self._decisions, self._events, self.dir / "session.json"):
+        for p in (self._decisions, self._events, self._turns, self.dir / "session.json"):
             if p.exists():
                 p.unlink()
+
+    def turn(self, record: dict[str, Any]) -> None:
+        self._append(self._turns, record)
 
     def decision(self, record: dict[str, Any]) -> None:
         self._append(self._decisions, record)
@@ -41,18 +47,21 @@ class SessionLogger:
         (self.dir / "session.json").write_text(json.dumps(summary, indent=2, ensure_ascii=False), encoding="utf-8")
 
     def read_decisions(self) -> list[dict[str, Any]]:
-        if not self._decisions.exists():
+        return self._read(self._decisions)
+
+    def read_turns(self) -> list[dict[str, Any]]:
+        return self._read(self._turns)
+
+    @staticmethod
+    def _read(path: Path) -> list[dict[str, Any]]:
+        if not path.exists():
             return []
-        out = []
-        for line in self._decisions.read_text(encoding="utf-8").splitlines():
-            if line.strip():
-                out.append(json.loads(line))
-        return out
+        return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
 
     @staticmethod
     def _append(path: Path, record: dict[str, Any]) -> None:
         with path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(record, ensure_ascii=False) + "\n")
+            f.write(json.dumps(record, ensure_ascii=False, default=str) + "\n")
 
 
 class AnnotationStore:

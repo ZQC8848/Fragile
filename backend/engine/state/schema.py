@@ -1,121 +1,115 @@
 """Story state as data: schema loading, initial state, validation, textualization, diff.
 
-Constraint B (docs/backend-design.md section 2): the state schema is a versioned JSON Schema file
-under <repo>/schemas/state_v<N>.json. Nothing in the engine hard-codes variable names except the
-few structural ones listed in STRUCTURAL (beat_history, clock_s, ...).
+The state schema is a versioned JSON Schema file under <repo>/schemas/state_v<N>.json. Every property
+carries a `default`, and the initial state is built from those defaults (beat-script.md §0.1), so nothing
+here hard-codes the story's variables except the structural ones the engine itself moves.
 """
 
 from __future__ import annotations
 
 import json
 from copy import deepcopy
-from pathlib import Path
 from typing import Any
 
 import jsonschema
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
-SCHEMAS_DIR = REPO_ROOT / "schemas"
+from engine.paths import REPO_ROOT, SCHEMAS_DIR
 
-CURRENT_STATE_VERSION = 1
+CURRENT_STATE_VERSION = 2
 
 # Variables the engine itself reads/writes. Everything else is opaque data for rules and scorers.
 STRUCTURAL = {
     "schema_version",
+    "story_min",
+    "turn_count",
+    "story_phase",
+    "current_beat",
+    "beat_step",
+    "beat_turns",
     "beat_history",
     "consecutive_generated",
-    "story_phase",
-    "clock_s",
+    "silence_streak",
+    "private_turns",
+    "claims",
+    "heard_by",
     "ending",
-    "last_discourse_act",
-    "last_interaction",
 }
 
-INDOOR_ZONES = {"entrance", "guest_table", "bar", "counter", "kitchen_door", "back_corner"}
+#: story_min thresholds of the phases (interaction-design.md §7.1); data/clock.yaml carries the same numbers
+PHASE_BOUNDS = (("early", 6.0), ("mid", 12.0))
+
+__all__ = ["CURRENT_STATE_VERSION", "REPO_ROOT", "SCHEMAS_DIR", "STRUCTURAL", "StateSchema"]
 
 
 class StateSchema:
     def __init__(self, version: int = CURRENT_STATE_VERSION):
         self.version = version
+        # a module global read at call time, so tests can point SCHEMAS_DIR at a fixture directory
         path = SCHEMAS_DIR / f"state_v{version}.json"
         self.raw: dict[str, Any] = json.loads(path.read_text(encoding="utf-8"))
         self.props: dict[str, Any] = self.raw["properties"]
+        self.defs: dict[str, Any] = self.raw.get("$defs", {})
         self._validator = jsonschema.Draft202012Validator(self.raw)
 
     # -- lifecycle -------------------------------------------------------
     def initial_state(self) -> dict[str, Any]:
-        """The opening situation of Wrongest Person: Lin alone in the closed restaurant, May outside."""
-        return {
-            "schema_version": self.version,
-            "tension": 1,
-            "lin_composure": 1.0,
-            "may_suspicion": 0,
-            "may_trust_lin": 1,
-            "danger_proximity": 0,
-            "guest_pressure": 0,
-            "revealed": [],
-            "glass": "on_table",
-            "gun": "hidden",
-            "envelope": "sealed",
-            "door": "closed",
-            "may_zone": "street",
-            "lin_zone": "guest_table",
-            "guest_zone": "absent",
-            "beat_history": [],
-            "consecutive_generated": 0,
-            "story_phase": "early",
-            "clock_s": 0.0,
-            "ending": None,
-            "last_discourse_act": None,
-            "last_interaction": None,
-        }
+        """Every property at its schema `default`."""
+        missing = [name for name, prop in self.props.items() if "default" not in prop]
+        if missing:
+            raise ValueError(f"state_v{self.version}.json: no default for {missing}")
+        return {name: deepcopy(prop["default"]) for name, prop in self.props.items()}
 
     def validate(self, state: dict[str, Any]) -> list[str]:
-        return [e.message for e in self._validator.iter_errors(state)]
+        return [f"{list(e.absolute_path)}: {e.message}" for e in self._validator.iter_errors(state)]
 
     def assert_valid(self, state: dict[str, Any]) -> None:
         errs = self.validate(state)
         if errs:
             raise ValueError("invalid state: " + "; ".join(errs))
 
+    def enum(self, name: str) -> list[str]:
+        """Values of a $defs enum (Fact, Room, Npc, Addressee)."""
+        return list(self.defs[name]["enum"])
+
     # -- derived ----------------------------------------------------------
     @staticmethod
     def derive_phase(state: dict[str, Any]) -> str:
         if state.get("ending"):
             return "ended"
-        n = len(state.get("beat_history", []))
-        if state.get("guest_pressure", 0) >= 2 or n >= 8:
-            return "late"
-        if n >= 3:
-            return "mid"
-        return "early"
+        m = float(state.get("story_min", 0))
+        for phase, until in PHASE_BOUNDS:
+            if m < until:
+                return phase
+        return "late"
 
     def refresh_derived(self, state: dict[str, Any]) -> dict[str, Any]:
         state = dict(state)
         state["story_phase"] = self.derive_phase(state)
         return state
 
-    # -- textualization (scorer input, constraint A) ----------------------
+    # -- textualization (scorer input: never beat ids as features beyond the history summary) ---------
     def textualize(self, state: dict[str, Any]) -> str:
-        """Flat, stable, human-readable rendering. Order follows the schema so re-training data is
-        consistent across sessions. Structural lists are summarized, not dumped."""
+        """Flat, stable, human-readable rendering in schema order, so training data stays consistent across
+        sessions. Bookkeeping lists are summarized, not dumped."""
         parts: list[str] = []
         for name in self.props:
-            if name in ("schema_version", "last_interaction"):
+            if name in ("schema_version", "heard_by", "beat_step", "beat_turns", "consecutive_generated"):
                 continue
             val = state.get(name)
             if name == "beat_history":
-                ids = [h["beat_id"] for h in (val or [])]
+                ids = [h["beat_id"] for h in (val or []) if h.get("completed", True)]
                 parts.append(f"beats_played={','.join(ids) if ids else 'none'}")
+            elif name == "claims":
+                facts = sorted({c["fact"] for c in (val or [])})
+                parts.append(f"claims={','.join(facts) if facts else 'none'}")
+            elif name == "topic_tier":
+                parts.append("topic_tier=" + ",".join(f"{k}:{v}" for k, v in (val or {}).items()))
             elif isinstance(val, list):
                 parts.append(f"{name}={','.join(map(str, val)) if val else 'none'}")
             elif isinstance(val, float):
                 parts.append(f"{name}={val:.2f}")
             else:
                 parts.append(f"{name}={val}")
-        li = state.get("last_interaction")
-        if li:
-            parts.append(f"last_interaction={li.get('action')}:{li.get('target')}")
         return "; ".join(parts)
 
     @staticmethod
@@ -124,9 +118,15 @@ class StateSchema:
         for k in set(before) | set(after):
             if k == "beat_history":
                 continue
-            if before.get(k) != after.get(k):
-                out[k] = {"from": before.get(k), "to": after.get(k)}
+            a, b = before.get(k), after.get(k)
+            if isinstance(a, dict) and isinstance(b, dict) and k != "heard_by":
+                for sub in set(a) | set(b):
+                    if a.get(sub) != b.get(sub):
+                        out[f"{k}.{sub}"] = {"from": a.get(sub), "to": b.get(sub)}
+            elif a != b:
+                out[k] = {"from": a, "to": b}
         return out
 
     def copy(self, state: dict[str, Any]) -> dict[str, Any]:
         return deepcopy(state)
+

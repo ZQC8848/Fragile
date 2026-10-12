@@ -9,16 +9,21 @@ from engine.state import StateSchema
 
 @pytest.fixture(autouse=True)
 def wrongest_person_state_v1(monkeypatch):
-    """The DSL tests were written against Wrongest Person's state_v1 (copied to tests/fixtures/).
-    Fragile's own state_v2.json arrives in M1."""
+    """The DSL tests were written against Wrongest Person's state_v1 (copied to tests/fixtures/); they test
+    the DSL, not Fragile's story, so they keep that schema."""
     monkeypatch.setattr(state_schema, "SCHEMAS_DIR", Path(__file__).parent / "fixtures")
 
 
 @pytest.fixture
 def state():
-    s = StateSchema().initial_state()
-    s.update({"may_zone": "guest_table", "glass": "on_table", "revealed": ["debt"], "tension": 2})
-    return s
+    # Wrongest Person's opening situation (its state_v1 has no defaults to build it from)
+    return {
+        "schema_version": 1, "tension": 2, "lin_composure": 1.0, "may_suspicion": 0, "may_trust_lin": 1,
+        "danger_proximity": 0, "guest_pressure": 0, "revealed": ["debt"], "glass": "on_table", "gun": "hidden",
+        "envelope": "sealed", "door": "closed", "may_zone": "guest_table", "lin_zone": "guest_table",
+        "guest_zone": "absent", "beat_history": [], "consecutive_generated": 0, "story_phase": "early",
+        "clock_s": 0.0, "ending": None, "last_discourse_act": None, "last_interaction": None,
+    }
 
 
 def test_compile_basic_and_in(state):
@@ -73,7 +78,7 @@ def test_referenced_vars():
 
 
 def test_apply_effects_clamps_and_validates(state):
-    props = StateSchema().props
+    props = StateSchema(1).props
     new = apply_effects(state, {"tension": "+9", "lin_composure": "-0.25", "glass": "moved", "revealed": ["add", "gun"]}, props)
     assert new["tension"] == 5
     assert new["lin_composure"] == 0.75

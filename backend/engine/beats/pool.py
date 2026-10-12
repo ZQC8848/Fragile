@@ -1,4 +1,8 @@
-"""The beat pool: eligibility, priority, dead-end checks."""
+"""The beat pool: eligibility, entries, priority, must-follow and the ending table.
+
+Every rule is evaluated over the state plus the transient `turn` namespace of the turn that just ended,
+so a beat can be entered by what the player just did (the_admission's `accused` entry, second_crate).
+"""
 
 from __future__ import annotations
 
@@ -7,6 +11,15 @@ from typing import Any
 
 from engine.beats.loader import Beat, BeatLoadError, load_beats
 from engine.dsl import truthy
+
+
+def rule_ctx(state: dict[str, Any], turn: dict[str, Any] | None) -> dict[str, Any]:
+    return {**state, "turn": turn or {}}
+
+
+def completed(state: dict[str, Any], beat_id: str) -> bool:
+    """Played to the end. Aborted beats stay selectable (interaction-design.md §6.2)."""
+    return any(h["beat_id"] == beat_id and h.get("completed", True) for h in state.get("beat_history", []))
 
 
 class BeatPool:
@@ -20,8 +33,9 @@ class BeatPool:
 
     def reload(self, directory: Path, state_vars: set[str] | None = None) -> None:
         fresh = load_beats(directory, state_vars)
-        self.beats = fresh
-        self.by_id = {b.id: b for b in fresh}
+        generated = [b for b in self.beats if b.origin == "generated" and b.id not in {f.id for f in fresh}]
+        self.beats = fresh + generated
+        self.by_id = {b.id: b for b in self.beats}
 
     def add(self, beat: Beat) -> None:
         if beat.id in self.by_id:
@@ -29,54 +43,68 @@ class BeatPool:
         self.beats.append(beat)
         self.by_id[beat.id] = beat
 
-    # -- selection helpers ---------------------------------------------------
-    def eligible(self, state: dict[str, Any]) -> list[Beat]:
-        played = {h["beat_id"] for h in state.get("beat_history", [])}
-        clock = float(state.get("clock_s", 0))
-        out: list[Beat] = []
-        for b in self.beats:
-            # `repeatable` beats stay in the pool: interrupt beats (the cup at May's lips) have to be
-            # able to fire every time the player triggers them, or the session dead-ends.
-            if b.id in played and not b.raw.get("repeatable"):
-                continue
-            if b.raw.get("min_clock_s") is not None and clock < float(b.raw["min_clock_s"]):
-                continue
-            if truthy(b.compiled["preconditions"], state):
-                out.append(b)
-        return out
+    # -- rules ----------------------------------------------------------------
+    @staticmethod
+    def entry_for(beat: Beat, ctx: dict[str, Any]) -> dict[str, Any] | None:
+        """The first entry whose `when` holds."""
+        for entry, rule in zip(beat.entries, beat.compiled["entries"], strict=True):
+            if truthy(rule, ctx):
+                return entry
+        return None
+
+    def why_not(self, beat: Beat, state: dict[str, Any], turn: dict[str, Any] | None = None) -> str:
+        """'' when eligible, otherwise the first reason it is not."""
+        ctx = rule_ctx(state, turn)
+        if completed(state, beat.id):
+            return "already played"
+        if not truthy(beat.compiled["preconditions"], ctx):
+            return "preconditions false"
+        if self.entry_for(beat, ctx) is None:
+            return "no entry applies"
+        if self.should_abort(beat, ctx):
+            return "abort_if holds"
+        return ""
+
+    def eligible(self, state: dict[str, Any], turn: dict[str, Any] | None = None) -> list[Beat]:
+        return [b for b in self.beats if self.why_not(b, state, turn) == ""]
 
     @staticmethod
-    def priority(beat: Beat, state: dict[str, Any]) -> float:
-        p = 0.0
-        for test in beat.compiled["priority_test"]:
-            if truthy(test["when"], state):
-                p += test["add"]
-        force = beat.raw.get("force_after_clock_s")
-        if force is not None and float(state.get("clock_s", 0)) >= float(force):
-            p += 100.0
+    def priority(beat: Beat, ctx: dict[str, Any], entry: dict[str, Any] | None = None) -> float:
+        p = sum(t["add"] for t in beat.compiled["priority_test"] if truthy(t["when"], ctx))
+        if entry is not None:
+            p += float(entry.get("priority_add", 0))
         return p
 
-    def shelf(self, state: dict[str, Any]) -> list[dict[str, Any]]:
-        """Every beat with its standing right now, for the backstage shelf panel.
+    @staticmethod
+    def should_abort(beat: Beat, ctx: dict[str, Any]) -> bool:
+        rule = beat.compiled["abort_if"]
+        return bool(rule) and truthy(rule, ctx)
 
-        Cheap on purpose: eligibility and `weight * (1 + priority)` are pure functions of the state, so
-        this can be pushed on every backstage update. The scorers are NOT run here - they cost LLM calls
-        and only make sense at an actual decision, where the decision log records them.
-        """
-        played = {h["beat_id"] for h in state.get("beat_history", [])}
-        clock = float(state.get("clock_s", 0))
+    def must_follow(self, state: dict[str, Any], turn: dict[str, Any] | None, exclude: str | None = None) -> Beat | None:
+        """The triggered must-follow beat with the lowest rank (story.md §9.4), if any."""
+        ctx = rule_ctx(state, turn)
+        hits = [
+            b for b in self.eligible(state, turn)
+            if b.id != exclude and b.compiled["must_follow"] and truthy(b.compiled["must_follow"], ctx)
+        ]
+        return min(hits, key=lambda b: b.must_follow_rank or 99) if hits else None
+
+    def ending_after_testimony(self, state: dict[str, Any], turn: dict[str, Any] | None) -> Beat | None:
+        """The eligible ending with the lowest ending_rank (beat-script.md §4). Only once testimony is done."""
+        if not completed(state, "testimony"):
+            return None
+        ends = [b for b in self.eligible(state, turn) if b.is_ending]
+        return min(ends, key=lambda b: b.ending_rank or 99) if ends else None
+
+    # -- views -----------------------------------------------------------------
+    def shelf(self, state: dict[str, Any], turn: dict[str, Any] | None = None) -> list[dict[str, Any]]:
+        """Every beat with its standing right now, for the Console's beat shelf. Cheap: no scorers run."""
+        ctx = rule_ctx(state, turn)
         out: list[dict[str, Any]] = []
         for b in self.beats:
-            repeatable = bool(b.raw.get("repeatable"))
-            min_clock = b.raw.get("min_clock_s")
-            reason = ""
-            if b.id in played and not repeatable:
-                reason = "already played"
-            elif min_clock is not None and clock < float(min_clock):
-                reason = f"waits for clock {float(min_clock):.0f}s"
-            elif not truthy(b.compiled["preconditions"], state):
-                reason = "preconditions false"
-            priority = self.priority(b, state)
+            reason = self.why_not(b, state, turn)
+            entry = self.entry_for(b, ctx) if reason == "" else None
+            priority = self.priority(b, ctx, entry)
             out.append(
                 {
                     "beat_id": b.id,
@@ -84,29 +112,22 @@ class BeatPool:
                     "type": b.type,
                     "origin": b.origin,
                     "tension_slope": b.tension_slope,
+                    "minutes": b.minutes,
                     "weight": b.weight,
                     "priority": priority,
-                    "base_score": b.weight * (1.0 + priority),
+                    "must_follow_rank": b.must_follow_rank,
+                    "entry": entry["id"] if entry else None,
                     "eligible": reason == "",
                     "reason": reason,
-                    "repeatable": repeatable,
-                    "played": b.id in played,
-                    "aborts_now": self.should_abort(b, state),
+                    "played": completed(state, b.id),
+                    "current": state.get("current_beat") == b.id,
                 }
             )
-        out.sort(key=lambda r: (not r["eligible"], -r["base_score"], r["beat_id"]))
+        out.sort(key=lambda r: (not r["eligible"], -r["priority"], -r["weight"], r["beat_id"]))
         return out
 
-    @staticmethod
-    def should_abort(beat: Beat, state: dict[str, Any]) -> bool:
-        rule = beat.compiled["abort_if"]
-        return bool(rule) and truthy(rule, state)
-
-    def spine(self) -> list[Beat]:
-        return [b for b in self.beats if b.type == "spine"]
-
     def endings(self) -> list[Beat]:
-        return [b for b in self.beats if b.type == "ending"]
+        return [b for b in self.beats if b.is_ending]
 
     def public(self) -> list[dict[str, Any]]:
         return [b.public() for b in self.beats]
