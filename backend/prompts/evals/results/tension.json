@@ -1,0 +1,179 @@
+{
+ "stamp": {
+  "provider": "openai",
+  "model": "deepseek-flash",
+  "prompt_version": 1
+ },
+ "items": {
+  "llm": [
+   {
+    "id": "t_arrival",
+    "expected": 1.0,
+    "got": 1.0,
+    "reason": "The arrival is mostly polite and warm, with only a faint oddness in the too-fast door and Mia's relieved greeting.",
+    "meta": {
+     "role": "tension",
+     "provider": "openai",
+     "model": "deepseek-flash",
+     "prompt_version": 1,
+     "cached": false,
+     "attempts": 1,
+     "errors": [],
+     "latency_ms": 2882.0
+    }
+   },
+   {
+    "id": "t_smalltalk",
+    "expected": 1.0,
+    "got": 1.0,
+    "reason": "Polite dinner small talk with only a slightly delayed laugh hinting at unease.",
+    "meta": {
+     "role": "tension",
+     "provider": "openai",
+     "model": "deepseek-flash",
+     "prompt_version": 1,
+     "cached": false,
+     "attempts": 1,
+     "errors": [],
+     "latency_ms": 1720.7
+    }
+   },
+   {
+    "id": "t_fourth_setting",
+    "expected": 2.0,
+    "got": 2.0,
+    "reason": "Julian dismisses Leo's absence as routine, but the empty place and Mia's flinch make the moment feel quietly wrong rather than openly dangerous.",
+    "meta": {
+     "role": "tension",
+     "provider": "openai",
+     "model": "deepseek-flash",
+     "prompt_version": 1,
+     "cached": false,
+     "attempts": 1,
+     "errors": [],
+     "latency_ms": 2837.6
+    }
+   },
+   {
+    "id": "t_kitchen_bait",
+    "expected": 2.5,
+    "got": 3.0,
+    "reason": "Mia's lowered voice, doorway glance, and plea for reassurance create private pressure and an unspoken warning about what 'he' might say at dinner.",
+    "meta": {
+     "role": "tension",
+     "provider": "openai",
+     "model": "deepseek-flash",
+     "prompt_version": 1,
+     "cached": false,
+     "attempts": 1,
+     "errors": [],
+     "latency_ms": 2747.3
+    }
+   },
+   {
+    "id": "t_two_afternoons",
+    "expected": 3.5,
+    "got": 4.0,
+    "reason": "Contradictory alibis collapse into open accusations and both hosts pressure the player to corroborate, while the glass wobbling on the hidden crate raises the immediate risk.",
+    "meta": {
+     "role": "tension",
+     "provider": "openai",
+     "model": "deepseek-flash",
+     "prompt_version": 1,
+     "cached": false,
+     "attempts": 1,
+     "errors": [],
+     "latency_ms": 11112.3
+    }
+   },
+   {
+    "id": "t_buzz",
+    "expected": 4.0,
+    "got": 4.0,
+    "reason": "Julian's buzzing hidden phone and Mia's remark about two phones collide with the revelation that Leo called twice and planned to arrive early, making the discrepancy feel like evidence and raising immediate suspicion.",
+    "meta": {
+     "role": "tension",
+     "provider": "openai",
+     "model": "deepseek-flash",
+     "prompt_version": 1,
+     "cached": false,
+     "attempts": 1,
+     "errors": [],
+     "latency_ms": 6330.4
+    }
+   },
+   {
+    "id": "t_admission",
+    "expected": 5.0,
+    "got": 4.5,
+    "reason": "Mia reveals the hidden presence has been here all along and both hosts turn to the player, making the concealed body an open confrontation.",
+    "meta": {
+     "role": "tension",
+     "provider": "openai",
+     "model": "deepseek-flash",
+     "prompt_version": 1,
+     "cached": false,
+     "attempts": 1,
+     "errors": [],
+     "latency_ms": 2591.2
+    }
+   },
+   {
+    "id": "t_quiet_after",
+    "expected": 2.5,
+    "got": 2.0,
+    "reason": "The untouched drinks, Mia's abruptly abandoned laugh, and the offstage car door create pervasive unease, but no open conflict or immediate threat surfaces in this quiet beat.",
+    "meta": {
+     "role": "tension",
+     "provider": "openai",
+     "model": "deepseek-flash",
+     "prompt_version": 1,
+     "cached": false,
+     "attempts": 1,
+     "errors": [],
+     "latency_ms": 2570.5
+    }
+   },
+   {
+    "id": "t_knock",
+    "expected": 5.0,
+    "got": 5.0,
+    "reason": "A knock at the door while a hidden body lies under the crate sends the scene into immediate crisis, with Julian urging silence and no one moving.",
+    "meta": {
+     "role": "tension",
+     "provider": "openai",
+     "model": "deepseek-flash",
+     "prompt_version": 1,
+     "cached": false,
+     "attempts": 1,
+     "errors": [],
+     "latency_ms": 2768.1
+    }
+   },
+   {
+    "id": "t_epilogue",
+    "expected": 3.0,
+    "got": 4.0,
+    "reason": "The movers lifting the crate and calling it 'heavy' puts the hidden body at immediate risk of discovery, though no confrontation has yet occurred.",
+    "meta": {
+     "role": "tension",
+     "provider": "openai",
+     "model": "deepseek-flash",
+     "prompt_version": 1,
+     "cached": false,
+     "attempts": 1,
+     "errors": [],
+     "latency_ms": 3448.9
+    }
+   }
+  ]
+ },
+ "summary": {
+  "llm": {
+   "n": 10,
+   "mae": 0.3,
+   "within_1": 1.0,
+   "spearman": 0.9751204679489438
+  }
+ }
+}

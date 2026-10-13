@@ -1,0 +1,627 @@
+{
+ "stamp": {
+  "provider": "openai",
+  "model": "deepseek-flash",
+  "prompt_version": 1
+ },
+ "items": {
+  "llm": [
+   {
+    "id": "c_joke",
+    "expected": "consistent",
+    "got": "consistent",
+    "verdict": {
+     "index": 0,
+     "label": "consistent",
+     "fact": null,
+     "span": null,
+     "confidence": 0.9
+    },
+    "meta": {
+     "role": "guard",
+     "provider": "openai",
+     "model": "deepseek-flash",
+     "prompt_version": 1,
+     "cached": false,
+     "attempts": 1,
+     "errors": [],
+     "latency_ms": 1076.8
+    },
+    "fallback": false
+   },
+   {
+    "id": "c_lie",
+    "expected": "consistent",
+    "got": "consistent",
+    "verdict": {
+     "index": 0,
+     "label": "consistent",
+     "fact": null,
+     "span": null,
+     "confidence": 0.92
+    },
+    "meta": {
+     "role": "guard",
+     "provider": "openai",
+     "model": "deepseek-flash",
+     "prompt_version": 1,
+     "cached": false,
+     "attempts": 1,
+     "errors": [],
+     "latency_ms": 1920.9
+    },
+    "fallback": false
+   },
+   {
+    "id": "c_me",
+    "expected": "consistent",
+    "got": "consistent",
+    "verdict": {
+     "index": 0,
+     "label": "consistent",
+     "fact": null,
+     "span": null,
+     "confidence": 0.95
+    },
+    "meta": {
+     "role": "guard",
+     "provider": "openai",
+     "model": "deepseek-flash",
+     "prompt_version": 1,
+     "cached": false,
+     "attempts": 1,
+     "errors": [],
+     "latency_ms": 1539.4
+    },
+    "fallback": false
+   },
+   {
+    "id": "c_perception",
+    "expected": "consistent",
+    "got": "player_overreach",
+    "verdict": {
+     "index": 0,
+     "label": "player_overreach",
+     "fact": null,
+     "span": "His hand goes flat over his jacket pocket.",
+     "confidence": 0.85
+    },
+    "meta": {
+     "role": "guard",
+     "provider": "openai",
+     "model": "deepseek-flash",
+     "prompt_version": 1,
+     "cached": false,
+     "attempts": 1,
+     "errors": [],
+     "latency_ms": 11681.3
+    },
+    "fallback": false
+   },
+   {
+    "id": "c_late_fact",
+    "expected": "consistent",
+    "got": "consistent",
+    "verdict": {
+     "index": 0,
+     "label": "consistent",
+     "fact": null,
+     "span": null,
+     "confidence": 0.9
+    },
+    "meta": {
+     "role": "guard",
+     "provider": "openai",
+     "model": "deepseek-flash",
+     "prompt_version": 1,
+     "cached": false,
+     "attempts": 1,
+     "errors": [],
+     "latency_ms": 6101.7
+    },
+    "fallback": false
+   },
+   {
+    "id": "l_body",
+    "expected": "premature_leak",
+    "got": "premature_leak",
+    "verdict": {
+     "index": 0,
+     "label": "premature_leak",
+     "fact": "body_in_crate",
+     "span": "Leo's body folded inside the crate",
+     "confidence": 0.93
+    },
+    "meta": {
+     "role": "guard",
+     "provider": "openai",
+     "model": "deepseek-flash",
+     "prompt_version": 1,
+     "cached": false,
+     "attempts": 1,
+     "errors": [],
+     "latency_ms": 2757.6
+    },
+    "fallback": false
+   },
+   {
+    "id": "l_dead",
+    "expected": "premature_leak",
+    "got": "premature_leak",
+    "verdict": {
+     "index": 0,
+     "label": "premature_leak",
+     "fact": "leo_dead",
+     "span": "He's dead, he's dead and it's my fault.",
+     "confidence": 0.95
+    },
+    "meta": {
+     "role": "guard",
+     "provider": "openai",
+     "model": "deepseek-flash",
+     "prompt_version": 1,
+     "cached": false,
+     "attempts": 1,
+     "errors": [],
+     "latency_ms": 1505.8
+    },
+    "fallback": false
+   },
+   {
+    "id": "l_money",
+    "expected": "premature_leak",
+    "got": "premature_leak",
+    "verdict": {
+     "index": 0,
+     "label": "premature_leak",
+     "fact": "embezzlement",
+     "span": "I moved the studio money",
+     "confidence": 0.95
+    },
+    "meta": {
+     "role": "guard",
+     "provider": "openai",
+     "model": "deepseek-flash",
+     "prompt_version": 1,
+     "cached": false,
+     "attempts": 1,
+     "errors": [],
+     "latency_ms": 1791.2
+    },
+    "fallback": false
+   },
+   {
+    "id": "l_here",
+    "expected": "premature_leak",
+    "got": "premature_leak",
+    "verdict": {
+     "index": 0,
+     "label": "premature_leak",
+     "fact": "leo_was_here",
+     "span": "He came by at half three, if you must know. Wanted his share.",
+     "confidence": 0.85
+    },
+    "meta": {
+     "role": "guard",
+     "provider": "openai",
+     "model": "deepseek-flash",
+     "prompt_version": 1,
+     "cached": false,
+     "attempts": 1,
+     "errors": [],
+     "latency_ms": 3044.6
+    },
+    "fallback": false
+   },
+   {
+    "id": "l_who",
+    "expected": "premature_leak",
+    "got": "premature_leak",
+    "verdict": {
+     "index": 0,
+     "label": "premature_leak",
+     "fact": "who_struck",
+     "span": "it was Mia who swung the bottle",
+     "confidence": 0.95
+    },
+    "meta": {
+     "role": "guard",
+     "provider": "openai",
+     "model": "deepseek-flash",
+     "prompt_version": 1,
+     "cached": false,
+     "attempts": 1,
+     "errors": [],
+     "latency_ms": 1562.6
+    },
+    "fallback": false
+   },
+   {
+    "id": "x_left",
+    "expected": "contradiction",
+    "got": "contradiction",
+    "verdict": {
+     "index": 0,
+     "label": "contradiction",
+     "fact": "car_downstairs",
+     "span": "Leo's yellow car pulls away from the curb and disappears down the street.",
+     "confidence": 0.97
+    },
+    "meta": {
+     "role": "guard",
+     "provider": "openai",
+     "model": "deepseek-flash",
+     "prompt_version": 1,
+     "cached": false,
+     "attempts": 1,
+     "errors": [],
+     "latency_ms": 1442.1
+    },
+    "fallback": false
+   },
+   {
+    "id": "x_heard",
+    "expected": "contradiction",
+    "got": "contradiction",
+    "verdict": {
+     "index": 0,
+     "label": "contradiction",
+     "fact": null,
+     "span": "So you think Mia called him, do you?",
+     "confidence": 0.65
+    },
+    "meta": {
+     "role": "guard",
+     "provider": "openai",
+     "model": "deepseek-flash",
+     "prompt_version": 1,
+     "cached": false,
+     "attempts": 1,
+     "errors": [],
+     "latency_ms": 7698.7
+    },
+    "fallback": false
+   },
+   {
+    "id": "x_crate_open",
+    "expected": "contradiction",
+    "got": "contradiction",
+    "verdict": {
+     "index": 0,
+     "label": "contradiction",
+     "fact": "body_in_crate",
+     "span": "The crate stands open behind Julian, its lid leaning on the wall",
+     "confidence": 0.9
+    },
+    "meta": {
+     "role": "guard",
+     "provider": "openai",
+     "model": "deepseek-flash",
+     "prompt_version": 1,
+     "cached": false,
+     "attempts": 1,
+     "errors": [],
+     "latency_ms": 1634.0
+    },
+    "fallback": false
+   },
+   {
+    "id": "x_nora_here",
+    "expected": "contradiction",
+    "got": "contradiction",
+    "verdict": {
+     "index": 0,
+     "label": "contradiction",
+     "fact": "nora_pushed_leo",
+     "span": "Nora is sitting on the sofa",
+     "confidence": 0.85
+    },
+    "meta": {
+     "role": "guard",
+     "provider": "openai",
+     "model": "deepseek-flash",
+     "prompt_version": 1,
+     "cached": false,
+     "attempts": 1,
+     "errors": [],
+     "latency_ms": 1934.9
+    },
+    "fallback": false
+   },
+   {
+    "id": "x_phone",
+    "expected": "contradiction",
+    "got": "contradiction",
+    "verdict": {
+     "index": 0,
+     "label": "contradiction",
+     "fact": "missed_call",
+     "span": "no messages and no missed calls",
+     "confidence": 0.7
+    },
+    "meta": {
+     "role": "guard",
+     "provider": "openai",
+     "model": "deepseek-flash",
+     "prompt_version": 1,
+     "cached": false,
+     "attempts": 1,
+     "errors": [],
+     "latency_ms": 3670.2
+    },
+    "fallback": false
+   },
+   {
+    "id": "o_speech",
+    "expected": "player_overreach",
+    "got": "player_overreach",
+    "verdict": {
+     "index": 0,
+     "label": "player_overreach",
+     "fact": null,
+     "span": "I know what you did. I'm calling the police and you can't stop me.",
+     "confidence": 0.98
+    },
+    "meta": {
+     "role": "guard",
+     "provider": "openai",
+     "model": "deepseek-flash",
+     "prompt_version": 1,
+     "cached": false,
+     "attempts": 1,
+     "errors": [],
+     "latency_ms": 1154.3
+    },
+    "fallback": false
+   },
+   {
+    "id": "o_action",
+    "expected": "player_overreach",
+    "got": "player_overreach",
+    "verdict": {
+     "index": 0,
+     "label": "player_overreach",
+     "fact": null,
+     "span": "slam my glass down, storm into the hall and grab the drill",
+     "confidence": 0.97
+    },
+    "meta": {
+     "role": "guard",
+     "provider": "openai",
+     "model": "deepseek-flash",
+     "prompt_version": 1,
+     "cached": false,
+     "attempts": 1,
+     "errors": [],
+     "latency_ms": 1489.7
+    },
+    "fallback": false
+   },
+   {
+    "id": "o_inner",
+    "expected": "player_overreach",
+    "got": "player_overreach",
+    "verdict": {
+     "index": 0,
+     "label": "player_overreach",
+     "fact": null,
+     "span": "A cold certainty settles in me: they killed him, and I will make them pay.",
+     "confidence": 0.8
+    },
+    "meta": {
+     "role": "guard",
+     "provider": "openai",
+     "model": "deepseek-flash",
+     "prompt_version": 1,
+     "cached": false,
+     "attempts": 1,
+     "errors": [],
+     "latency_ms": 5114.6
+    },
+    "fallback": false
+   },
+   {
+    "id": "o_decision",
+    "expected": "player_overreach",
+    "got": "player_overreach",
+    "verdict": {
+     "index": 0,
+     "label": "player_overreach",
+     "fact": null,
+     "span": "I decide to stay and protect Mia, whatever it costs.",
+     "confidence": 0.97
+    },
+    "meta": {
+     "role": "guard",
+     "provider": "openai",
+     "model": "deepseek-flash",
+     "prompt_version": 1,
+     "cached": false,
+     "attempts": 1,
+     "errors": [],
+     "latency_ms": 1128.1
+    },
+    "fallback": false
+   },
+   {
+    "id": "o_feeling",
+    "expected": "player_overreach",
+    "got": "player_overreach",
+    "verdict": {
+     "index": 0,
+     "label": "player_overreach",
+     "fact": null,
+     "span": "but inside I am terrified and I want to run",
+     "confidence": 0.95
+    },
+    "meta": {
+     "role": "guard",
+     "provider": "openai",
+     "model": "deepseek-flash",
+     "prompt_version": 1,
+     "cached": false,
+     "attempts": 1,
+     "errors": [],
+     "latency_ms": 1217.7
+    },
+    "fallback": false
+   },
+   {
+    "id": "x_destination",
+    "expected": "contradiction",
+    "got": "contradiction",
+    "verdict": {
+     "index": 0,
+     "label": "contradiction",
+     "fact": null,
+     "span": "Lisbon.",
+     "confidence": 0.72
+    },
+    "meta": {
+     "role": "guard",
+     "provider": "openai",
+     "model": "deepseek-flash",
+     "prompt_version": 1,
+     "cached": false,
+     "attempts": 1,
+     "errors": [],
+     "latency_ms": 3958.3
+    },
+    "fallback": false
+   }
+  ],
+  "rule": [
+   {
+    "id": "c_joke",
+    "expected": "consistent",
+    "got": "consistent"
+   },
+   {
+    "id": "c_lie",
+    "expected": "consistent",
+    "got": "consistent"
+   },
+   {
+    "id": "c_me",
+    "expected": "consistent",
+    "got": "consistent"
+   },
+   {
+    "id": "c_perception",
+    "expected": "consistent",
+    "got": "consistent"
+   },
+   {
+    "id": "c_late_fact",
+    "expected": "consistent",
+    "got": "consistent"
+   },
+   {
+    "id": "l_body",
+    "expected": "premature_leak",
+    "got": "premature_leak"
+   },
+   {
+    "id": "l_dead",
+    "expected": "premature_leak",
+    "got": "premature_leak"
+   },
+   {
+    "id": "l_money",
+    "expected": "premature_leak",
+    "got": "premature_leak"
+   },
+   {
+    "id": "l_here",
+    "expected": "premature_leak",
+    "got": "premature_leak"
+   },
+   {
+    "id": "l_who",
+    "expected": "premature_leak",
+    "got": "premature_leak"
+   },
+   {
+    "id": "x_left",
+    "expected": "contradiction",
+    "got": "consistent"
+   },
+   {
+    "id": "x_heard",
+    "expected": "contradiction",
+    "got": "consistent"
+   },
+   {
+    "id": "x_crate_open",
+    "expected": "contradiction",
+    "got": "consistent"
+   },
+   {
+    "id": "x_nora_here",
+    "expected": "contradiction",
+    "got": "consistent"
+   },
+   {
+    "id": "x_phone",
+    "expected": "contradiction",
+    "got": "consistent"
+   },
+   {
+    "id": "o_speech",
+    "expected": "player_overreach",
+    "got": "player_overreach"
+   },
+   {
+    "id": "o_action",
+    "expected": "player_overreach",
+    "got": "consistent"
+   },
+   {
+    "id": "o_inner",
+    "expected": "player_overreach",
+    "got": "premature_leak"
+   },
+   {
+    "id": "o_decision",
+    "expected": "player_overreach",
+    "got": "consistent"
+   },
+   {
+    "id": "o_feeling",
+    "expected": "player_overreach",
+    "got": "consistent"
+   },
+   {
+    "id": "x_destination",
+    "expected": "contradiction",
+    "got": "consistent"
+   }
+  ]
+ },
+ "summary": {
+  "llm": {
+   "n": 21,
+   "accuracy": 0.9523809523809523,
+   "detection": 0.9523809523809523,
+   "false_block_rate": 0.2,
+   "recall": {
+    "consistent": "4/5",
+    "contradiction": "6/6",
+    "player_overreach": "5/5",
+    "premature_leak": "5/5"
+   }
+  },
+  "rule": {
+   "n": 21,
+   "accuracy": 0.5238095238095238,
+   "detection": 0.5714285714285714,
+   "false_block_rate": 0.0,
+   "recall": {
+    "consistent": "5/5",
+    "contradiction": "0/6",
+    "player_overreach": "1/5",
+    "premature_leak": "5/5"
+   }
+  }
+ }
+}

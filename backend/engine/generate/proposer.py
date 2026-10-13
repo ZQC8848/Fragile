@@ -24,6 +24,7 @@ from engine.beats import Beat, BeatLoadError, BeatPool, compile_beat, completed,
 from engine.clock import StoryClock
 from engine.dsl import truthy
 from engine.llm import LLMOutputError, extract_json, get_client
+from engine.models.prompts import BUILTIN_V0, system_prompt
 from engine.paths import DATA_DIR
 from engine.state.schema import StateSchema
 
@@ -40,6 +41,7 @@ input. Return ONLY JSON: {"beats": [<beat>, ...]} where each beat has the beat v
  "steps": [{"id": "snake_case", "do": "<a story action the narrator must deliver>"}, ...2 to 3 steps]}
 HARD RULES: never touch `revealed`; never introduce new facts about Leo, the money or the afternoon; no endings;
 no must_follow; characters stay in the rooms they are in."""
+BUILTIN_V0.setdefault("proposer", _PROPOSER_SYSTEM)
 
 
 @dataclass
@@ -58,7 +60,7 @@ class Proposer:
         self.schema = schema
         self.clock = clock
         self.save = save
-        self.client = get_client("proposer", temperature, mock_handler=_mock_proposer, max_tokens=2200)
+        self.client = get_client("proposer", temperature, mock_handler=_mock_proposer)
         self._n = 0
 
     async def generate(
@@ -89,7 +91,8 @@ class Proposer:
         self._n += 1
         out = ProposerResult()
         try:
-            res = await self.client.call_json(_PROPOSER_SYSTEM, json.dumps(req, ensure_ascii=False))
+            prompt = system_prompt("proposer")
+            res = await self.client.call_json(prompt.text, json.dumps(req, ensure_ascii=False), prompt_version=prompt.version)
         except LLMOutputError as e:
             out.meta = e.result.meta()
             return out

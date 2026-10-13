@@ -83,8 +83,9 @@ class RuleEncoderPath:
 class LLMEncoderPath:
     path = "llm"
 
-    def __init__(self, rule: RuleEncoder, temperature: float = 0.0):
+    def __init__(self, rule: RuleEncoder, temperature: float = 0.0, action_table: str = ""):
         self.rule = rule
+        self.action_table = action_table
         self.client = get_client("review", temperature, mock_handler=self._mock)
 
     def _mock(self, system: str, user: str) -> dict[str, Any]:
@@ -92,7 +93,7 @@ class LLMEncoderPath:
         return self.rule.encode(req["input"], req["context"])
 
     async def encode(self, turn_input: dict[str, Any], context: dict[str, Any]) -> EncoderOutput:
-        prompt = system_prompt("review")
+        prompt = system_prompt("review", ACTION_TABLE=self.action_table)
         payload = {"input": turn_input, "context": context}
         user = (
             "Review this turn of player input. Return only the JSON object.\n\n"
@@ -121,9 +122,11 @@ class TrainedEncoderPath:
 
 
 class Encoder:
-    def __init__(self, objects: dict[str, dict[str, Any]], active: str | None = None, shadow: bool | None = None):
+    def __init__(
+        self, objects: dict[str, dict[str, Any]], active: str | None = None, shadow: bool | None = None, action_table: str = ""
+    ):
         self.rule = RuleEncoder(objects)
-        llm = LLMEncoderPath(self.rule)
+        llm = LLMEncoderPath(self.rule, action_table=action_table)
         self.paths = {"rule": RuleEncoderPath(self.rule), "llm": llm, "trained": TrainedEncoderPath(llm)}
         self.active = active or path_from_env("encoder")
         self.shadow = shadow_from_env() if shadow is None else shadow

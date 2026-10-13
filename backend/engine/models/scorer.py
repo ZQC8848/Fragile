@@ -22,6 +22,7 @@ from typing import Any
 
 from engine.beats import GENERATE_NEW_ID, Beat
 from engine.llm import LLMOutputError, get_client
+from engine.models.prompts import BUILTIN_V0, system_prompt
 from engine.paths import SCHEMAS_DIR
 
 SCORER_SCHEMA = json.loads((SCHEMAS_DIR / "llm" / "scorer.json").read_text(encoding="utf-8"))
@@ -127,6 +128,7 @@ Rules:
 - If NO shelf beat plausibly follows the player's last input, give GENERATE_NEW a high positive offset.
 - Otherwise keep GENERATE_NEW at or below 0.
 - Each candidate has a target_slope: the tension change the arc wants if that beat is played now."""
+BUILTIN_V0.setdefault("scorer", _SCORER_SYSTEM)
 
 
 class LLMOffsetScorer:
@@ -149,7 +151,8 @@ class LLMOffsetScorer:
         )
         err = ""
         try:
-            res = await self.client.call_json(_SCORER_SYSTEM, user, schema=SCORER_SCHEMA)
+            prompt = system_prompt("scorer")
+            res = await self.client.call_json(prompt.text, user, schema=SCORER_SCHEMA, prompt_version=prompt.version)
             offsets = {o["id"]: o for o in res.data.get("offsets", [])}
             self.last_meta = res.meta()
         except LLMOutputError as e:

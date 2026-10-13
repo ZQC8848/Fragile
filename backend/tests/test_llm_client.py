@@ -207,3 +207,25 @@ async def test_without_schema_any_json_passes():
     handler, _ = scripted(['Sure: {"offsets": []}'])
     llm = get_client("scorer", 0.2, mock_handler=handler)
     assert await llm.complete_json("sys", "u") == {"offsets": []}
+
+
+async def test_provider_errors_get_one_retry_then_the_fallback_error():
+    class Flaky(FakeProvider):
+        async def _provider_complete(self, provider, system, user, temp, json_mode):
+            self.prompts.append((system, user))
+            if len(self.prompts) == 1:
+                raise RuntimeError("503 overloaded")
+            return self.replies[0]
+
+    ok = Flaky(['{"verdict": "ok"}'])
+    res = await ok.call_json("sys", "the input", schema=VERDICT_SCHEMA)
+    assert res.data == {"verdict": "ok"} and res.attempts == 2 and "provider error" in res.errors[0]
+    assert ok.prompts[0][1].endswith("Reply in json.")  # JSON mode needs the word for some endpoints
+
+    class Down(FakeProvider):
+        async def _provider_complete(self, provider, system, user, temp, json_mode):
+            raise RuntimeError("connection refused")
+
+    with pytest.raises(LLMOutputError) as e:
+        await Down([]).call_json("sys", "the input", schema=VERDICT_SCHEMA)
+    assert e.value.result.attempts == 2

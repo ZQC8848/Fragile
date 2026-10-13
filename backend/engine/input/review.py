@@ -82,6 +82,7 @@ class Review:
             "silent": self.silent,
             "validity": self.validity,
             "encoder": self.run.log(lambda r: r.public()) if self.run else None,
+            "llm_calls": self.extra.get("llm_calls", []),
         }
 
 

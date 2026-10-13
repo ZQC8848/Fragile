@@ -98,6 +98,21 @@ class WorldRules:
         """{object: {topic, where}} for the encoder."""
         return {name: {"topic": o.get("topic"), "where": o.get("where")} for name, o in self.objects.items()}
 
+    def action_table(self) -> str:
+        """The closed action table as text, for the review prompt (M2 maps actions onto it)."""
+        lines = [
+            'verb "go_to", target = a room: hall, living, kitchen, balcony, bathroom (one adjacent room per turn)',
+            'verb "take_aside", target = "julian" or "mia", arg = the room to go to: kitchen, balcony or hall',
+            'verb "leave", target = "front_door" (walking out of the flat; only from the hall)',
+        ]
+        for name, obj in self.objects.items():
+            where = ", ".join(obj["where"]) if obj.get("where") else "any room"
+            verbs = ", ".join(f'"{v}"' for v in obj["actions"])
+            arg = [v for v, spec in obj["actions"].items() if spec.get("arg")]
+            extra = f'; arg = free text for {", ".join(arg)}' if arg else ""
+            lines.append(f'target "{name}" (in {where}): verb {verbs}{extra}')
+        return "\n".join(f"- {line}" for line in lines)
+
     def perceivable(self, state: dict[str, Any]) -> list[str]:
         """Objects the player can see from where they stand."""
         room = state.get("player_room")

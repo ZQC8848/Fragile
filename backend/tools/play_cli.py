@@ -1,6 +1,10 @@
 """Play Fragile in the terminal, against the same Session the WebSocket uses (plan.md M3).
 
     uv run python tools/play_cli.py [--name Sam] [--gender female|male|nonbinary] [--seed 1] [--scorer A|B|C|random]
+                                    [--live all | --live review,narrator,guard]
+
+Without --live every LLM role answers from its offline mock (unless backend/.env lists it in LLM_LIVE_ROLES).
+--live all sends every role to the provider configured in backend/.env.
 
 Type what you say and do in one line ("I lean on the railing. "Isn't that Leo's car?""). Quotes are speech,
 the rest is action. The draft comes back split into channels: Enter sends it, `e` edits the channels, anything
@@ -20,6 +24,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import os
 import shutil
 import sys
 import textwrap
@@ -251,6 +256,7 @@ class Cli:
             ("guard", [(g["attempt"], g["steps_ok"]) for g in r.get("guard") or []]),
             ("state diff", r.get("state_diff")),
             ("latency ms", r.get("latency_ms")),
+            ("llm calls", [f"{c['role']}:{c['model']}@v{c['prompt_version']} {c['latency_ms']:.0f}ms x{c['attempts']}" for c in r.get("llm_calls") or []]),
         ]
         for k, v in rows:
             self.say(f"{k:>10}: {json.dumps(v, ensure_ascii=False, default=str)}")
@@ -263,8 +269,13 @@ def main() -> None:
     ap.add_argument("--seed", type=int, default=None)
     ap.add_argument("--scorer", default=None, help="A|B|C|random (default: MODEL_SCORER or B)")
     ap.add_argument("--tau", type=float, default=1.0)
+    ap.add_argument("--live", default=None, help="roles to send to their real provider: all, or a comma list")
     args = ap.parse_args()
     load_env()
+    if args.live:
+        from engine.llm import ROLES
+
+        os.environ["LLM_LIVE_ROLES"] = ",".join(ROLES) if args.live == "all" else args.live
 
     async def go() -> None:
         name = args.name or (await stdin_line("Your name: ") or "Sam").strip() or "Sam"

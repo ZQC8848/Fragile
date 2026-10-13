@@ -12,7 +12,7 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from engine.llm import LLMOutputError, extract_json, get_client
+from engine.llm import LLMOutputError, get_client
 from engine.models.base import SlotRun, path_from_env, run_slot, shadow_from_env
 from engine.models.prompts import system_prompt
 from engine.paths import SCHEMAS_DIR
@@ -32,15 +32,17 @@ class LLMTensionPath:
 
     def __init__(self, temperature: float = 0.0):
         self.client = get_client("tension", temperature, mock_handler=self._mock)
+        #: the declared tension, for the offline mock only: it is never put in the prompt, because a measure
+        #: that reads the beats' own claims would grade the drama manager with its own answers
+        self._declared = 1.0
 
-    @staticmethod
-    def _mock(system: str, user: str) -> dict[str, Any]:
-        req = extract_json(user)
-        return {"tension": float(req["declared_tension"]), "reason": "mock: declared tension"}
+    def _mock(self, system: str, user: str) -> dict[str, Any]:
+        return {"tension": self._declared, "reason": "mock: declared tension"}
 
     async def estimate(self, window: list[str], state: dict[str, Any]) -> dict[str, Any]:
         prompt = system_prompt("tension")
-        payload = {"window": window, "declared_tension": float(state.get("tension", 1))}
+        self._declared = float(state.get("tension", 1))
+        payload = {"window": window}
         user = f"Rate the tension of this window. Return only the JSON object.\n\n```json\n{json.dumps(payload, ensure_ascii=False, indent=1)}\n```"
         try:
             res = await self.client.call_json(prompt.text, user, schema=TENSION_SCHEMA, prompt_version=prompt.version)

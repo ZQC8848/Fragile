@@ -1,0 +1,631 @@
+uv run python tools/play_cli.py [--name Sam] [--gender female|male|nonbinary] [--seed 1] [--scorer A|B|C|random]
+                                    [--live all | --live review,narrator,guard]
+
+Without --live every LLM role answers from its offline mock (unless backend/.env lists it in LLM_LIVE_ROLES).
+--live all sends every role to the provider configured in backend/.env.
+
+Type what you say and do in one line ("I lean on the railing. "Isn't that Leo's car?""). Quotes are speech,
+the rest is action. The draft comes back split into channels: Enter sends it, `e` edits the channels, anything
+else replaces it. An empty line is silence.
+
+It stopped raining an hour ago. The street still shines. Out front, a dented yellow hatchback sits
+under the streetlight with two wheels up on the curb. My phone buzzed a few times this afternoon. I
+haven't checked it. Upstairs, someone has taped a sign to Julian and Mia's door: MOVERS 6 AM. The
+bell is barely pressed when the door opens, almost before the ringing has finished. Mia stands in
+the doorway with a tea towel twisted in her hands, though her hands look perfectly dry. Her smile
+arrives a half second late, and then all at once, too warmly, the way you greet someone at a
+hospital. For a moment she looks past me, down the stairwell, toward the street and the little
+yellow car on the curb. Then back to me. She folds the towel once, twice, and steps aside to make
+room in the narrow hall. Behind her the flat is all boxes and lamplight, the furniture already gone
+somewhere else. She holds the door and waits, head tilted, as if she has been listening for me
+specifically.
+  [hall · Mia]
+> "Where's Leo tonight?"
+  draft: say: "Where's Leo tonight?" · to mia
+  Enter = send · e = edit channels · or type again > <Enter>
+
+  [you · say: "Where's Leo tonight?" · to mia]
+"Where's Leo tonight?" Julian's voice reaches the hall before he does. He appears in the kitchen
+doorway with a bottle in one hand, jacket still on, smiling like the question was addressed to him
+all along. Julian: "Not yet. He'll turn up. He always turns up late and apologises beautifully." Mia
+looks at her shoes. Then, as if remembering something urgent, she crosses the hall and wraps her
+arms around me, and holds on a beat too long. Mia: "You came. You actually came." Her hands, where
+they press against my back, are cold and damp, as if she has just washed something. Over her
+shoulder I can see the kitchen, the wiped counters, the windows checked shut. She lets go and
+smooths my sleeve where it didn't need smoothing, smiling up at me, waiting, as though the hug had
+been an answer to something.
+  [picture: door_mia]
+  [hall · Mia]
+> I sip my wine and watch them.
+  draft: do: I sip my wine · face: watching them
+  Enter = send · e = edit channels · or type again > <Enter>
+
+  [you · do: I sip my wine · face: watching them]
+I sip my wine, watching the two of them. Mia is at my elbow before the glass is half lowered. Mia:
+"Are you warm enough? There's more food, there's plenty, let me get you something, Sam, you've had
+nothing all evening." She wipes a corner of the counter that already shines. Julian appears with two
+glasses held in one hand. Julian: "There they are. Keep your shoes on, we've got nothing left to
+scratch." He steers me through into the living room. One photo left on the wall, boxes stacked
+everywhere, the flat echoing around them. Mia: "Did you drive? Where did you park?" Julian cuts in,
+easy as anything, and puts a glass into my hand. Dinner is laid out on a shipping crate under a
+tablecloth, four folding chairs around it, plates waiting. Mia is still looking at me, waiting for
+an answer.
+  [living · Julian, Mia]
+> I sip my wine and watch them.
+  draft: do: I sip my wine · face: watch them
+  Enter = send · e = edit channels · or type again > <Enter>
+
+  [you · do: I sip my wine · face: watch them]
+I lift my glass and sip, my eyes on the two of them. Julian is on his feet before the glass is half
+lowered, bottle in hand, topping me up with a flourish, his own glass still full from the last pour.
+Julian: "There. Can't do a farewell on an empty glass, Sam, it's bad luck. To the new life. Ours, I
+mean. Decided last week, if you can believe that. Spontaneous. You know me." He waves the bottle
+over the tablecloth, over the crate beneath it, like a man showing off his dining room. Julian: "The
+table left on Tuesday. The crate is sturdier anyway." Mia peels the lids off the takeaway boxes one
+by one, and the smell of the old place rises between us, the same order as always. She lines the
+cartons up neatly, then turns one so the label faces the wall. Julian raises his glass above the
+cartons and holds it there, smiling, waiting for me to raise mine.
+  [picture: dinner_on_crate]
+  [living · Julian, Mia]
+> "Where's Leo tonight?"
+  draft: say: "Where's Leo tonight?" · to both
+  Enter = send · e = edit channels · or type again > <Enter>
+
+  [you · say: "Where's Leo tonight?" · to both]
+"Where's Leo tonight?" The question lands on the tablecloth somewhere between the cartons. Julian's
+smile doesn't move. He picks up the bottle, studies the label like it just got interesting. Julian:
+"Flaked. You know how he is. Three weeks of yes, then radio silence on the night. Classic." He says
+it to the wine, not to me. Mia has gone very still over the takeaway lids, and then she is moving
+again, too quickly, coming around the crate to take my elbow. Mia: "Sit, sit, Sam, you're standing
+around like a removal man. Not there though. That end is wobbly, the whole thing, it's fine, it's
+just wobbly, come round this side." She steers me to the far chair and folds me into it, and stays
+standing herself, one hand on the back of my seat, well away from the wobbly end. Julian sets a
+fourth plate down anyway, then looks at it, and moves it to the side. Julian: "More for us, eh?"
+  [living · Julian, Mia]
+> I sip my wine and watch them.
+  draft: do: I sip my wine · face: watch them
+  Enter = send · e = edit channels · or type again > <Enter>
+
+  [you · do: I sip my wine · face: watch them]
+I sip my wine and watch them over the rim of the glass. Julian is up again at once, bottle in hand,
+leaning across to top up Mia's glass though she has not touched it. Julian: "Drink up, darling. It's
+a celebration. Last dinner under this roof, eh? After tomorrow it's all the new life." He lifts his
+own glass above the cartons and holds it there, smiling. Julian: "To fresh starts." Mia's glass
+stays down on the tablecloth, full, her hand flat beside it. She smiles at the cartons instead of at
+the toast. Julian turns to me. Julian: "So. What have you been doing with yourself, Sam?" Julian
+checks his watch, a quick turn of the wrist inside the jacket cuff. Moved to the side of the crate,
+the fourth place setting is still laid. Plate, glass, fork. His question hangs above it all, waiting
+for an answer.
+  [living · Julian, Mia]
+> I sip my wine and watch them.
+  draft: do: sip my wine · face: watch them · to both
+  Enter = send · e = edit channels · or type again > <Enter>
+
+  [you · do: sip my wine · face: watch them · to both]
+I raise my glass and take a slow sip, watching them both over the rim. Julian is up again before I
+have set it down, bottle in hand. He tops up my glass, then Mia's, though hers stands untouched. His
+own is already full. He pours anyway. Julian: "Can't let the good stuff go to waste, can we? Not
+tonight. Tomorrow it's the new life, Sam. Spontaneous. You know me." Mia folds the corner of the
+tablecloth flat over the crate, smooths it down, folds it again. She is smiling at the cartons.
+Julian's gaze slides sideways to the fourth place, the plate and glass and fork still laid at the
+edge of the crate. He turns his wrist inside the jacket cuff. Julian: "Seven forty. Even for him,
+that's ambitious." He lifts his glass an inch off the cloth and holds it there, the toast from
+before still unfinished, and looks at me, waiting.
+  [living · Julian, Mia]
+> "Where's Leo tonight?"
+  draft: say: "Where's Leo tonight?" · to both
+  Enter = send · e = edit channels · or type again > <Enter>
+
+  [you · say: "Where's Leo tonight?" · to both]
+"Where's Leo tonight?" The question lands in the middle of the toast that never quite finished.
+Mia's hand stops moving on the tablecloth. Mia: "This morning. No. Yesterday." She and Julian
+exchange a look. It lasts half a second, no longer, and then Julian is on his feet. He reaches
+across the crate and gathers up the fourth place setting, plate, glass, fork, stacked one inside the
+other with a practised tilt of the wrist. Julian: "He's not coming. Classic Leo." Mia flinches as
+the fork slides against the plate. A small sound, quickly folded away under her napkin. Julian: "He
+does this every time, doesn't he, Sam?" He stands there holding the empty setting, smiling at me,
+waiting to be agreed with.
+  [picture: fourth_setting]
+  [living · Julian, Mia]
+> "I think Mia's right."
+  draft: say: "I think Mia's right." · to both
+  Enter = send · e = edit channels · or type again > <Enter>
+
+  [you · say: "I think Mia's right." · to both]
+"I think Mia's right." Julian looks up, delighted, the bottle already tilted. He tops up my glass,
+though I have barely touched it, then reaches for Mia's, which stands full. Julian: "Two to one.
+Outnumbered in my own flat. That's the new life starting early, that is." Julian: "See? She thinks
+I'm being harsh." He says it to the room, lightly, and lifts the stacked fourth setting off the
+sideboard. A moment later the plates land in the kitchen sink with a small, final clatter. Mia rises
+without a word, cloth in hand. Through the doorway I can see her wiping the counter, a counter that
+is already clean, the same corner, round and round. Then she seems to remember herself. She comes
+back, stacks the takeaway cartons one on top of the other, and holds them against her hip. Mia:
+"Sam, help me with these? He never does."
+  [living · Julian, Mia]
+> "Sure, I'll help."
+  draft: say: "Sure, I'll help." · to both
+  Enter = send · e = edit channels · or type again > <Enter>
+
+  [you · say: "Sure, I'll help." · to both]
+"Sure, I'll help." Mia sets the cartons down by the sink and thanks me too many times for a job that
+took ten seconds. Then she reaches for a glass from the rack and starts polishing it, a glass that
+already shines. Mia: "Are you warm enough? I can put the heating on, it's no trouble at all. And
+there's more rice, Sam, you hardly touched yours, nobody did, I made too much. I always..." The
+cloth moves in small circles. Her eyes flick to the window above the sink. It's shut. It was shut
+before. She puts the glass down and turns the tap on, full, the water drumming hard against the
+steel. Then she comes back to the island, and the cloth finds its corner again, the same one, round
+and round. When she speaks, her voice has dropped underneath the running water. Mia: "Sam. Did you
+come by car tonight? Where did you park?"
+  [picture: kitchen_island]
+  [kitchen · Mia]
+> "Where's Leo tonight?"
+  draft: say: "Where's Leo tonight?" · to mia
+  Enter = send · e = edit channels · or type again > <Enter>
+
+  [you · say: "Where's Leo tonight?" · to mia]
+"Where's Leo tonight?" The cloth stops, just for a second, in the middle of its circle. Mia doesn't
+look up. Mia: "Leo was always... is always late. God, listen to me." She folds the cloth, unfolds
+it, smooths it flat against the island with the heel of her hand. The tap is still running at her
+back. She doesn't seem to hear it. Mia: "Julian and I are... It's fine. It's a fresh start." She
+says it the way you'd read something off a card. The pause stretches. Her hand drifts back to the
+same corner of the island, round and round. Mia: "I don't want to go. Isn't that stupid?
+Everything's packed and I don't want to go." Her eyes come up to mine at last, red at the rims,
+searching my face. The water drums on in the sink behind her. She waits.
+  [kitchen · Mia]
+> I sip my wine and watch them.
+  draft: do: I sip my wine and watch them.
+  Enter = send · e = edit channels · or type again > <Enter>
+
+  [you · do: I sip my wine and watch them.]
+I sip my wine and watch her. Mia is on her feet before the glass has left my mouth, reaching for the
+covered pot on the stove. Mia: "There's still rice, honestly, two minutes and it's hot again. And
+you'd tell me if you were cold, wouldn't you? I can never tell with this flat, it's either an icebox
+or an oven..." She sits back down without waiting for an answer. The cloth finds its corner of the
+island and turns in small circles, though the stone already shines. The water in the sink runs on
+and on. Then her hand goes still, flat on the cloth. Her eyes go to the doorway and come back. Her
+voice, when it comes, is low. Mia: "If he says anything about me tonight. About me not being well.
+You know me, right, Sam?"
+  [kitchen · Mia]
+> "I think Mia's right."
+  draft: say: "I think Mia's right." · to mia
+  Enter = send · e = edit channels · or type again > <Enter>
+
+  [you · say: "I think Mia's right." · to mia]
+"I think Mia's right." Mia is up before I've finished, spooning more rice onto my plate, though it
+isn't empty. Mia: "Are you warm enough? I can never tell in this flat, it's either an icebox or an
+oven." She sits, then stands again and wipes at a clean patch of counter beside the sink. Mia:
+"Thank you. God. Thank you." She reaches behind her and turns the tap off. The quiet that follows is
+very loud. Her eyes are red. Julian appears in the doorway, glass in hand, jacket still on. Julian:
+"What are you two whispering about?" My phone buzzes. A text from Nora lights the screen: Hey, is
+Leo with you? He's not picking up. Julian is already moving, pulling the balcony door open with his
+free hand. Julian: "Keep me company? She hates the smoke."
+  [living · Julian, Mia]
+  [phone · text from nora]
+> "Sure, I could use some air."
+  draft: say: "Sure, I could use some air." · to both
+  Enter = send · e = edit channels · or type again > <Enter>
+
+  [you · say: "Sure, I could use some air." · to both]
+"Sure, I could use some air." Julian holds the door and I step out after him. The rain has moved
+off, but the railing is still beaded with it and the street below shines black. He tops up my glass
+from the bottle he carried out, then his own, though it wasn't empty. Julian: "Mia's loss. Fresh
+air, fresh start. You have to toast that." He leans against the ledge, coaxes a cigarette from the
+jacket he hasn't taken off all evening, and shields the flame with one hand. Julian: "Spontaneous.
+You know me, Sam. One day you wake up and think, why not." The cigarette catches. He checks his
+watch over the first drag, quick, like a man confirming a train time, then exhales at the sky.
+Julian: "A whole new life. Starting tomorrow, we don't know a soul out there. Mad, right?"
+  [balcony · Julian]
+> I lean over the railing. "Isn't that Leo's car down there?"
+  draft: do: I lean over the railing. · say: "Isn't that Leo's car down there?" · to julian
+  Enter = send · e = edit channels · or type again > <Enter>
+
+  [you · do: I lean over the railing. · say: "Isn't that Leo's car down there?" · to julian]
+I lean over the railing. "Isn't that Leo's car down there?" From up here the yellow hatchback is
+impossible to miss. The street below is still wet and shining, and it sits with two wheels up on the
+curb, like it was left in a hurry. Julian follows my eyes down. For a moment he says nothing at all.
+Julian: "Lots of yellow cars in this city, Sam." He flicks the ash too fast. It breaks apart before
+it clears the ledge and disappears into the dark. He takes another drag, and his eyes stay on mine a
+beat too long, waiting for me to nod and let it go.
+  [picture: balcony_car]
+  [balcony · Julian]
+> I take out my phone and listen to the voicemail.
+  draft: do: I take out my phone and listen to the voicemail.
+  Enter = send · e = edit channels · or type again > <Enter>
+
+  [you · do: I take out my phone and listen to the voicemail.]
+I take out my phone and listen to the voicemail. Leo's voice, small and tinny against my ear, with
+traffic behind it. Hey, it's Leo. I'm heading over to Julian's now, early. Something's... I'll
+explain. Can you come early tonight? Like, really early. Call me back. Please. The message ends. The
+balcony hum comes back, the wet street shining below, and I lower the phone. Julian: "Who's texting
+you, Sam?" He's watching me over the cigarette, smiling, but the smile has gone careful. He taps the
+ash, takes a slow drag, and lets it out toward the railing. Julian: "Listen. Mia hasn't been well.
+If she says strange things tonight, be kind to her. Just don't take it to heart, Sam."
+  [balcony · Julian]
+> "I think Mia's right."
+  draft: say: "I think Mia's right." · to julian
+  Enter = send · e = edit channels · or type again > <Enter>
+
+  [you · say: "I think Mia's right." · to julian]
+"I think Mia's right." Julian laughs and reaches for the bottle, topping my glass up before the
+sentence is even finished. Julian: "Mia's right. There it is. First rule of the new life, Sam. I'm
+getting it printed on the mugs." Julian: "Knew I could count on you." He pats my shoulder, twice, a
+fraction too firm. From inside comes Mia's voice. 'Are you two coming back in?' Then she is in the
+doorway, tea towel in her hands, the apology already on her face. Mia: "Sorry, I didn't mean to
+interrupt, it's just everything's going, well, it was never really warm, but come in, both of you,
+please." Back around the crate, the talk drifts to the packing. The boxes by the door, the tape gun,
+the markers. Mia sits, then stands again. Julian checks his watch and smiles. Julian: "So. Bubble
+wrap or newspaper, Sam? Take your time. People feel very strongly about this."
+  [living · Julian, Mia]
+> "Leo left me a voicemail this afternoon. He said he was coming here. And his car is still downstairs."
+  draft: say: "Leo left me a voicemail this afternoon. He said he was coming here. And his car is
+  still downstairs." · to both
+  Enter = send · e = edit channels · or type again > <Enter>
+
+  [you · say: "Leo left me a voicemail this afternoon. He said he was coming here. And his car is
+  still downstairs." · to both]
+"Leo left me a voicemail this afternoon. He said he was coming here. And his car is still
+downstairs." The sentence lands like a set of keys on a table. Mia stops wiping. Julian looks at his
+watch, as if the time might help. Mia: "He was always... is always, sorry, is always so good about
+calling, Leo is. I don't know why I said was. What else did he say?" Julian doesn't say the name at
+all. He reaches for his glass and finds it full. Julian: "We packed all day, Sam. Together. Didn't
+leave the flat once." Mia: "I was lying down. I had a headache. I didn't see anything." It comes out
+of them almost in one voice, two versions of the same day, and then they both stop. Mia stares down
+at the cloth. Julian watches only me, faintly smiling, waiting to see which one I will believe.
+  [living · Julian, Mia]
+> "Leo left me a voicemail this afternoon. He said he was coming here. And his car is still downstairs."
+  draft: say: "Leo left me a voicemail this afternoon. He said he was coming here. And his car is
+  still downstairs." · to both
+  Enter = send · e = edit channels · or type again > <Enter>
+
+  [you · say: "Leo left me a voicemail this afternoon. He said he was coming here. And his car is
+  still downstairs." · to both]
+"Leo left me a voicemail this afternoon. He said he was coming here. And his car is still
+downstairs." The cloth stops moving. For the first time all evening Mia is perfectly still, both
+hands flat on the counter, and the flat goes so quiet I can hear water ticking somewhere in the
+pipes. Mia: "Please." She doesn't say please what. Her eyes stay on mine, shining and steady, and
+the word just sits there between us, unfinished, waiting for me to decide what it means. Behind her
+Julian has gone very still, his hand resting on the bottle, not pouring, not joking, watching the
+two of us like a man holding his breath.
+  [living · Julian, Mia]
+> "Leo left me a voicemail this afternoon. He said he was coming here. And his car is still downstairs."
+  draft: say: "Leo left me a voicemail this afternoon. He said he was coming here. And his car is
+  still downstairs." · to both
+  Enter = send · e = edit channels · or type again > <Enter>
+
+  [you · say: "Leo left me a voicemail this afternoon. He said he was coming here. And his car is
+  still downstairs." · to both]
+"Leo left me a voicemail this afternoon. He said he was coming here. And his car is still
+downstairs." Mia: "We spent all day packing." Julian sets the bottle down very carefully, as if the
+table had become something fragile. Julian: "Packed. Sealed. Labelled. You were there for all of it,
+Mia." Mia: "I was in the bedroom, Julian, I was lying down, I told you, I wasn't there for all of
+it." Julian: "Same flat. Same day. That's all anyone needs to know." Mia: "You keep saying the day
+like it's one thing. It isn't one thing, it never is with you." Julian: "You always make me clean up
+your mess." Mia: "I cleaned up yours." A glass wobbles on the crate, rocking, and Mia catches it
+before it falls, her hand faster than her face. For a moment nobody speaks. Then they both turn to
+me. Julian: "Sam. Tell her she's remembering it wrong." Mia: "Tell him."
+  [picture: two_afternoons]
+  [living · Julian, Mia]
+> "I think Mia's right."
+  draft: say: "I think Mia's right." · to both
+  Enter = send · e = edit channels · or type again > <Enter>
+
+  [you · say: "I think Mia's right." · to both]
+"I think Mia's right." Julian's grin arrives a beat too fast, the one he saves for people who have
+missed the joke. Julian: "Sam. It isn't one thing, she said so herself. Fine. We packed. She lay
+down for an hour. We packed some more. Same day. Nothing in it." Nobody answers. Mia's cloth stops
+moving. Julian picks up the bottle and pours, all three glasses, unhurried, a man rebuilding the
+evening one glass at a time. Julian: "Let's not do this tonight." My phone starts to ring, shrill in
+all that quiet. Nora. It rings, and rings. Neither of them speaks. Mia has gone still. Julian looks
+at me, and waits.
+  [living · Julian, Mia]
+  [phone · call incoming from nora]
+> I pick up the phone.
+  draft: do: I pick up the phone.
+  Enter = send · e = edit channels · or type again > <Enter>
+
+  [you · do: I pick up the phone.]
+I pick up the phone. The ringing cuts off mid-burst, and the silence it leaves is total. Julian's
+grin stays where it is, fixed, like a photograph of itself. Julian: "Who's texting you, Sam?" He
+says it lightly, swirling his glass, a man asking after the weather. But neither of them moves.
+Mia's hand has stopped on the counter, and both of them are watching me. In my ear, Nora's voice,
+fast and close: 'Hey. Sorry.'
+  [living · Julian, Mia]
+> "Leo left me a voicemail this afternoon. He said he was coming here. And his car is still downstairs."
+  draft: say: "Leo left me a voicemail this afternoon. He said he was coming here. And his car is
+  still downstairs." · to both
+  Enter = send · e = edit channels · or type again > <Enter>
+
+  [you · say: "Leo left me a voicemail this afternoon. He said he was coming here. And his car is
+  still downstairs." · to both]
+"Leo left me a voicemail this afternoon. He said he was coming here. And his car is still
+downstairs." Julian is already reaching for the bottle. He tops up my glass, then Mia's, unhurried,
+a man with all the time in the world. Julian: "Sam. A voicemail. Since when does our friend answer
+an invitation? He'll be on our doorstep in a month, no suitcase, some enormous story. Drink. New
+life, remember." In my ear, small and fast: 'Is Leo with you? He said he'd be at Julian's tonight,
+with you. He's not picking up.' The room goes quiet. Mia's cloth stops mid-circle. Julian sets the
+bottle down very carefully, and both of them watch me listen, the phone still warm against my ear.
+  [living · Julian, Mia]
+> "Leo left me a voicemail this afternoon. He said he was coming here. And his car is still downstairs."
+  draft: say: "Leo left me a voicemail this afternoon. He said he was coming here. And his car is
+  still downstairs." · to both
+  Enter = send · e = edit channels · or type again > <Enter>
+
+  [you · say: "Leo left me a voicemail this afternoon. He said he was coming here. And his car is
+  still downstairs." · to both]
+"Leo left me a voicemail this afternoon. He said he was coming here. And his car is still
+downstairs." Julian answers with the bottle. He leans in and refills my glass before I can cover it,
+smooth as a parlour trick, his other hand resting for a moment against the pocket of his jacket.
+Julian: "Sam. A voicemail. That is not news, that is archaeology. You know him. He recorded it in a
+taxi, on his way to some better party, and by now he cannot remember any of our names. Drink up. New
+life, remember." He checks his watch, a quick flick of the eyes, nothing more. Mia has gone back to
+wiping the same clean corner of the counter, round and round. She is not looking at me. She is
+looking at the window. In my ear, small and insistent, Nora again: 'Did he say anything to you
+today? Anything weird?' Julian raises his glass to me, smiling, and waits. The question is in my
+ear. The room is in front of me.
+  [living · Julian, Mia]
+> "He was here, Nora. He came this afternoon. Come up."
+  draft: say: "He was here, Nora. He came this afternoon. Come up." · to nora
+  Enter = send · e = edit channels · or type again > <Enter>
+
+  [you · say: "He was here, Nora. He came this afternoon. Come up." · to nora]
+"He was here, Nora. He came this afternoon. Come up." Julian is on his feet before the sentence has
+finished. The bottle comes up. He tops his own glass, then reaches for mine, which is already full,
+and fills it anyway, right to the rim. Julian: "Sam. New life, remember? This time tomorrow we are a
+rumour. Drink up, while there are still glasses." In my ear, very quiet: 'What? Then where is he?'
+Then, smaller, folded in on itself: 'Okay. Okay. If you hear from him, call me.' The line goes dead.
+I lower the phone. Julian sets the bottle down, unhurried, and smiles at me across the crate.
+Julian: "Who was that, Sam?" Before I can answer, a buzzing. From inside Julian's jacket. Small,
+insistent, a trapped wasp against the cloth. Mia goes very still by the window. Julian does not
+move. Nobody looks at the pocket. It buzzes again.
+  [living · Julian, Mia]
+> "Leo left me a voicemail this afternoon. He said he was coming here. And his car is still downstairs."
+  draft: say: "Leo left me a voicemail this afternoon. He said he was coming here. And his car is
+  still downstairs." · to both
+  Enter = send · e = edit channels · or type again > <Enter>
+
+  [you · say: "Leo left me a voicemail this afternoon. He said he was coming here. And his car is
+  still downstairs." · to both]
+"Leo left me a voicemail this afternoon. He said he was coming here. And his car is still
+downstairs." Julian answers with the bottle. He leans in and refills my glass before I can cover it,
+smooth as a parlour trick, and sets it down like a full stop. Julian: "Sam. He leaves that voicemail
+everywhere, ask anyone from college. He is always coming, he is always ten minutes away. And half
+this city drives that car. Drink up. New life, remember." Mia's cloth has stopped moving. She is
+looking at the window, not at me. From inside Julian's jacket, a buzzing. His hand goes flat over
+the pocket, casual as a shrug, but the screen glows through the cloth, a small grey light against
+his side. He does not look down. He keeps smiling at me, and waits.
+  [picture: jacket_light]
+  [living · Julian, Mia]
+> "Leo left me a voicemail this afternoon. He said he was coming here. And his car is still downstairs."
+  draft: say: "Leo left me a voicemail this afternoon. He said he was coming here. And his car is
+  still downstairs." · to both
+  Enter = send · e = edit channels · or type again > <Enter>
+
+  [you · say: "Leo left me a voicemail this afternoon. He said he was coming here. And his car is
+  still downstairs." · to both]
+"Leo left me a voicemail this afternoon. He said he was coming here. And his car is still
+downstairs." Julian gets to the bottle first. He leans across and tops up Mia's glass, which nobody
+has touched, until the wine stands a little higher than the glass should allow. Julian: "Sam. Leo
+materialises when he feels like it, he always has, you know that better than anyone. If he turns up
+at the airport we'll take him too. Twelve hours from now there is an ocean between us and this whole
+conversation. To our new life." He raises his glass to no one in particular, drinks, and stands.
+Julian: "Work. Sorry. Australia's awake." He slides the balcony door open and steps out into the
+cold, phone already in his hand. The door sighs shut behind him. Mia watches him go, all the way,
+before she turns to me. Mia: "He has two phones now. For the move." The voicemail, the car
+downstairs. I lay them on the table between us, next to the glasses. Mia looks at them, then at me,
+and waits.
+  [living · Mia]
+> "Leo left me a voicemail this afternoon. He said he was coming here. And his car is still downstairs."
+  draft: say: "Leo left me a voicemail this afternoon. He said he was coming here. And his car is
+  still downstairs." · to mia
+  Enter = send · e = edit channels · or type again > <Enter>
+
+  [you · say: "Leo left me a voicemail this afternoon. He said he was coming here. And his car is
+  still downstairs." · to mia]
+"Leo left me a voicemail this afternoon. He said he was coming here. And his car is still
+downstairs." Mia reaches for the nearest carton and unfolds it toward me, though everything has gone
+cold. She asks if I am warm enough, whether the window is draughty, and her cloth finds the corner
+of the crate and wipes it, and wipes it again. Mia: "Have a little more, Sam, you've eaten nothing.
+Are you cold? I can... there's a jumper somewhere, I'm sure." Then the cloth stops. She is looking
+at the crate, at the tablecloth screwed down tight over it, and something in her face lets go,
+quietly, like a clasp. Mia: "He's not late." A long pause. Her hand comes to rest flat on the cloth
+above the crate, almost tender. Mia: "He's here. He's been here the whole time."
+  [living · Mia]
+> "Leo left me a voicemail this afternoon. He said he was coming here. And his car is still downstairs."
+  draft: say: "Leo left me a voicemail this afternoon. He said he was coming here. And his car is
+  still downstairs." · to mia
+  Enter = send · e = edit channels · or type again > <Enter>
+
+  [you · say: "Leo left me a voicemail this afternoon. He said he was coming here. And his car is
+  still downstairs." · to mia]
+"Leo left me a voicemail this afternoon. He said he was coming here. And his car is still
+downstairs." Mia is on her feet before I finish, lifting the lid off a carton nobody will eat, and
+her cloth finds the same clean corner of the crate and stays there, working. Mia: "You're cold, Sam,
+I can see it, I'll put the heating on, or tea, it takes two minutes, and you should eat something,
+honestly." The balcony door slides open. Julian stands in it, phone in his hand, looking only at
+her. Julian: "Mia. Stop." It is said the way he says everything, quietly. The cloth stops. Mia holds
+the carton lid like a small shield. Julian turns to me, polite, patient, and waits for what I do
+next.
+  [living · Mia]
+> "Leo left me a voicemail this afternoon. He said he was coming here. And his car is still downstairs."
+  draft: say: "Leo left me a voicemail this afternoon. He said he was coming here. And his car is
+  still downstairs." · to mia
+  Enter = send · e = edit channels · or type again > <Enter>
+
+  [you · say: "Leo left me a voicemail this afternoon. He said he was coming here. And his car is
+  still downstairs." · to mia]
+"Leo left me a voicemail this afternoon. He said he was coming here. And his car is still
+downstairs." Julian appears in the doorway. Julian: "What are you two whispering about?" Julian:
+"You two and your secrets." Nobody laughs. It is out now, and neither of them reaches for a denial.
+Mia's hand stays flat on the tablecloth above the crate. Julian looks at her, then at me. They both
+look at me. Julian pulls a folding chair round to face me and sits down slowly, jacket still
+buttoned, and waits.
+  [living · Julian, Mia]
+> I sip my wine and watch them.
+  draft: do: I sip my wine and watch them.
+  Enter = send · e = edit channels · or type again > <Enter>
+
+  [you · do: I sip my wine and watch them.]
+I sip my wine and watch them. Julian tops up my glass, then his own, which was already full. He sets
+the bottle down with care. Julian: "You look like you're interviewing us, Sam. New life, remember.
+Lisbon. Sun. We should be celebrating." He leans back, jacket still buttoned, and the performance
+drops away all at once, like a coat taken off. Julian: "He came for money. We argued. He grabbed me,
+I pushed him, he hit the counter. That's it. That's all it was." It lands word for word, too clean,
+rehearsed. He watches me over the rim of his glass. Mia has gone very still, her hand flat on the
+tablecloth. He is waiting to hear whether I buy it.
+  [living · Julian, Mia]
+> "Where's Leo tonight?"
+  draft: say: "Where's Leo tonight?" · to both
+  Enter = send · e = edit channels · or type again > <Enter>
+
+  [you · say: "Where's Leo tonight?" · to both]
+"Where's Leo tonight?" The question sits down on the crate between us and makes itself comfortable.
+Mia's hand lifts off the tablecloth. Mia: "I need some air. I need... sorry." She pushes her chair
+back and goes into the kitchen. A moment later the tap comes on, hard, and stays on. Julian doesn't
+move. He turns his glass a quarter circle on the tablecloth, checks his watch, and then looks at me,
+polite and patient, as if I had only asked him the time. The tap runs. He waits.
+  [living · Julian]
+> I sip my wine and watch them.
+  draft: do: I sip my wine and watch them.
+  Enter = send · e = edit channels · or type again > <Enter>
+
+  [you · do: I sip my wine and watch them.]
+I sip my wine and watch them. Julian tops up my glass before it is half empty, then Mia's, which
+nobody has touched. Julian: "Drink, drink. New life, Sam. Lisbon. We'll bore you senseless with it,
+you'll love it." The tap stops in the kitchen. Mia comes back and stands behind her chair, the tea
+towel twisted tight in her hands. I look at her. Mia: "I don't... I don't remember. I was in the
+hall. I heard it." Julian watches her, nodding too hard. Julian: "That's what happened, Sam." He
+says it to me, not to her, and waits, glass in hand, for me to agree.
+  [living · Julian]
+> "I don't know what to say."
+  draft: say: "I don't know what to say." · to julian
+  Enter = send · e = edit channels · or type again > <Enter>
+
+  [you · say: "I don't know what to say." · to julian]
+"I don't know what to say." Julian breathes out, slow, like a man let off a hook. He reaches for the
+bottle and pours, mine first, then Mia's untouched glass, then his own. Julian: "Then don't say
+anything, Sam. Drink. Lisbon. Sunshine, sardines, terrible Portuguese. That's the future, and the
+future deserves a toast." My phone buzzes against the table. A text from Nora: 'I'm downstairs. His
+car is here. His location says he's in your building.' Mia appears in the kitchen doorway, the tea
+towel twisted in her hands. All three of us look at the phone.
+  [living · Julian]
+  [phone · text from nora]
+> "Where's Leo tonight?"
+  draft: say: "Where's Leo tonight?" · to julian
+  Enter = send · e = edit channels · or type again > <Enter>
+
+  [you · say: "Where's Leo tonight?" · to julian]
+"Where's Leo tonight?" Julian: "When did you last see him, Sam?" He asks it lightly, topping up a
+glass nobody is drinking from, but Mia answers at the same time, over him. Mia: "He was here,
+Julian, Sam knows he was here, we already, why are we still..." Julian: "He never showed. That's the
+evening, Mia. We waited, and he never showed." They look at each other, two versions colliding in
+the small space over the crate. On the table my phone lights up again, Nora's message still
+unanswered on the screen: 'I'm downstairs. His car is here. His location says he's in your
+building.' Julian looks at it, then at me, and waits for his answer.
+  [living · Julian, Mia]
+> I sip my wine and watch them.
+  draft: do: I sip my wine and watch them.
+  Enter = send · e = edit channels · or type again > <Enter>
+
+  [you · do: I sip my wine and watch them.]
+I sip my wine and watch them. Julian reaches for the bottle and tops up Mia's glass, the one nobody
+has touched. Julian: "In Lisbon, Sam, even the rain is warm. New life, new weather. That's the
+plan." Mia isn't listening. She looks at the window, then at my phone lying between us, and her
+hands keep folding the same tea towel. Mia: "She's here? Julian, she's here." Julian: "Don't answer
+it." Julian sets the bottle down and refills my glass instead, careful, right to the brim. The
+joking stops. His voice goes calm, almost tender. Julian: "Sam."
+  [living · Julian, Mia]
+> I sip my wine and watch them.
+  draft: do: I sip my wine · face: I watch them
+  Enter = send · e = edit channels · or type again > <Enter>
+
+  [you · do: I sip my wine · face: I watch them]
+I sip my wine, and I watch them. Julian tops up his own glass, though it is already full. Julian:
+"You'll come and see us, Sam. Everyone says they will. You actually will." He sets the bottle down,
+squares it with the tablecloth's edge, and looks at me. Julian: "Here's what happens. Six o'clock,
+the movers come. Seven forty, we're gone. Tonight was dinner. He never showed." He says it like a
+timetable, calm, almost gentle, and then he waits for me to learn it.
+  [living · Julian, Mia]
+> "Where's Leo tonight?"
+  draft: say: "Where's Leo tonight?" · to both
+  Enter = send · e = edit channels · or type again > <Enter>
+
+  [you · say: "Where's Leo tonight?" · to both]
+"Where's Leo tonight?" Julian looks at me for a long moment, and the room gets quieter. Mia has gone
+very still, the tea towel twisted in her hands. Julian: "Nora doesn't need to know anything." He
+checks his watch, then smiles at me, and it isn't a host's smile anymore. Julian: "There's money.
+More than you'd think. The studio money." Julian: "Two missed calls from him, and you just happened
+to walk in at seven? Who do you think they'll believe?"
+  [living · Julian, Mia]
+> I sip my wine and watch them.
+  draft: do: I sip my wine and watch them.
+  Enter = send · e = edit channels · or type again > <Enter>
+
+  [you · do: I sip my wine and watch them.]
+I sip my wine and I watch them. Julian reaches for the bottle and tops up a glass that doesn't need
+it. He squares it against the tablecloth's edge, and just like that his face changes, the host back
+on like a jacket. Julian: "Anyway. Enough of all that. Lisbon, Sam. Sun, cheap wine, rooftops.
+You'll love it. We'll get a little place, you'll have your own key. How's that." Mia isn't
+listening. She's at the island, wiping the same clean corner, and when she looks up at me her eyes
+are wet and very steady. Mia: "Please. Don't make it worse. For him. For me." She holds my look, the
+cloth still moving in small circles under her hand.
+  [living · Julian, Mia]
+> "I don't know what to say."
+  draft: say: "I don't know what to say." · to both
+  Enter = send · e = edit channels · or type again > <Enter>
+
+  [you · say: "I don't know what to say." · to both]
+"I don't know what to say." Julian reaches for the bottle and tops up my glass, then his own, which
+never seems to get any emptier. He smiles, easy as ever. Julian: "Then don't say anything, Sam.
+Simple. Lisbon, white walls, blue tiles, coffee for a euro. You'll come out and never leave. How's
+that." Julian: "Take your time. You've got till six." A knock at the door.
+  [living · Julian, Mia]
+> "Where's Leo tonight?"
+  draft: say: "Where's Leo tonight?" · to both
+  Enter = send · e = edit channels · or type again > <Enter>
+
+  [you · say: "Where's Leo tonight?" · to both]
+"Where's Leo tonight?" Julian reaches for the bottle and refills a glass that isn't empty. Julian:
+"Him? You know him, Sam. Finds a better party, every time. His loss. Lisbon, though. Sun, rooftops,
+coffee for a euro." A knock. All three of us look at the door. Nobody moves. Another knock. Julian
+opens it. Nora comes in, coat wet, phone in her fist. She takes in the dinner on the crate, the
+glasses. Nora: "Where is he? His car's downstairs. His phone's in this building." Nora looks only at
+me.
+  [picture: nora_at_door]
+  [living · Julian, Mia, Nora]
+> I sip my wine and watch them.
+  draft: do: I sip my wine and watch them.
+  Enter = send · e = edit channels · or type again > <Enter>
+
+  [you · do: I sip my wine and watch them.]
+I sip my wine and watch them. Nora: "I don't care about that. Where is he?" The room goes very
+still. Julian stands behind her, saying nothing for once, his hand resting near his jacket pocket.
+Mia has stopped in the kitchen doorway, the cloth in her hand, the corner of the island already
+clean. Nora: "Sam. You've been here all night. Did he come?" She waits. So do they.
+  [living · Julian, Mia, Nora]
+> "He was here, Nora. He came this afternoon. Come up."
+  draft: say: "He was here, Nora. He came this afternoon. Come up." · to nora
+  Enter = send · e = edit channels · or type again > <Enter>
+
+  [you · say: "He was here, Nora. He came this afternoon. Come up." · to nora]
+"He was here, Nora. He came this afternoon. Come up." Julian gives a small, regretful laugh, the
+host correcting a guest who has the evening wrong. Julian: "Sam. Sam, come on. He never came. You
+were here all night, you saw it. Dinner, wine, no Leo. That's the evening, isn't it?" His version
+and mine sit side by side on the tablecloth, and neither will give ground. Nora turns to the crate.
+Julian: "Nora. Wait." Nobody moves. What I said hangs there, in the middle of the room, and there is
+no taking it back and no need to. Julian puts his glass down on the crate, carefully, as if it might
+break. Mia has stopped wiping. The cloth hangs from her hand. Mia: "It was me. I hit him. I'm sorry.
+I'm so sorry." Julian stands very still beside her, one hand near his jacket pocket, and he does not
+stop her. He does not say anything at all. No one says anything else. Nora sits beside the crate.
+Downstairs, the car is still there.
+  [picture: ending_confession]
+  [living · Julian, Mia, Nora]
+
+— the end —
+
+[ending=confession turns=42 minutes=18.5 wall=5040s]
+[review: 42 calls, mean 4882 ms, retries 0, model deepseek-flash v1]
+[narrator: 46 calls, mean 49520 ms, retries 1, model kimi-k3 v1]
+[guard: 46 calls, mean 24477 ms, retries 2, model deepseek-flash v1]
+[scorer: 8 calls, mean 13452 ms, retries 1, model deepseek-flash v1]
+[narrator rewrites per turn: [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 1]; repaired turns: 0; fallbacks: 0]
+[log dir: /Users/qinchuanzhang/Dev/games/Fragile/backend/data/logs/live-1791847229]

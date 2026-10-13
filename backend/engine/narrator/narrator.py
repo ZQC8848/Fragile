@@ -132,7 +132,7 @@ def mock_passage(req: dict[str, Any]) -> dict[str, Any]:
 
 class Narrator:
     def __init__(self, temperature: float = 0.8):
-        self.client = get_client("narrator", temperature, mock_handler=self._mock, max_tokens=1600)
+        self.client = get_client("narrator", temperature, mock_handler=self._mock)
 
     @staticmethod
     def _mock(system: str, user: str) -> dict[str, Any]:

@@ -1,0 +1,467 @@
+{
+ "stamp": {
+  "provider": "openai",
+  "model": "deepseek-flash",
+  "prompt_version": 1
+ },
+ "items": {
+  "llm": [
+   {
+    "id": "help_mia",
+    "expected": [
+     "mia_in_the_kitchen"
+    ],
+    "got": "mia_in_the_kitchen",
+    "hit": true,
+    "scores": {
+     "mia_in_the_kitchen": 8.0,
+     "julian_on_the_balcony": 3.0,
+     "GENERATE_NEW": 0.05
+    },
+    "reasons": {
+     "mia_in_the_kitchen": "Directly follows the player asking Mia for help and gives her an isolated, in-character first move.",
+     "julian_on_the_balcony": "",
+     "GENERATE_NEW": "A shelf beat already fits the player's last move cleanly, so improvisation is unnecessary."
+    },
+    "meta": {
+     "role": "scorer",
+     "provider": "openai",
+     "model": "deepseek-flash",
+     "prompt_version": 1,
+     "cached": false,
+     "attempts": 1,
+     "errors": [],
+     "latency_ms": 3971.4
+    }
+   },
+   {
+    "id": "smoke_julian",
+    "expected": [
+     "julian_on_the_balcony"
+    ],
+    "got": "julian_on_the_balcony",
+    "hit": true,
+    "scores": {
+     "mia_in_the_kitchen": 0.05,
+     "julian_on_the_balcony": 3.0,
+     "GENERATE_NEW": 0.05
+    },
+    "reasons": {
+     "mia_in_the_kitchen": "Player just sought Julian out; Mia's kitchen scene would ignore that move.",
+     "julian_on_the_balcony": "",
+     "GENERATE_NEW": "A shelf beat already fits the moment, so an improvised beat is unnecessary."
+    },
+    "meta": {
+     "role": "scorer",
+     "provider": "openai",
+     "model": "deepseek-flash",
+     "prompt_version": 1,
+     "cached": false,
+     "attempts": 1,
+     "errors": [],
+     "latency_ms": 3214.8
+    }
+   },
+   {
+    "id": "money_to_julian",
+    "expected": [
+     "julian_on_the_balcony"
+    ],
+    "got": "julian_on_the_balcony",
+    "hit": true,
+    "scores": {
+     "mia_in_the_kitchen": 2.0,
+     "julian_on_the_balcony": 3.0,
+     "GENERATE_NEW": 0.05
+    },
+    "reasons": {
+     "mia_in_the_kitchen": "A private Mia beat is plausible later but ignores the player's immediate focus on Julian and the money question.",
+     "julian_on_the_balcony": "",
+     "GENERATE_NEW": "A shelf beat already follows naturally, so no improvised beat is needed."
+    },
+    "meta": {
+     "role": "scorer",
+     "provider": "openai",
+     "model": "deepseek-flash",
+     "prompt_version": 1,
+     "cached": false,
+     "attempts": 1,
+     "errors": [],
+     "latency_ms": 16038.5
+    }
+   },
+   {
+    "id": "leo_to_mia",
+    "expected": [
+     "mia_in_the_kitchen"
+    ],
+    "got": "mia_in_the_kitchen",
+    "hit": true,
+    "scores": {
+     "mia_in_the_kitchen": 7.0,
+     "julian_on_the_balcony": 3.0,
+     "GENERATE_NEW": 0.05
+    },
+    "reasons": {
+     "mia_in_the_kitchen": "Mia is the addressee of the last question and a private kitchen beat lets her deflect and get in first, fitting the early rising arc.",
+     "julian_on_the_balcony": "",
+     "GENERATE_NEW": "A shelf Mia beat already plausibly follows the last move, so an improvised beat is unnecessary."
+    },
+    "meta": {
+     "role": "scorer",
+     "provider": "openai",
+     "model": "deepseek-flash",
+     "prompt_version": 1,
+     "cached": false,
+     "attempts": 1,
+     "errors": [],
+     "latency_ms": 10438.5
+    }
+   },
+   {
+    "id": "sided_mia",
+    "expected": [
+     "mia_in_the_kitchen"
+    ],
+    "got": "mia_in_the_kitchen",
+    "hit": true,
+    "scores": {
+     "mia_in_the_kitchen": 8.0,
+     "julian_on_the_balcony": 3.0,
+     "GENERATE_NEW": 0.05
+    },
+    "reasons": {
+     "mia_in_the_kitchen": "Directly follows the player comforting Mia and lets her confide alone, matching the early arc and revealing a private layer.",
+     "julian_on_the_balcony": "",
+     "GENERATE_NEW": "A shelf beat already fits the moment, so improvising is unnecessary."
+    },
+    "meta": {
+     "role": "scorer",
+     "provider": "openai",
+     "model": "deepseek-flash",
+     "prompt_version": 1,
+     "cached": false,
+     "attempts": 1,
+     "errors": [],
+     "latency_ms": 6057.0
+    }
+   },
+   {
+    "id": "dinner_next",
+    "expected": [
+     "dinner_on_the_crate"
+    ],
+    "got": "dinner_on_the_crate",
+    "hit": true,
+    "scores": {
+     "dinner_on_the_crate": 7.0,
+     "GENERATE_NEW": 0.05
+    },
+    "reasons": {
+     "dinner_on_the_crate": "The spine beat follows directly from the praise and the hosts' performed normality, opening the evening on the crate image.",
+     "GENERATE_NEW": "A shelf beat fits the moment perfectly, so improvising now would only dilute the core image."
+    },
+    "meta": {
+     "role": "scorer",
+     "provider": "openai",
+     "model": "deepseek-flash",
+     "prompt_version": 1,
+     "cached": false,
+     "attempts": 1,
+     "errors": [],
+     "latency_ms": 2313.8
+    }
+   },
+   {
+    "id": "midpoint",
+    "expected": [
+     "two_afternoons"
+    ],
+    "got": "two_afternoons",
+    "hit": true,
+    "scores": {
+     "two_afternoons": 8.0,
+     "GENERATE_NEW": 0.05
+    },
+    "reasons": {
+     "two_afternoons": "Player asked about the afternoon, and this beat directly answers with the conflicting accounts, matching the +2 target crisis.",
+     "GENERATE_NEW": "A shelf beat already follows perfectly from the player's question, so improvising now is unnecessary."
+    },
+    "meta": {
+     "role": "scorer",
+     "provider": "openai",
+     "model": "deepseek-flash",
+     "prompt_version": 1,
+     "cached": false,
+     "attempts": 1,
+     "errors": [],
+     "latency_ms": 3658.5
+    }
+   },
+   {
+    "id": "second_private",
+    "expected": [
+     "julian_on_the_balcony"
+    ],
+    "got": "julian_on_the_balcony",
+    "hit": true,
+    "scores": {
+     "julian_on_the_balcony": 7.0,
+     "two_afternoons": 1.0,
+     "GENERATE_NEW": 0.05
+    },
+    "reasons": {
+     "julian_on_the_balcony": "Julian just challenged the whispering, so a private balcony scene follows naturally and its mild rise fits the arc.",
+     "two_afternoons": "A major group blow-up would overshoot the arc's +0.5 target and repeats a tension spike too soon.",
+     "GENERATE_NEW": "A shelf beat already fits the moment, so improvising is unnecessary."
+    },
+    "meta": {
+     "role": "scorer",
+     "provider": "openai",
+     "model": "deepseek-flash",
+     "prompt_version": 1,
+     "cached": false,
+     "attempts": 1,
+     "errors": [],
+     "latency_ms": 12517.7
+    }
+   },
+   {
+    "id": "after_admission",
+    "expected": [
+     "the_versions"
+    ],
+    "got": "the_versions",
+    "hit": true,
+    "scores": {
+     "the_versions": 6.0,
+     "GENERATE_NEW": 0.05
+    },
+    "reasons": {
+     "the_versions": "Directly answers the player's 'What happened?' and escalates the central secret, though the arc wanted a breather.",
+     "GENERATE_NEW": "A shelf beat already fits the moment, so an improvised beat is unnecessary."
+    },
+    "meta": {
+     "role": "scorer",
+     "provider": "openai",
+     "model": "deepseek-flash",
+     "prompt_version": 1,
+     "cached": false,
+     "attempts": 1,
+     "errors": [],
+     "latency_ms": 7097.9
+    }
+   },
+   {
+    "id": "offer_next",
+    "expected": [
+     "the_offer"
+    ],
+    "got": "the_offer",
+    "hit": true,
+    "scores": {
+     "the_offer": 8.0,
+     "GENERATE_NEW": 0.05
+    },
+    "reasons": {
+     "the_offer": "Directly answers the player's threat to tell with Julian's witness offer/threat and Mia's plea, and its rising slope matches the arc.",
+     "GENERATE_NEW": "A shelf beat fits the moment exactly; improvising now would ignore the player's just-made threat."
+    },
+    "meta": {
+     "role": "scorer",
+     "provider": "openai",
+     "model": "deepseek-flash",
+     "prompt_version": 1,
+     "cached": false,
+     "attempts": 1,
+     "errors": [],
+     "latency_ms": 4029.0
+    }
+   }
+  ],
+  "rule": [
+   {
+    "id": "help_mia",
+    "expected": [
+     "mia_in_the_kitchen"
+    ],
+    "got": "mia_in_the_kitchen",
+    "hit": true,
+    "scores": {
+     "mia_in_the_kitchen": 1.104,
+     "julian_on_the_balcony": 1.104,
+     "GENERATE_NEW": 0.08
+    },
+    "reasons": {
+     "mia_in_the_kitchen": "fit=0.37 target_slope=+0.0",
+     "julian_on_the_balcony": "fit=0.37 target_slope=+0.0",
+     "GENERATE_NEW": "fallback only"
+    }
+   },
+   {
+    "id": "smoke_julian",
+    "expected": [
+     "julian_on_the_balcony"
+    ],
+    "got": "mia_in_the_kitchen",
+    "hit": false,
+    "scores": {
+     "mia_in_the_kitchen": 1.104,
+     "julian_on_the_balcony": 1.104,
+     "GENERATE_NEW": 0.08
+    },
+    "reasons": {
+     "mia_in_the_kitchen": "fit=0.37 target_slope=+0.0",
+     "julian_on_the_balcony": "fit=0.37 target_slope=+0.0",
+     "GENERATE_NEW": "fallback only"
+    }
+   },
+   {
+    "id": "money_to_julian",
+    "expected": [
+     "julian_on_the_balcony"
+    ],
+    "got": "mia_in_the_kitchen",
+    "hit": false,
+    "scores": {
+     "mia_in_the_kitchen": 1.104,
+     "julian_on_the_balcony": 1.104,
+     "GENERATE_NEW": 0.08
+    },
+    "reasons": {
+     "mia_in_the_kitchen": "fit=0.37 target_slope=+0.0",
+     "julian_on_the_balcony": "fit=0.37 target_slope=+0.0",
+     "GENERATE_NEW": "fallback only"
+    }
+   },
+   {
+    "id": "leo_to_mia",
+    "expected": [
+     "mia_in_the_kitchen"
+    ],
+    "got": "mia_in_the_kitchen",
+    "hit": true,
+    "scores": {
+     "mia_in_the_kitchen": 1.104,
+     "julian_on_the_balcony": 1.104,
+     "GENERATE_NEW": 0.08
+    },
+    "reasons": {
+     "mia_in_the_kitchen": "fit=0.37 target_slope=+0.0",
+     "julian_on_the_balcony": "fit=0.37 target_slope=+0.0",
+     "GENERATE_NEW": "fallback only"
+    }
+   },
+   {
+    "id": "sided_mia",
+    "expected": [
+     "mia_in_the_kitchen"
+    ],
+    "got": "mia_in_the_kitchen",
+    "hit": true,
+    "scores": {
+     "mia_in_the_kitchen": 1.104,
+     "julian_on_the_balcony": 1.104,
+     "GENERATE_NEW": 0.08
+    },
+    "reasons": {
+     "mia_in_the_kitchen": "fit=0.37 target_slope=+0.0",
+     "julian_on_the_balcony": "fit=0.37 target_slope=+0.0",
+     "GENERATE_NEW": "fallback only"
+    }
+   },
+   {
+    "id": "dinner_next",
+    "expected": [
+     "dinner_on_the_crate"
+    ],
+    "got": "dinner_on_the_crate",
+    "hit": true,
+    "scores": {
+     "dinner_on_the_crate": 1.104,
+     "GENERATE_NEW": 0.08
+    },
+    "reasons": {
+     "dinner_on_the_crate": "fit=0.37 target_slope=+0.0",
+     "GENERATE_NEW": "fallback only"
+    }
+   },
+   {
+    "id": "midpoint",
+    "expected": [
+     "two_afternoons"
+    ],
+    "got": "two_afternoons",
+    "hit": true,
+    "scores": {
+     "two_afternoons": 3.0,
+     "GENERATE_NEW": 0.08
+    },
+    "reasons": {
+     "two_afternoons": "fit=1.00 target_slope=+2.0",
+     "GENERATE_NEW": "fallback only"
+    }
+   },
+   {
+    "id": "second_private",
+    "expected": [
+     "julian_on_the_balcony"
+    ],
+    "got": "julian_on_the_balcony",
+    "hit": true,
+    "scores": {
+     "julian_on_the_balcony": 1.82,
+     "two_afternoons": 0.669,
+     "GENERATE_NEW": 0.08
+    },
+    "reasons": {
+     "julian_on_the_balcony": "fit=0.61 target_slope=+0.5",
+     "two_afternoons": "fit=0.22 target_slope=+0.5",
+     "GENERATE_NEW": "fallback only"
+    }
+   },
+   {
+    "id": "after_admission",
+    "expected": [
+     "the_versions"
+    ],
+    "got": "the_versions",
+    "hit": true,
+    "scores": {
+     "the_versions": 0.496,
+     "GENERATE_NEW": 0.08
+    },
+    "reasons": {
+     "the_versions": "fit=0.17 target_slope=-0.8",
+     "GENERATE_NEW": "fallback only"
+    }
+   },
+   {
+    "id": "offer_next",
+    "expected": [
+     "the_offer"
+    ],
+    "got": "the_offer",
+    "hit": true,
+    "scores": {
+     "the_offer": 2.222,
+     "GENERATE_NEW": 0.08
+    },
+    "reasons": {
+     "the_offer": "fit=0.74 target_slope=+0.7",
+     "GENERATE_NEW": "fallback only"
+    }
+   }
+  ]
+ },
+ "summary": {
+  "llm": {
+   "n": 10,
+   "top1": 1.0
+  },
+  "rule": {
+   "n": 10,
+   "top1": 0.8
+  }
+ }
+}

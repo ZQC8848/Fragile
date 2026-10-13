@@ -33,7 +33,7 @@ from engine.generate import Proposer
 from engine.illustrate import pick_tableau
 from engine.input import InputReviewer, OptionGenerator, Review, build_turn, is_empty
 from engine.journal import SessionLogger
-from engine.llm import set_llm_live
+from engine.llm import CALL_LOG, set_llm_live
 from engine.llm.client import _clients
 from engine.models import Encoder, Guard, GuardContext, TensionEstimator, path_from_env, shadow_from_env
 from engine.models.encoder import empty_output
@@ -82,7 +82,7 @@ class Session:
         self.knowledge = Knowledge.from_dir()
         self.prologue = (DATA_DIR / "prologue.txt").read_text(encoding="utf-8").strip()
         shadow = shadow_from_env()
-        self.encoder = Encoder(self.world.object_topics(), shadow=shadow)
+        self.encoder = Encoder(self.world.object_topics(), shadow=shadow, action_table=self.world.action_table())
         self.guard = Guard(shadow=shadow)
         self.tension = TensionEstimator(shadow=shadow)
         self.dm = DramaManager(self.pool, TensionArc.from_file(), self.clock, scorer or path_from_env("scorer"), tau, seed, shadow)
@@ -119,6 +119,14 @@ class Session:
 
     # ===================================================================== public entry points
     async def start(self, name: str, gender: str) -> None:
+        calls: list[dict[str, Any]] = []
+        token = CALL_LOG.set(calls)
+        try:
+            await self._start(name, gender, calls)
+        finally:
+            CALL_LOG.reset(token)
+
+    async def _start(self, name: str, gender: str, calls: list[dict[str, Any]]) -> None:
         async with self.lock:
             self._reset_runtime()
             self.logger.reset()
@@ -141,14 +149,21 @@ class Session:
             record = {
                 "turn": 0, "session": self.id, "name_len": len(self.name), "gender": self.gender,
                 "decision": decision.public(), "narrator": out, "guard": guard_log, "state": deepcopy(self.state),
-                "latency_ms": {"total": round((time.perf_counter() - t0) * 1000, 1)}, "model_versions": self._model_versions(),
+                "latency_ms": {"total": round((time.perf_counter() - t0) * 1000, 1)}, "llm_calls": calls,
+                "model_versions": self._model_versions(),
             }
             await self._finish_turn(record)
 
     async def review(self, turn_input: dict[str, Any]) -> Review:
         """Pre-submit check; never uses up a turn."""
         self._require_playing()
-        r = await self.reviewer.review(turn_input, self._encoder_context())
+        calls: list[dict[str, Any]] = []
+        token = CALL_LOG.set(calls)
+        try:
+            r = await self.reviewer.review(turn_input, self._encoder_context())
+        finally:
+            CALL_LOG.reset(token)
+        r.extra["llm_calls"] = calls
         if not r.ok:
             self.rejections += 1
         self.logger.event("review", r.public())
@@ -175,7 +190,13 @@ class Session:
                 if prior is not None and source in ("typed_accepted", "option") and _same(prior.channels, channels):
                     review = prior
                 else:
-                    review = await self.reviewer.review({"mode": "channels", "channels": channels}, self._encoder_context())
+                    calls: list[dict[str, Any]] = []
+                    token = CALL_LOG.set(calls)
+                    try:
+                        review = await self.reviewer.review({"mode": "channels", "channels": channels}, self._encoder_context())
+                    finally:
+                        CALL_LOG.reset(token)
+                    review.extra["llm_calls"] = calls
                 if source in ("option", "option_edited") and review.output is not None:
                     pass  # options were checked when generated; the classification is what matters
                 elif not review.ok:
@@ -250,6 +271,18 @@ class Session:
     # ===================================================================== the turn
     async def _play_turn(
         self, channels: dict[str, Any], source: str, output: dict[str, Any], silent: bool, review: Review | None
+    ) -> dict[str, Any]:
+        calls: list[dict[str, Any]] = []
+        token = CALL_LOG.set(calls)
+        try:
+            record = await self._turn(channels, source, output, silent, review, calls)
+        finally:
+            CALL_LOG.reset(token)
+        return record
+
+    async def _turn(
+        self, channels: dict[str, Any], source: str, output: dict[str, Any], silent: bool, review: Review | None,
+        calls: list[dict[str, Any]],
     ) -> dict[str, Any]:
         t_start = time.perf_counter()
         lat: dict[str, float] = {}
@@ -415,6 +448,8 @@ class Session:
         if ended is not None or ending is not None:
             self._measure_tension()
         lat["total"] = _ms(t_start)
+        review_calls = (review.extra.get("llm_calls") if review else None) or []
+        lat["review_before_submit"] = round(sum(c["latency_ms"] for c in review_calls), 1)
         record = {
             "turn": turn_no,
             "session": self.id,
@@ -439,6 +474,7 @@ class Session:
             "state_diff": self.schema.diff(before, state),
             "state": deepcopy(state),
             "latency_ms": lat,
+            "llm_calls": review_calls + calls,
             "model_versions": self._model_versions(),
         }
         await self._finish_turn(record)
@@ -574,6 +610,12 @@ class Session:
             speaker_allowed={n: self.knowledge.allowed_facts(n, state) for n in NPCS},
             player={**(player or {}), "world_note": bool(world and (world.note or world.follow_notes))},
             ending=ending, knowledge=req.knowledge,
+            scene={
+                "room": state["player_room"], "present": self.world.present(state),
+                **{f"{n}_room": state[f"{n}_room"] for n in NPCS},
+                **{k: state[k] for k in ("crate", "leo_phone", "player_phone", "nora_call")},
+                "heard_by": state.get("heard_by", {}),
+            },
         )
         out = await self.narrator.write(req)
         log: list[dict[str, Any]] = []

@@ -51,10 +51,16 @@ BUILTIN_V0: dict[str, str] = {
 }
 
 
-def system_prompt(role: str) -> Prompt:
+def system_prompt(role: str, **variables: str) -> Prompt:
+    """The role's prompt with `{{NAME}}` placeholders filled from `variables` (e.g. the review prompt's action
+    table, generated from data/interactions.yaml so it never drifts from the world rules)."""
     try:
-        return load_prompt(role)
+        prompt = load_prompt(role)
     except FileNotFoundError:
         if role not in BUILTIN_V0:
             raise
-        return Prompt(BUILTIN_V0[role], 0)
+        prompt = Prompt(BUILTIN_V0[role], 0)
+    text = prompt.text
+    for key, value in variables.items():
+        text = text.replace("{{" + key + "}}", value)
+    return Prompt(text, prompt.version)

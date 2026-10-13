@@ -28,6 +28,7 @@ import os
 import re
 import time
 from collections.abc import AsyncIterator
+from contextvars import ContextVar
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -41,8 +42,24 @@ log = logging.getLogger("fragile.llm")
 
 ROLES = ("review", "narrator", "guard", "tension", "scorer", "proposer", "options", "selfplay", "judge")
 
+#: output budget per role. Generous on purpose: reasoning models spend part of it thinking, and a budget that
+#: runs out returns an empty or cut-off reply. Only tokens actually produced are billed.
+ROLE_MAX_TOKENS = {
+    "review": 8000, "narrator": 8000, "guard": 8000, "tension": 4000, "scorer": 6000,
+    "proposer": 8000, "options": 6000, "selfplay": 4000, "judge": 6000,
+}
+
+#: seconds before a request is abandoned (then retried once, then the role's fallback). The SDK's own default
+#: is 600 s plus silent retries, which once froze a turn for ten minutes. LLM_TIMEOUT_<ROLE> overrides.
+ROLE_TIMEOUT_S = {"narrator": 90.0, "proposer": 120.0, "judge": 120.0}
+DEFAULT_TIMEOUT_S = 60.0
+
 ENV_FILE = Path(__file__).resolve().parents[2] / ".env"
 _env_loaded = False
+
+#: when set to a list, every finished call_json appends its LLMResult.meta() here: the turn loop collects the
+#: provider, model, prompt version and latency of each call for the turn log
+CALL_LOG: ContextVar[list[dict[str, Any]] | None] = ContextVar("llm_call_log", default=None)
 
 _FENCE_RE = re.compile(r"```(?:json)?\s*(.*?)```", re.DOTALL)
 
@@ -183,6 +200,12 @@ def extract_json(text: str) -> Any:
     raise LLMError(f"could not parse JSON from model output: {text[:200]!r}")
 
 
+def _log_call(res: LLMResult) -> None:
+    log_list = CALL_LOG.get()
+    if log_list is not None:
+        log_list.append(res.meta())
+
+
 def _parse_and_validate(text: str, validator: jsonschema.protocols.Validator | None) -> tuple[Any, str | None]:
     """(data, None) when usable, (None, error message) otherwise."""
     try:
@@ -257,18 +280,35 @@ class LLMClient:
             validator = jsonschema.Draft202012Validator(schema)
         errors: list[str] = []
         latency = 0.0
+        # some OpenAI-compatible endpoints (DeepSeek) refuse JSON mode unless the user turn says "json"
+        if "json" not in user and self.config.effective_provider != "mock":
+            user += "\n\nReply in json."
         prompt = user
         for attempt in (1, 2):
-            res = await self.call_text(system, prompt, temperature=temperature, json_mode=True, prompt_version=prompt_version)
+            t0 = time.perf_counter()
+            try:
+                res = await self.call_text(system, prompt, temperature=temperature, json_mode=True, prompt_version=prompt_version)
+            except Exception as e:  # noqa: BLE001 - a provider error (4xx, 5xx, timeout) gets the same retry, then the fallback
+                p = self.config.effective_provider
+                res = LLMResult(self.config.role, p, "mock" if p == "mock" else self.config.model, prompt_version)
+                res.latency_ms = (time.perf_counter() - t0) * 1000
+                error = f"provider error: {e.__class__.__name__}: {str(e)[:300]}"
+                latency += res.latency_ms
+                res.attempts, res.errors, res.latency_ms = attempt, errors, latency
+                errors.append(error)
+                log.warning("llm %s attempt %d failed: %s", self.config.role, attempt, error)
+                continue
             latency += res.latency_ms
             res.attempts, res.errors, res.latency_ms = attempt, errors, latency
             data, error = _parse_and_validate(res.text, validator)
             if error is None:
                 res.data = data
+                _log_call(res)
                 return res
             errors.append(error)
             log.warning("llm %s attempt %d unusable: %s", self.config.role, attempt, error)
             prompt = user + _RETRY_NOTE.format(error=error)
+        _log_call(res)
         raise LLMOutputError(res)
 
     async def call_text(
@@ -350,11 +390,15 @@ class LLMClient:
             return await self._anthropic_complete(system, user, temp)
         raise LLMError(f"unknown provider {provider!r} for role {self.config.role}")
 
+    def timeout_s(self) -> float:
+        raw = os.getenv(f"LLM_TIMEOUT_{self.config.role.upper()}")
+        return float(raw) if raw else ROLE_TIMEOUT_S.get(self.config.role, DEFAULT_TIMEOUT_S)
+
     def _get_openai(self):
         if self._openai is None:
             from openai import AsyncOpenAI
 
-            kwargs: dict[str, Any] = {}
+            kwargs: dict[str, Any] = {"timeout": self.timeout_s(), "max_retries": 0}
             if self.config.base_url:
                 kwargs["base_url"] = self.config.base_url
             if self.config.api_key:
@@ -366,7 +410,7 @@ class LLMClient:
         if self._anthropic is None:
             from anthropic import AsyncAnthropic
 
-            kwargs: dict[str, Any] = {}
+            kwargs: dict[str, Any] = {"timeout": self.timeout_s(), "max_retries": 0}
             if self.config.api_key:
                 kwargs["api_key"] = self.config.api_key
             self._anthropic = AsyncAnthropic(**kwargs)
@@ -420,10 +464,11 @@ class LLMClient:
 _clients: dict[str, LLMClient] = {}
 
 
-def get_client(role: str, temperature: float, mock_handler=None, max_tokens: int = 1200) -> LLMClient:
+def get_client(role: str, temperature: float, mock_handler=None, max_tokens: int | None = None) -> LLMClient:
     """Cached per role. Mock handlers are attached by the role modules."""
     if role not in _clients:
-        _clients[role] = LLMClient(LLMConfig.for_role(role, temperature, max_tokens), mock_handler)
+        budget = max_tokens or ROLE_MAX_TOKENS.get(role, 1200)
+        _clients[role] = LLMClient(LLMConfig.for_role(role, temperature, budget), mock_handler)
     elif mock_handler is not None and _clients[role]._mock_handler is None:
         _clients[role]._mock_handler = mock_handler
     return _clients[role]

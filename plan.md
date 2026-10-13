@@ -235,19 +235,47 @@ log(turn_record)
 | R7 | 每个 LLM 角色没有 prompt 文件时用内置的 v0 短 prompt（`engine/models/prompts.py`），M4 的 `<role>_v1.md` 落地后自动接管 | 让 llm 路径在 M4 之前就能接真供应商 |
 | R8 | 离线 mock 的 review / guard / tension 直接用各自的 rule 路径作答 | 一份规则实现同时当 baseline 和离线 mock |
 
-### M4 · LLM mock 接入（10/10–10/13）· 负责 #2、#3、#4、#1 各管自己的模块
+### M4 · LLM mock 接入（10/10–10/13，实际完成 10/12）· 负责 #2、#3、#4、#1 各管自己的模块
 
-- [ ] 写 prompt v1：`review`、`narrator`、`guard`、`tension`、`scorer`、`proposer`、`options`、`selfplay`、`judge`
-- [ ] 每个模块一套小评测集 `prompts/evals/<role>.jsonl`，每套 20–30 条手写样例：
-  - review：interaction-design.md §4.2 的九类违规各 2 条、合规 10 条，再加切分和翻译样例；
-  - guard：四类各 5 条；
-  - tension：10 个对话窗口；
-  - scorer：10 个决策点。
-- [ ] `tools/eval_prompts.py`：一条命令跑完所有评测集，输出准确率
-- [ ] 按 §3.3 配好供应商，用 `LLM_LIVE_ROLES` 打开（§3.2 的上线开关）；离线 mock 和真实 LLM 都能切换
-- [ ] 各阶段延迟写进日志，`play_cli.py /trace` 能看到
+- [x] 写 prompt v1：`review`、`narrator`、`guard`、`tension`、`scorer`、`proposer`、`options`、`selfplay`、`judge`（`backend/prompts/<role>_v1.md`；review 的动作表由 `interactions.yaml` 生成后填进 `{{ACTION_TABLE}}`）
+- [x] 每个模块一套小评测集 `prompts/evals/<role>.jsonl`：review 35 条（九类违规各 2 条、合规 10 条、切分翻译和 Nora 7 条）、guard 20 条（四类各 5 条）、tension 10 个窗口、scorer 10 个决策点
+- [x] `tools/eval_prompts.py`：一条命令跑完所有评测集，llm 路径和 rule 基线并排输出；`--offline` 走离线 mock
+- [x] 按 §3.3 配好供应商（DeepSeek：review / guard / tension / scorer / options / proposer；Kimi：narrator / selfplay / judge），用 `LLM_LIVE_ROLES` 或 `play_cli.py --live all` 打开
+- [x] 各阶段延迟写进日志；每个 LLM 调用的角色、模型、prompt 版本、延迟和重试次数记进回合日志的 `llm_calls`，`play_cli.py /trace` 能看到
 
-**验收（里程碑 B，10/13）**：真实 LLM 下用 `play_cli.py` 玩完一局；评测集结果入库，作为 prompt 的回归基线。
+**验收（里程碑 B）**：真实 LLM 下用 `play_cli.py` 玩完一局（记录在 `prompts/evals/results/live_playthrough.txt`）；评测集结果入库（`prompts/evals/results/`），作为 prompt 的回归基线。
+
+基线（2026-10-12，prompt v1）：
+
+| 模块 | 模型 | llm 路径 | rule 基线 |
+|---|---|---|---|
+| review（M2） | deepseek-flash | 合规判断 100%，误拒 0%，漏拦 0%；对谁、话语行为、动作、翻译、Nora 判定全对 | 89%，误拒 6%，漏拦 17%，不会翻译 |
+| guard（M3） | deepseek-flash | 95%（21 条，跑 3 次都是 95%）；误拦 0–20%（3 次里有 1 次误拦了 1 条正常旁白）；矛盾 6/6 | 52%，抓不到矛盾 |
+| tension（M4） | deepseek-flash | MAE 0.25–0.30，Spearman 0.98 | （无：rule 读的是 beat 自报的值） |
+| scorer（M1） | deepseek-flash | top-1 100% | top-1 80% |
+
+真实 LLM 整局（2026-10-12，`live_playthrough.txt`）：脚本玩家走 golden path，42 回合到 `confession` 结局，剧情时间 18.5 分钟，15 个主干拍全部演完，没有兜底、没有修补，guard 打回重写 4 次。**每回合平均约 50 秒，远超 §6 估计的 6–10 秒**：
+
+| 角色 | 模型 | 调用 | 平均延迟 |
+|---|---|---|---|
+| narrator | kimi-k3 | 46 | 49.5 秒 |
+| guard | deepseek-flash | 46 | 24.5 秒（含一次 615 秒的挂起） |
+| scorer | deepseek-flash | 8 | 13.5 秒 |
+| review | deepseek-flash | 42 | 4.9 秒 |
+
+同一个请求单独测叙述者：kimi-k3 22–44 秒，kimi-k2.6 75–156 秒，deepseek-v4-pro 33–41 秒，**deepseek-flash 7–9 秒，文笔相当**。叙述者换哪个模型待定（P2）。
+
+实现时定下的细化：
+
+| # | 细化 | 理由 |
+|---|---|---|
+| R9 | 供应商报错（4xx、5xx、超时）和输出不合格一样：重试一次，再走兜底，不让一次报错中断回合 | 真实供应商偶尔返回空内容或 503 |
+| R10 | 每个角色的输出上限放大到 4000–8000 token | 推理型模型先消耗推理 token，上限小时会返回空内容或被截断的 JSON；只按实际产出计费 |
+| R11 | JSON 模式下用户消息里没有 "json" 时自动补一句 | DeepSeek 要求用户消息里出现这个词才接受 JSON 模式 |
+| R12 | tension 的 llm 路径只读文本窗口，不再把 beat 自报的张力放进 prompt | backend-design.md §2 原则 5：不能用 beat 自报的数值来评估 DM |
+| R13 | guard 的输入加上场景信息（房间、在场的人、各人位置、木箱和手机状态、`heard_by`） | 判断"对没听到的话作出反应"这一类矛盾需要它 |
+| R14 | 每个角色设请求超时（默认 60 秒，narrator 90 秒，proposer 和 judge 120 秒，`LLM_TIMEOUT_<ROLE>` 可改），关掉 SDK 自带的重试 | SDK 默认等 600 秒再静默重试，曾让一个回合卡了 13 分钟 |
+| R15 | narrator 和 guard 的 prompt 写明固定设定（去澳大利亚、6 点搬家、07:40 的航班、人物关系），改动设定按矛盾处理 | 试玩中叙述者 7 次把目的地写成 Lisbon，guard 没拦 |
 
 ### M5 · 前端（10/11–10/16）· 负责 #6
 

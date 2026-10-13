@@ -1,5 +1,6 @@
 from .cache import ResponseCache, cache_key
 from .client import (
+    CALL_LOG,
     ROLES,
     LLMClient,
     LLMConfig,
@@ -16,6 +17,7 @@ from .client import (
 from .prompts import PROMPTS_DIR, Prompt, load_prompt, prompt_versions
 
 __all__ = [
+    "CALL_LOG",
     "PROMPTS_DIR",
     "ROLES",
     "LLMClient",

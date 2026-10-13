@@ -52,6 +52,9 @@ class GuardContext:
     ending: bool = False
     #: knowledge slice and recent context for the llm path
     knowledge: dict[str, Any] = field(default_factory=dict)
+    #: the physical scene for contradiction checks: room, who is present, rooms of the others, crate, phones,
+    #: who heard what (heard_by)
+    scene: dict[str, Any] = field(default_factory=dict)
 
     def public(self) -> dict[str, Any]:
         return {
@@ -123,6 +126,7 @@ class LLMGuardPath:
             "speaker_allowed": {k: sorted(v) for k, v in ctx.speaker_allowed.items()},
             "player_input": ctx.player,
             "ending": ctx.ending,
+            "scene": ctx.scene,
             "knowledge": ctx.knowledge,
         }
         user = f"Check every segment. Return only the JSON object.\n\n```json\n{json.dumps(payload, ensure_ascii=False, indent=1)}\n```"
