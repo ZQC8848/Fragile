@@ -252,6 +252,7 @@ class RuleEncoder:
             "claims": claims,
             "coverage": 0.9 if known or any(u["action"] for u in units) or not units else 0.6,
             "nora_answer": nora_answer,
+            "side_answer": None,  # the rule path leaves side questions to the act rules (beats/runner.side_answer)
         }
 
     # ------------------------------------------------------------------ segmentation

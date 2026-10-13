@@ -14,6 +14,7 @@ Commands (free, they never use up a turn):
     /channels   switch between the single box and filling in the channels
     /options    three suggested moves; pick 1-3, or e1-e3 to edit one first
     /phone      the phone drawer: missed calls, voicemail, texts
+    /card       your player card: who you are and what you know walking in
     /state      story state, current beat and step
     /trace      the last turn: input, M2, world, reactions, beat, clock, DM, narrator, guard, latencies
     /help, /quit
@@ -102,6 +103,8 @@ class Cli:
             self.say(render_segments(msg["segments"]))
             if msg.get("tableau"):
                 self.say(f"[picture: {msg['tableau']}]", "  ")
+        elif t == "player_card":
+            self.show_card(msg)
         elif t == "input_review_result":
             self.last_review = msg
         elif t == "options":
@@ -158,6 +161,9 @@ class Cli:
                 self.say(f"{ev['kind'].replace('_', ' ')} · {ev['from'].capitalize()}{body}", "  ")
             if self.session.state["nora_call"] == "ringing":
                 self.say("Nora is calling. (answer or decline it as your action)", "  ")
+        elif cmd == "/card":
+            if self.session.card:
+                self.show_card(self.session.card)
         elif cmd == "/state":
             s = self.session
             self.say(s.schema.textualize(s.state), "  ")
@@ -168,6 +174,11 @@ class Cli:
         else:
             self.say(f"[unknown command {cmd}; /help]")
         return True
+
+    def show_card(self, card: dict[str, Any]) -> None:
+        self.say(f"[{card['name']}: {card['identity']}]", "  ")
+        for fact in card["knows"]:
+            self.say(f"- {fact}", "  ")
 
     async def single(self, text: str) -> None:
         while True:

@@ -69,6 +69,8 @@ def score_review(item: dict[str, Any], out: dict[str, Any]) -> dict[str, Any]:
         checks["translated"] = bool(out.get("translated")) == exp["translated"]
     if "nora_answer" in exp:
         checks["nora_answer"] = out.get("nora_answer") == exp["nora_answer"]
+    if "side_answer" in exp:
+        checks["side_answer"] = out.get("side_answer") == exp["side_answer"]
     if "claims" in exp:
         checks["claims"] = set(exp["claims"]) <= set(out.get("claims") or []) and bool(exp["claims"] or not out.get("claims"))
     if "speech_has" in exp:

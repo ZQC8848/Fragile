@@ -54,6 +54,14 @@ class Knowledge:
         """State `revealed` ids this character may speak of now."""
         return {f["fact"] for f in self.sayable(who, state) if f.get("fact")}
 
+    def player_card(self, state: dict[str, Any]) -> dict[str, Any]:
+        """What the player is told walking in (plan.md R24): who they are, and every fact they may state now."""
+        player = self.cards.get("player") or {}
+        return {
+            "identity": (player.get("persona") or {}).get("identity", ""),
+            "knows": [f["text"] for f in self.sayable("player", state)],
+        }
+
     def slice(self, state: dict[str, Any], speakers: list[str], perceivable: list[str]) -> dict[str, Any]:
         """What the narrator may use this turn."""
         out: dict[str, Any] = {}

@@ -19,6 +19,7 @@ and the tests all drive the same object. Messages follow schemas/messages_v2.jso
 from __future__ import annotations
 
 import asyncio
+import os
 import time
 from collections.abc import Awaitable, Callable
 from copy import deepcopy
@@ -38,6 +39,7 @@ from engine.llm.client import _clients
 from engine.models import Encoder, Guard, GuardContext, TensionEstimator, path_from_env, shadow_from_env
 from engine.models.encoder import empty_output
 from engine.narrator import Knowledge, NarrationRequest, Narrator, fill, repair
+from engine.narrator import ledger as story_ledger
 from engine.paths import DATA_DIR
 from engine.reactions import ReactionLayer
 from engine.state import StateSchema
@@ -48,6 +50,8 @@ Push = Callable[[dict[str, Any]], Awaitable[None]]
 NPCS = ("julian", "mia", "nora")
 MAX_GUARD_REWRITES = 2
 TENSION_WINDOW = 4
+#: seconds one turn may spend on narration, rewrites included (NARRATOR_TURN_BUDGET_S overrides)
+NARRATION_BUDGET_S = 150.0
 
 
 async def _discard(_: dict[str, Any]) -> None:
@@ -116,6 +120,7 @@ class Session:
         self.options_requests = 0
         self.traces: list[dict[str, Any]] = []
         self.last_decision: Decision | None = None
+        self.card: dict[str, Any] | None = None
 
     # ===================================================================== public entry points
     async def start(self, name: str, gender: str) -> None:
@@ -133,6 +138,8 @@ class Session:
             self.name, self.gender = name.strip() or "Sam", gender
             self.phase = "playing"
             await self.push({"type": "session_state", "phase": "playing", "turn": 0})
+            self.card = {"type": "player_card", "name": self.name, **self.knowledge.player_card(self.state)}
+            await self.push(self.card)
             for ev in (
                 {"kind": "missed_call", "from": "leo", "text": "15:10", "id": "leo_missed_1"},
                 {"kind": "missed_call", "from": "leo", "text": "15:10", "id": "leo_missed_2"},
@@ -331,6 +338,8 @@ class Session:
 
         # -- 2. reactions, the answer, the caps -----------------------------------------------
         t = time.perf_counter()
+        heard = state.get("heard_by") or {}
+        turn["fresh"] = {h: [f for f in turn["claims"] if h not in heard.get(f, [])] for h in ("julian", "mia")}
         reaction = self.reactions.select(state, turn, None if refused else run, self.used, self.last_speaker)
         for r in reaction.chosen():
             if r.once:
@@ -344,6 +353,7 @@ class Session:
             if outcome and outcome.get("effects"):
                 state = self._apply(state, outcome["effects"])
         state, clipped = self.reactions.cap_deltas(before, state)
+        state = self.reactions.recover(before, state)
         state = self.reactions.record_claims(state, turn, turn_no)
         state = self.schema.refresh_derived(state)
         lat["reactions"] = _ms(t)
@@ -421,11 +431,13 @@ class Session:
         # -- 6. narration and guard -------------------------------------------------------------------
         t = time.perf_counter()
         reactions_req = [{"role": "primary" if r is reaction.primary else "secondary", "responder": r.responder, "do": r.do} for r in reaction.chosen()]
-        world_req = world.public() if world.status in ("done", "failed", "blocked") or world.follow_notes else None
+        world_req = world.public() if world.status in ("done", "failed", "blocked", "held") or world.follow_notes or world.before else None
         req = self._request(
             state, turn_no, player=channels, world=world_req, reactions=reactions_req,
             outcome={"id": outcome["id"], "text": outcome["text"]} if outcome else None,
-            steps=plan, resume=resume, events=notes, fast_forward=fast_forward, opening=opening, ending=ending,
+            steps=run.beat.resolve(plan, rule_ctx(state, turn)) if run is not None and plan else plan,
+            resume=resume, events=notes, fast_forward=fast_forward, opening=opening, ending=ending,
+            moves=story_ledger.moves(before, state),
         )
         extra_allowed = set(world.reveals)
         for e in reaction.effects + ([{"effects": outcome.get("effects")}] if outcome else []):
@@ -559,6 +571,7 @@ class Session:
         """An ending plays out whole in the passage that reaches it: opening, every step, the epilogue."""
         beat = decision.chosen_beat
         entry = decision.entry or beat.entries[0]
+        steps = beat.resolve(beat.steps, rule_ctx(state, {}))  # before its effects: "unless the crate is already open"
         state = self._apply(state, beat.effects)
         state["beat_history"] = [*state["beat_history"], {
             "beat_id": beat.id, "origin": beat.origin, "completed": True, "aborted_by": None, "entry": entry.get("id"),
@@ -566,7 +579,7 @@ class Session:
         }]
         state = self.schema.refresh_derived(state)
         self.run = None
-        return state, {"beat": beat, "beat_id": beat.id, "opening": entry["opening"], "steps": beat.steps, "epilogue": beat.epilogue}
+        return state, {"beat": beat, "beat_id": beat.id, "opening": entry["opening"], "steps": steps, "epilogue": beat.epilogue}
 
     def _sync_run(self, state: dict[str, Any]) -> None:
         run = self.run
@@ -598,6 +611,7 @@ class Session:
             name=self.name, gender=self.gender, turn=turn_no, room=state["player_room"], present=present,
             knowledge=self.knowledge.slice(state, speakers, self.world.perceivable(state)),
             words=self.clock.passage_words(state["story_min"]), recent=[p["text"] for p in self.passages[-2:]],
+            positions=story_ledger.positions(state), ledger=story_ledger.history(state), said=story_ledger.said(self.passages),
             opening=opening, ending=ending, **kw,
         )
 
@@ -615,9 +629,11 @@ class Session:
                 **{f"{n}_room": state[f"{n}_room"] for n in NPCS},
                 **{k: state[k] for k in ("crate", "leo_phone", "player_phone", "nora_call")},
                 "heard_by": state.get("heard_by", {}),
+                "moves": req.moves,
             },
         )
-        out = await self.narrator.write(req)
+        deadline = time.monotonic() + float(os.getenv("NARRATOR_TURN_BUDGET_S") or NARRATION_BUDGET_S)
+        out = await self.narrator.write(req, deadline)
         log: list[dict[str, Any]] = []
         rewrites = 0
         while True:
@@ -625,7 +641,7 @@ class Session:
             fails = Guard.failures(verdict.result["verdicts"])
             steps_ok = sorted(out.steps_delivered) == sorted(planned)
             log.append({"attempt": rewrites, "verdicts": verdict.log(), "steps_delivered": out.steps_delivered, "steps_ok": steps_ok})
-            if (not fails and steps_ok) or rewrites >= MAX_GUARD_REWRITES:
+            if (not fails and steps_ok) or rewrites >= MAX_GUARD_REWRITES or time.monotonic() >= deadline:
                 break
             if not fails and rewrites >= 1:
                 break  # a steps mismatch gets one rewrite, then the engine moves on and logs it
@@ -633,8 +649,13 @@ class Session:
             if not steps_ok:
                 hints.append(f"deliver exactly these steps and report them in steps_delivered: {planned}")
             req.hints = hints
-            out = await self.narrator.write(req)
+            redo = await self.narrator.write(req, deadline)
             rewrites += 1
+            if redo.fallback and not out.fallback:
+                # no model could rewrite in time: keep the written draft and repair it rather than show stitched text
+                log.append({"attempt": rewrites, "kept_previous": True, "errors": redo.meta.get("errors")})
+                break
+            out = redo
         segments = out.segments
         repaired = False
         if fails:

@@ -5,7 +5,12 @@ Actions are attempts. Each one ends as:
     done     it happened; `effects` changed the world, `note` says what the player now perceives
     free     a gesture the world has no rule for (looking at someone); nothing changes, the narrator renders it
     failed   it cannot be attempted here (wrong room, nothing like that here); `note` says why
-    blocked  the world (`needs`) or a present NPC (`blockers`) stopped it; a blocking NPC loses composure
+    blocked  the world (`needs`) or a present NPC (`blockers`, `watch`) stopped it; a blocking NPC loses composure
+    held     a watching NPC asked about it; the next turn's answer decides (plan.md R17)
+
+A `watch` is an NPC who has to notice the attempt before stopping it: a declared attempt is always noticed,
+otherwise their composure decides between not noticing, asking, and stopping it. A held attempt is settled
+at the start of the next turn (`apply` -> `_settle_held`), and that result is narrated first (`before`).
 
 After the action the hosts may follow the player (`follow`) and `private_turns` is recounted.
 """
@@ -23,13 +28,15 @@ from engine.paths import DATA_DIR
 from engine.state.schema import StateSchema
 
 HOSTS = ("julian", "mia")
+#: rooms a host can be taken to (take_aside's `arg`)
+TAKE_ALONG_ROOMS = ("kitchen", "balcony", "hall", "living")
 NPCS = ("julian", "mia", "nora")
 
 
 @dataclass
 class WorldResult:
     action: dict[str, Any] | None
-    status: str = "none"  # none | done | free | failed | blocked
+    status: str = "none"  # none | done | free | failed | blocked | held
     blocked_by: str | None = None
     note: str | None = None
     effects: dict[str, Any] = field(default_factory=dict)
@@ -37,6 +44,8 @@ class WorldResult:
     reveals: list[str] = field(default_factory=list)
     follow_notes: list[str] = field(default_factory=list)
     moved: list[str] = field(default_factory=list)
+    #: what happens first: the answer to last turn's held attempt
+    before: list[str] = field(default_factory=list)
 
     def public(self) -> dict[str, Any]:
         return {
@@ -48,6 +57,7 @@ class WorldResult:
             "reveals": self.reveals,
             "follow_notes": self.follow_notes,
             "moved": self.moved,
+            "before": self.before,
         }
 
 
@@ -70,6 +80,9 @@ class WorldRules:
         for name, obj in raw.get("objects", {}).items():
             actions = {verb: self._compile_spec(spec) for verb, spec in (obj.get("actions") or {}).items()}
             self.objects[name] = {**obj, "actions": actions}
+        #: the attempt a watching NPC can hold over a turn (the one whose watch can ask)
+        self.holdable = next(((name, verb, spec) for name, o in self.objects.items() for verb, spec in o["actions"].items()
+                              if (spec.get("_watch") or {}).get("on_ask")), None)
 
     @classmethod
     def from_file(cls, schema: StateSchema, path: Path | None = None) -> WorldRules:
@@ -80,10 +93,22 @@ class WorldRules:
         spec["_when"] = _rule(spec.get("when"))
         spec["_needs"] = _rule(spec.get("needs"))
         spec["_blockers"] = [{**b, "_when": _rule(b["when"])} for b in spec.get("blockers") or []]
-        for key in (spec.get("effects") or {}):
-            if key.split(".")[0] not in self.schema.props:
-                raise KeyError(f"interactions.yaml: unknown state variable {key!r}")
+        spec["_note_when"] = [{**n, "_when": _rule(n["when"])} for n in spec.get("note_when") or []]
+        watch = spec.get("watch")
+        if watch:
+            spec["_watch"] = {**watch, "_when": _rule(watch["when"]), "_declared": _rule(watch.get("declared") or "false")}
+        for effects in (spec.get("effects"), (watch or {}).get("on_stop"), (watch or {}).get("on_ask")):
+            for key in effects or {}:
+                if key.split(".")[0] not in self.schema.props:
+                    raise KeyError(f"interactions.yaml: unknown state variable {key!r}")
         return spec
+
+    @staticmethod
+    def _note(spec: dict[str, Any], ctx: dict[str, Any]) -> str | None:
+        for n in spec.get("_note_when") or []:
+            if truthy(n["_when"], ctx):
+                return n["note"]
+        return spec.get("note")
 
     # -- views ------------------------------------------------------------------------------
     @staticmethod
@@ -102,7 +127,7 @@ class WorldRules:
         """The closed action table as text, for the review prompt (M2 maps actions onto it)."""
         lines = [
             'verb "go_to", target = a room: hall, living, kitchen, balcony, bathroom (one adjacent room per turn)',
-            'verb "take_aside", target = "julian" or "mia", arg = the room to go to: kitchen, balcony or hall',
+            'verb "take_aside", target = "julian" or "mia", arg = the room to go to: kitchen, balcony, hall or living (also: going somewhere while holding, leading or bringing that person along)',
             'verb "leave", target = "front_door" (walking out of the flat; only from the hall)',
         ]
         for name, obj in self.objects.items():
@@ -120,11 +145,26 @@ class WorldRules:
 
     # -- applying an action -------------------------------------------------------------------
     def apply(self, state: dict[str, Any], action: dict[str, Any] | None, turn: dict[str, Any]) -> tuple[dict[str, Any], WorldResult]:
+        state, held = self._settle_held(state, turn)
+        state, result = self._apply_action(state, action, turn)
+        if held is not None:
+            result.before = [held.note] if held.note else []
+            result.effects = {**held.effects, **result.effects}
+            result.reveals = held.reveals + result.reveals
+            if result.status == "none":
+                result.status, result.blocked_by = held.status, held.blocked_by
+        return state, result
+
+    def _apply_action(self, state: dict[str, Any], action: dict[str, Any] | None, turn: dict[str, Any]) -> tuple[dict[str, Any], WorldResult]:
         if not action:
             return state, WorldResult(None)
         verb, target, arg = action.get("verb"), action.get("target"), action.get("arg")
         ctx = {**state, "turn": turn, "target": target, "arg": arg}
         if verb == "go_to":
+            host = turn.get("leads")
+            here = state.get("player_room")
+            if host and state.get(f"{host}_room") == here and target in TAKE_ALONG_ROOMS and target in self.rooms.get(here, {}).get("adjacent", []):
+                return self._take_aside(state, ctx, {"verb": "take_aside", "target": host, "arg": target}, host, target)
             return self._go_to(state, ctx, action, target)
         if verb == "take_aside":
             return self._take_aside(state, ctx, action, target, arg)
@@ -166,7 +206,7 @@ class WorldRules:
             return state, WorldResult(action, "failed", note="You can only take Julian or Mia aside.")
         if not truthy(spec["_when"], ctx):
             return state, WorldResult(action, "failed", note=f"{target.capitalize()} isn't here.")
-        if arg not in ("kitchen", "balcony", "hall", "living"):
+        if arg not in TAKE_ALONG_ROOMS:
             return state, WorldResult(action, "failed", note="Where to?")
         other = "mia" if target == "julian" else "julian"
         effects: dict[str, Any] = {"player_room": arg, f"{target}_room": arg}
@@ -186,12 +226,66 @@ class WorldRules:
                 effects = {f"{who}_composure": f"-{self.block_cost}"} if f"{who}_composure" in self.schema.props else {}
                 new = apply_effects(state, effects, self.schema.props)
                 return new, WorldResult(action, "blocked", blocked_by=who, note=spec.get("blocked_note"), effects=effects)
+        note = self._note(spec, ctx)
+        watch = spec.get("_watch")
+        if watch and truthy(watch["_when"], ctx):
+            seen = self._notice(state, ctx, watch)
+            if seen == "stop":
+                return self._stop(state, action, watch)
+            if seen == "ask":
+                new = apply_effects(state, watch["on_ask"], self.schema.props)
+                return new, WorldResult(action, "held", blocked_by=watch["who"], note=watch.get("ask_note"), effects=dict(watch["on_ask"]))
+            note = watch.get("unnoticed_note") or note
+        return self._succeed(state, ctx, action, spec, note)
+
+    def _succeed(self, state, ctx, action, spec, note):
         effects = dict(spec.get("effects") or {})
         if spec.get("classify") == "nora_told" and ctx["turn"].get("nora_answer") in ("truth", "lie"):
             effects["nora_told"] = ctx["turn"]["nora_answer"]
         new = apply_effects(state, effects, self.schema.props)
         reveals = [f for f in new.get("revealed", []) if f not in state.get("revealed", [])]
-        return new, WorldResult(action, "done", note=spec.get("note"), effects=effects, reveals=reveals)
+        return new, WorldResult(action, "done", note=note, effects=effects, reveals=reveals)
+
+    # -- watching NPCs (plan.md R17) -------------------------------------------------------------
+    @staticmethod
+    def _notice(state: dict[str, Any], ctx: dict[str, Any], watch: dict[str, Any]) -> str:
+        """stop | ask | unnoticed. Declared attempts are always stopped. Otherwise: calm enough and never
+        threatened -> unnoticed; shaken -> stopped; in between (or threatened before) -> asked."""
+        who = watch["who"]
+        composure = float(state.get(f"{who}_composure", 1.0))
+        low = float(watch.get("suspicious_below", 0.3))
+        high = watch.get("unsuspecting_at")
+        if truthy(watch["_declared"], ctx) or high is None or composure < low:
+            return "stop"
+        if composure >= float(high) and not state.get(f"threatened_{who}"):
+            return "unnoticed"
+        return "ask" if watch.get("ask_note") else "stop"
+
+    def _stop(self, state: dict[str, Any], action: dict[str, Any] | None, watch: dict[str, Any]) -> tuple[dict[str, Any], WorldResult]:
+        who = watch["who"]
+        effects = dict(watch["on_stop"])
+        if f"{who}_composure" in self.schema.props:
+            effects[f"{who}_composure"] = f"-{self.block_cost}"
+        desperate = float(state.get(f"{who}_composure", 1.0)) < float(watch.get("suspicious_below", 0.3))
+        note = watch.get("stop_desperate_note") if desperate and watch.get("stop_desperate_note") else watch["stop_note"]
+        new = apply_effects(state, effects, self.schema.props)
+        return new, WorldResult(action, "blocked", blocked_by=who, note=note, effects=effects)
+
+    def _settle_held(self, state: dict[str, Any], turn: dict[str, Any]) -> tuple[dict[str, Any], WorldResult | None]:
+        """The answer to "who are you texting?": the truth or silence gets it stopped, anything else (a lie, a
+        change of subject) lets it through; so does the watcher having left the room."""
+        if state.get("phone_challenge") != "asked" or self.holdable is None:
+            return state, None
+        target, verb, spec = self.holdable
+        watch = spec["_watch"]
+        state = {**state, "phone_challenge": "none"}
+        action = {"verb": verb, "target": target, "arg": None}
+        ctx = {**state, "turn": turn, "target": target, "arg": None}
+        present = state.get(f"{watch['who']}_room") == state.get("player_room")
+        said = not turn.get("silent") and any(a not in ("silence", "observe") for a in turn.get("acts") or [])
+        if present and (turn.get("declared_police") or not said):
+            return self._stop(state, action, watch)
+        return self._succeed(state, ctx, action, spec, watch.get("answered_note") or spec.get("note"))
 
     # -- after the action ----------------------------------------------------------------------
     def settle(self, state: dict[str, Any], result: WorldResult) -> tuple[dict[str, Any], WorldResult]:

@@ -31,6 +31,9 @@
     "player_holding",
     "private_turns",
     "police_called",
+    "police_blocks",
+    "phone_challenge",
+    "threatened_julian",
     "claims",
     "heard_by",
     "current_beat",
@@ -259,6 +262,26 @@
       "type": "boolean",
       "default": false,
       "description": "The player got through to the police (call not blocked). Ending judgement treats it like telling the truth."
+    },
+    "police_blocks": {
+      "type": "integer",
+      "default": 0,
+      "minimum": 0,
+      "description": "Times Julian has stopped the player reaching the police. Once he has, insisting gets through."
+    },
+    "phone_challenge": {
+      "type": "string",
+      "enum": [
+        "none",
+        "asked"
+      ],
+      "default": "none",
+      "description": "Julian asked who the player is texting while a text to 911 waits unsent; the next turn's answer decides (a lie sends it, the truth or silence gets it stopped)."
+    },
+    "threatened_julian": {
+      "type": "boolean",
+      "default": false,
+      "description": "Julian has heard the player threaten to tell, or caught them reaching for the police. Cumulative: never goes back to false."
     },
     "claims": {
       "type": "array",
@@ -515,6 +538,52 @@
             "null"
           ],
           "description": "set when the last 3 turns all raised the same topic"
+        },
+        "declared_police": {
+          "type": "boolean",
+          "description": "The player said out loud they are telling the police (threaten_to_tell, or police / 911 in their speech). Julian always hears a declared call (plan.md R17)."
+        },
+        "side_answer": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "julian",
+            "mia",
+            null
+          ],
+          "description": "When the scene asked a side question: whose side the answer takes, as judged by M2. null = let the act rules decide."
+        },
+        "leads": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "julian",
+            "mia",
+            null
+          ],
+          "description": "The host the player's action takes along (holding Mia's hand, bringing Julian): a go_to then moves them both (plan.md R22)."
+        },
+        "fresh": {
+          "type": "object",
+          "description": "Per host, the claims this turn that they had not heard before (heard_by). Only news shakes composure (plan.md R25).",
+          "properties": {
+            "julian": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "mia": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
         }
       }
     }

@@ -8,7 +8,7 @@ Register: Hitchcock's Rope. Dramatic irony and black humour laid over good manne
 - name, pronouns: the player. Use the name in NPC lines; pronouns only if someone refers to the player.
 - room, present: where "I" am and who is there. Only present people speak or act on stage; others may be heard off stage if a direction says so.
 - player: what the player wrote this turn (speech, action, expression, addressee). null on turn 0.
-- world: what the world did with the player's action. status done = it happened; blocked = someone/something stopped it (blocked_by); failed = it could not be attempted; note = what to render; follow_notes = hosts who followed the player in.
+- world: what the world did with the player's action. status done = it happened; blocked = someone/something stopped it (blocked_by); held = someone noticed and asks about it; failed = it could not be attempted; note = what to render; follow_notes = hosts who followed the player in; before = how someone takes the player's answer to their last question, rendered right after the player's words.
 - reactions: the reaction(s) to perform, primary first, each with responder (who performs it) and do (a stage direction).
 - outcome: the scene's answer to the player's reply to a question, already chosen. Render it.
 - steps: story beats you MUST deliver this turn, in order. Each `do` is a stage direction; lines in single quotes are sample dialogue. Deliver every step, nothing from later steps. resume = true: pick the thread back up naturally after an interruption.
@@ -20,6 +20,9 @@ Register: Hitchcock's Rope. Dramatic irony and black humour laid over good manne
 - knowledge: per character, persona and may_say (the facts they are allowed to state now); player.knows / revealed / can_see.
 - words: [min, max] target length of the whole passage (long steps and endings may run longer).
 - recent: the last passages, for continuity. Do not repeat them.
+- positions: where everyone is now. These are facts: nobody is anywhere else. moves: who changed room this turn; show every move unless the world note, a step or the opening already does.
+- ledger: what has already happened tonight. People remember it; never have anyone ask about something the ledger says they already saw or heard.
+- said: NPC lines already spoken tonight. Never repeat one word for word, even when a direction or sample line does: say it differently, or let a look do the work.
 - hints: problems with your previous draft. Fix all of them.
 
 # Segments, in this order

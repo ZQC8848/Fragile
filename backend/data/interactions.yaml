@@ -233,6 +233,9 @@ objects:
       call:
         effects: { leo_phone: buzzed }
         note: "It rings out. Somewhere close, something buzzes."
+        note_when:
+          - when: "julian_room == player_room"
+            note: "It rings out. Inside Julian's jacket, something buzzes. His hand goes flat over the pocket."
 
   # The player's own phone. Opening the phone drawer is free; these use up the turn and the hosts see it.
   phone:
@@ -242,11 +245,38 @@ objects:
         note: "Hey, it's Leo. I'm heading over to Julian's now, early. Something's... I'll explain. Can you come early tonight? Like, really early. Call me back. Please."
       give_phone: { arg: required, note: "Nobody takes it." }
 
+  # Reaching the police (plan.md R17). A call is always heard: Julian stops it when he is in the room and
+  # Nora is not. A text to 911 is covert: whether he notices depends on his composure (see `watch`). Once he
+  # has stopped the player, insisting gets through (police_blocks >= 1 switches the watch off).
   police:
     actions:
       call:
-        blockers:
-          - { who: julian, when: "julian_room == player_room and julian_composure >= 0.3" }
-        blocked_note: "'Who are you calling, {name}?' Julian's hand closes over the phone."
+        watch:
+          who: julian
+          when: "julian_room == player_room and nora_room != player_room and police_blocks == 0"
+          declared: "true"
+          stop_note: "'Who are you calling, {name}?' Julian's hand closes over the phone, gently, and ends the call."
+          stop_desperate_note: "Julian is across the room before it connects. He takes the phone out of my hand, ends the call and lays it face down in front of me. 'Don't. Don't do that again, {name}.'"
+          on_stop: { police_blocks: "+1", threatened_julian: true }
         effects: { police_called: true }
         note: "A calm voice asks what your emergency is."
+        note_when:
+          - when: "police_blocks >= 1 and julian_room == player_room"
+            note: "This time I don't let go of the phone. A calm voice asks what your emergency is."
+      text:
+        arg: optional
+        watch:
+          who: julian
+          when: "julian_room == player_room and nora_room != player_room and police_blocks == 0"
+          declared: "turn.declared_police"
+          unsuspecting_at: 0.6
+          suspicious_below: 0.3
+          stop_note: "'Who are you texting, {name}?' Julian's hand closes over the phone, gently, and he turns it face down."
+          stop_desperate_note: "Julian takes the phone out of my hand before I can send it, reads the screen, and deletes it. 'Don't. Don't do that again, {name}.'"
+          ask_note: "Julian watches my thumbs. 'Who are you texting, {name}?'"
+          unnoticed_note: "I type below the edge of the crate. Sent. Nobody looks up."
+          answered_note: "He looks at me a moment longer, then lets it go. The message sends."
+          on_stop: { police_blocks: "+1", threatened_julian: true }
+          on_ask: { phone_challenge: asked }
+        effects: { police_called: true }
+        note: "Sent. The screen says help is on the way."

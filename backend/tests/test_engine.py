@@ -8,6 +8,7 @@ from helpers import DATA, default_state
 from engine.beats import BeatPool, BeatRun, accepts_invite, rule_ctx, side_answer
 from engine.clock import StoryClock
 from engine.dm import DramaManager, TensionArc
+from engine.dsl import apply_effects
 from engine.models.guard import GuardContext, rule_verdicts
 from engine.models.rule_encoder import RuleEncoder
 from engine.reactions import ReactionLayer
@@ -221,7 +222,7 @@ def test_each_variable_moves_at_most_one_step_per_turn():
     before = mid()
     after = {**before, "side": 1.5, "mia_composure": 0.2, "couple_unity": 1, "tension": 1.5}
     capped, clipped = REACTIONS.cap_deltas(before, after)
-    assert capped["side"] == 1 and capped["mia_composure"] == pytest.approx(0.4) and capped["couple_unity"] == 2
+    assert capped["side"] == 1 and capped["mia_composure"] == pytest.approx(0.5) and capped["couple_unity"] == 2
     assert capped["tension"] == 1.5 and set(clipped) == {"side", "mia_composure", "couple_unity"}
 
 
@@ -378,3 +379,89 @@ async def test_nothing_eligible_is_empty_and_generate_is_dropped_after_two(dm):
     s = mid(beat_history=played("the_door"), consecutive_generated=2)
     d = await dm.decide(s, turn(), decision_idx=0, state_text="", tension=1)
     assert "GENERATE_NEW" not in {c["beat_id"] for c in d.candidates}
+
+
+# --------------------------------------------------------------------------- reaching the police (plan.md R17, R18)
+POLICE_CALL = {"verb": "call", "target": "police"}
+POLICE_TEXT = {"verb": "text", "target": "police", "arg": "someone is dead here"}
+
+
+def test_a_call_in_front_of_julian_is_always_stopped_then_insisting_gets_through():
+    s, r = WORLD.apply(mid(julian_composure=0.8), POLICE_CALL, turn())
+    assert (r.status, r.blocked_by) == ("blocked", "julian") and "gently" in r.note
+    assert s["police_blocks"] == 1 and s["threatened_julian"] and not s["police_called"]
+    s, r = WORLD.apply(s, POLICE_CALL, turn())
+    assert r.status == "done" and s["police_called"] and r.note.startswith("This time")
+
+
+def test_a_shaken_julian_stops_a_call_desperately():
+    s, r = WORLD.apply(mid(julian_composure=0.1), POLICE_CALL, turn())
+    assert r.status == "blocked" and "Don't do that again" in r.note
+
+
+def test_nobody_stops_a_call_out_of_julians_sight_or_in_front_of_nora():
+    s, r = WORLD.apply(mid(player_room="kitchen", mia_room="kitchen"), POLICE_CALL, turn())
+    assert r.status == "done" and s["police_called"]
+    s, r = WORLD.apply(mid(nora_room="living"), POLICE_CALL, turn())
+    assert r.status == "done"
+
+
+def test_a_covert_text_depends_on_julians_composure():
+    s, r = WORLD.apply(mid(julian_composure=0.8), POLICE_TEXT, turn())
+    assert r.status == "done" and s["police_called"] and "Nobody looks up" in r.note
+    s, r = WORLD.apply(mid(julian_composure=0.45), POLICE_TEXT, turn())
+    assert r.status == "held" and s["phone_challenge"] == "asked" and not s["police_called"]
+    s, r = WORLD.apply(mid(julian_composure=0.2), POLICE_TEXT, turn())
+    assert r.status == "blocked" and s["threatened_julian"]
+    s, r = WORLD.apply(mid(julian_composure=0.8), POLICE_TEXT, turn(declared_police=True))
+    assert r.status == "blocked"
+
+
+def test_once_threatened_julian_at_least_asks():
+    s, r = WORLD.apply(mid(julian_composure=0.8, threatened_julian=True), POLICE_TEXT, turn())
+    assert r.status == "held"
+
+
+def test_the_answer_to_who_are_you_texting():
+    asked = mid(julian_composure=0.45, phone_challenge="asked")
+    s, r = WORLD.apply(asked, None, turn(acts=["explain"], addressee="julian"))
+    assert s["police_called"] and s["phone_challenge"] == "none" and r.before and r.status == "done"
+    s, r = WORLD.apply(asked, None, turn(acts=["threaten_to_tell"], declared_police=True))
+    assert not s["police_called"] and r.status == "blocked" and s["police_blocks"] == 1
+    s, r = WORLD.apply(asked, None, turn(acts=["silence"], silent=True))
+    assert not s["police_called"] and r.status == "blocked"
+
+
+def test_calling_leo_next_to_julian_buzzes_his_jacket():
+    s, r = WORLD.apply(mid(), {"verb": "call", "target": "leo"}, turn())
+    assert s["leo_phone"] == "buzzed" and "Julian's jacket" in r.note
+    s, r = WORLD.apply(mid(player_room="kitchen", mia_room="kitchen"), {"verb": "call", "target": "leo"}, turn())
+    assert "Somewhere close" in r.note
+
+
+def test_threatening_in_front_of_julian_is_remembered():
+    s = mid()
+    res = REACTIONS.select(s, turn(acts=["threaten_to_tell"], addressee="julian"), None, set())
+    for e in res.effects:
+        s = apply_effects(s, e["effects"], SCHEMA.props)
+    assert s["threatened_julian"]
+
+
+# --------------------------------------------------------------------------- taking someone along (plan.md R22)
+def test_going_somewhere_holding_mias_hand_takes_her_along():
+    from engine.input.turn import leads
+    assert leads("I keep hold of Mia's hand and move toward the hall") == "mia"
+    assert leads("I walk to the hall") is None
+    s, r = WORLD.apply(mid(), {"verb": "go_to", "target": "hall"}, turn(leads="mia"))
+    assert (s["player_room"], s["mia_room"], s["julian_room"]) == ("hall", "hall", "living") and r.moved == ["mia"]
+    s, r = WORLD.apply(mid(), {"verb": "go_to", "target": "hall"}, turn(leads="nora"))
+    assert s["mia_room"] == "living"
+
+
+def test_m2_side_verdict_overrides_the_act_rules():
+    beat = POOL.by_id["julian_on_the_balcony"]
+    run = BeatRun.start(beat, beat.entries[0], 1)
+    run.awaiting = "the_warning"
+    t = turn(acts=["agree", "mention_voicemail"], addressee="julian")  # turn 17 of the Sonnet playthrough
+    assert run.choose_outcome(rule_ctx(default_state(), t))["id"] == "julian"
+    assert run.choose_outcome(rule_ctx(default_state(), {**t, "side_answer": "mia"}))["id"] == "mia"

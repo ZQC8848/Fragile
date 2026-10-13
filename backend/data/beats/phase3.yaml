@@ -41,10 +41,22 @@
     usually Mia). Julian still avoids the words dead and body.
   steps:
     - id: it_comes_out
-      do: "The less composed one looks at the crate and says it. Mia: 'He's not late.' A long pause. 'He's here. He's been here the whole time.' Or Julian: 'He came by. Earlier. He's not leaving, {name}.' Entered by the crate: the opening already showed the shoe."
+      do: "The less composed one looks at the crate and says it."
+      lines:
+        - when: "mia_composure <= julian_composure"
+          do: "Mia: 'He's not late.' A long pause. 'He's here. He's been here the whole time.'"
+        - when: "mia_composure > julian_composure"
+          do: "Julian: 'He came by. Earlier. He's not leaving, {name}.'"
+        - when: "crate == 'opened'"
+          do: "The opening already showed the shoe."
       length: long
     - id: take_it_back
-      do: "The other tries to stop it. Julian: 'Mia. Stop.' Or Mia: 'Julian, don't.'"
+      do: "The other tries to stop it."
+      lines:
+        - when: "mia_composure <= julian_composure"
+          do: "Julian: 'Mia. Stop.'"
+        - when: "mia_composure > julian_composure"
+          do: "Mia: 'Julian, don't.'"
     - id: on_the_table
       do: "It is out: Leo is dead, he is in the crate. Both of them look at you."
   mix_in:
@@ -126,7 +138,12 @@
     - id: the_plan
       do: "'Here's what happens. Six o'clock the movers come. Seven forty we're gone. Tonight was dinner. He never showed.'"
     - id: the_leverage
-      do: "'There's money. More than you'd think. The studio money.' If Julian has heard about the missed calls: 'Two missed calls from him, and you just happened to walk in at seven? Who do you think they'll believe?' Otherwise: 'You were here all night, {name}. You ate off that crate.'"
+      do: "'There's money. More than you'd think. The studio money.'"
+      lines:
+        - when: "has(heard_by.missed_call, 'julian')"
+          do: "'Two missed calls from him, and you just happened to walk in at seven? Who do you think they'll believe?'"
+        - when: "not has(heard_by.missed_call, 'julian')"
+          do: "'You were here all night, {name}. You ate off that crate.'"
     - id: mias_plea
       do: "Mia: 'Please. Don't make it worse. For him. For me.'"
       asks: { asker: both, kind: choice, on_silence: undecided }

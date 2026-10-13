@@ -294,6 +294,9 @@
           "$ref": "#/$defs/SessionState"
         },
         {
+          "$ref": "#/$defs/PlayerCard"
+        },
+        {
           "$ref": "#/$defs/InputReviewResult"
         },
         {
@@ -618,6 +621,34 @@
         },
         "message": {
           "type": "string"
+        }
+      }
+    },
+    "PlayerCard": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "name",
+        "identity",
+        "knows"
+      ],
+      "description": "Sent once at session start, before the opening passage: who the player is and what they know walking in (plan.md R24). The client can show it again at any time.",
+      "properties": {
+        "type": {
+          "const": "player_card"
+        },
+        "name": {
+          "type": "string"
+        },
+        "identity": {
+          "type": "string"
+        },
+        "knows": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       }
     }

@@ -24,7 +24,12 @@
   dramatic_intent: "You leave, or you stay to the end without knowing: either way you become the witness to a normal evening."
   steps:
     - id: goodbye
-      do: "Left early: the street, the car, the ticket. Stayed: Nora looks at you once and leaves."
+      do: "The goodbye."
+      lines:
+        - when: "player_room == 'outside'"
+          do: "The street, the yellow car, a parking ticket under the wiper."
+        - when: "player_room != 'outside'"
+          do: "Nora looks at you once and leaves."
   epilogue: "Six in the morning. The movers lift the crate. 'Heavy one.'"
   tableau: ending_bon_voyage
 
@@ -58,6 +63,10 @@
   must_follow: { when: "police_called", rank: 3 }
   ending_rank: 2
   entries:
+    # plan.md R19: the call cut her confession short, but she was already there; she says it before the crate opens
+    - id: police_mia_first
+      when: "police_called and mia_composure < 0.15 and side >= 1"
+      opening: "Sirens, somewhere below. Before anyone reaches the crate, Mia is on her feet. 'Don't. Don't open it. It was me. I hit him.'"
     - id: police
       when: "police_called"
       opening: "Sirens, somewhere below. Then a knock that is not Nora's."
@@ -72,12 +81,24 @@
     Mia admits it herself depends on side and her composure.
   steps:
     - id: the_screws
-      do: "Unless the crate is already open: the screws come out one by one onto the floor."
+      do: "The crate."
+      lines:
+        - when: "crate == 'sealed'"
+          do: "The screws come out one by one onto the floor."
+        - when: "crate == 'opened'"
+          do: "The lid is already off. Nobody goes near it."
     - id: the_shoe
       do: "The cloth slides off. A shoe. Nora makes no sound."
       tableau: ending_open_it
     - id: who_did_it
-      do: "Julian: 'It was me. I did it.' If couple_unity < 2: 'Ask her. Ask her what she did with the bottle.' If you are on Mia's side and her composure is below 0.3: Mia: 'I hit him. He had his hands on Julian's throat.'"
+      do: "Julian takes the blame first: 'It was me. I did it.'"
+      lines:
+        - when: "couple_unity < 2"
+          do: "He stops protecting her: 'Ask her. Ask her what she did with the bottle.'"
+        - when: "side >= 1 and mia_composure < 0.3 and not (police_called and mia_composure < 0.15 and side >= 1)"
+          do: "Mia: 'I hit him. He had his hands on Julian's throat.'"
+        - when: "police_called and mia_composure < 0.15 and side >= 1"
+          do: "Mia has already said it. She does not take it back."
   epilogue: "Sirens somewhere below. Nora sits on the floor, her back against the crate."
   tableau: ending_open_it
 
@@ -103,7 +124,12 @@
     is false: he is still taking the blame for Mia, and you know, or guess, it was not him.
   steps:
     - id: says_it
-      do: "Mia: 'It was me. I hit him. I'm sorry. I'm so sorry.' Or Julian: 'I did it, Nora. Me.'"
+      do: "The one who broke tells Nora."
+      lines:
+        - when: "mia_composure < 0.15 and side >= 1"
+          do: "Mia: 'It was me. I hit him. I'm sorry. I'm so sorry.'"
+        - when: "not (mia_composure < 0.15 and side >= 1)"
+          do: "Julian: 'I did it, Nora. Me.'"
     - id: nobody_stops_it
       do: "The other one does not stop it."
   epilogue: "No one says anything else. Nora sits beside the crate. Downstairs, the car is still there."
@@ -115,9 +141,9 @@
   origin: authored
   author: "beat-script v0"
   schema_version: 2
-  preconditions: "nora_room == 'outside' and julian_room == player_room and mia_room != player_room and julian_composure < 0.15 and side >= 1.5 and has(turn.acts, 'threaten_to_tell')"
+  preconditions: "nora_room == 'outside' and julian_room == player_room and mia_room != player_room and julian_composure < 0.15 and side >= 1.5 and threatened_julian"
   must_follow:
-    when: "nora_room == 'outside' and julian_room == player_room and mia_room != player_room and julian_composure < 0.15 and side >= 1.5 and has(turn.acts, 'threaten_to_tell')"
+    when: "nora_room == 'outside' and julian_room == player_room and mia_room != player_room and julian_composure < 0.15 and side >= 1.5 and threatened_julian"
     rank: 2
   ending_rank: 5
   entries:

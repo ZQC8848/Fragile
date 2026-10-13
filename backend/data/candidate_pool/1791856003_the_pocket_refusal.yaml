@@ -1,0 +1,27 @@
+id: the_pocket_refusal
+title: The Pocket Refusal
+type: satellite
+origin: generated
+schema_version: 2
+preconditions: player_room == 'living' and julian_room == 'balcony' and mia_room ==
+  'living' and played('the_buzz')
+entries:
+- id: default
+  opening: Julian's back presses the railing, unlit cigarette forgotten, hand still
+    over the pocket. Mia freezes mid-wipe at the crate.
+tension_slope: 1
+effects:
+  tension: '+0.5'
+minutes: 1.0
+max_turns: 2
+dramatic_intent: Deepen the standoff over the buzzing phone without revealing whose
+  phone it is. Julian's refusal reads as control, not innocence; Mia tries to buy
+  peace by changing the subject.
+steps:
+- id: drop_it_sam
+  do: Julian says, 'Drop it, Sam. Or this dinner's over.' He doesn't turn. Mia whispers,
+    'Please, not tonight.'
+- id: too_bright_subject_change
+  do: Mia pours more wine, hands shaking; the bottle clinks against the crate. 'Tell
+    us about the new flat,' she says too brightly.
+created_at: '2026-10-12T18:46:43'

@@ -14,7 +14,7 @@ The player is an old college friend at Julian and Mia's farewell dinner, in thei
 4. **Validity**: one label for the whole turn.
 5. **Rewrite**: when the label allows one, a channels object that keeps the intent and is valid.
 6. **Units**: classify every unit (one per speech sentence, one for the action, one for the expression).
-7. **suspicion** 0-3, **claims**, **coverage** 0-1, **nora_answer**.
+7. **suspicion** 0-3, **claims**, **coverage** 0-1, **nora_answer**, **side_answer**.
 
 # Validity: reject narrowly
 Reasonable attempts ALWAYS pass, even if they will fail in the story (opening the crate with bare hands, walking into the bathroom, hitting Julian). Speech may say ANYTHING: lies, bluffs, accusations, guesses, "Mia told me everything", insults. Only the narrated part (action, expression, unquoted single-box text) can break a rule.
@@ -53,6 +53,7 @@ Use the nearest verb: "look at the crate" -> examine crate; "look down at the st
 - **suspicion** 0-3: how suspicious of the hosts this turn is. 0 small talk; 1 a pointed question; 2 pressing on Leo/crate/afternoon or citing evidence; 3 accusing or threatening.
 - **claims**: facts the player asserts OR hints they know, in speech only (true or bluffed), from: car_downstairs, missed_call, leo_was_here, embezzlement, mia_called_leo, leo_wanted_money, leo_dead, body_in_crate, who_struck, nora_pushed_leo. "Isn't that Leo's car?" -> car_downstairs. "Leo called me twice" -> missed_call. Questions with no implied knowledge ("Where's Leo?") claim nothing.
 - **coverage** 0-1: how ordinary this input is for a dinner-party drama scene (1 = typical; low = something the scene's authors probably did not anticipate).
+- **side_answer**: only when context.asking.kind == "side": whose side the WHOLE answer takes, "julian" or "mia". Going along with what the asker asks backs the asker; refusing it, or standing up for the other one, backs the other ("I'll be kind to Mia, but I won't promise to ignore what I heard", asked by Julian -> mia). null when it takes neither side, or when nothing was asked.
 - **nora_answer**: only when the input is addressed to Nora (speech to her, a call, or a text to her): "truth" if it tells her anything true about Leo tonight (he was here, he's in the building, something happened, his car is here, come up), "lie" if it says he never came / hasn't been seen / everything is fine, "none" otherwise. null when not addressed to Nora.
 
 # Output
@@ -60,5 +61,5 @@ Reply with ONLY this JSON object, no prose:
 {"channels": {"speech": "", "action": "", "expression": "", "addressee": null}, "translated": false,
  "validity": {"label": "ok", "span": null, "message": null}, "rewrite": null,
  "units": [{"channel": "speech", "text": "...", "act": "...", "addressee": "...", "topics": [], "action": null, "implausible": false}],
- "suspicion": 0, "claims": [], "coverage": 1.0, "nora_answer": null}
+ "suspicion": 0, "claims": [], "coverage": 1.0, "nora_answer": null, "side_answer": null}
 Channels are always English after translation, and speech never keeps its surrounding quotation marks. For silence: all channels empty, units = [{"channel": "speech", "text": "", "act": "silence", "addressee": null, "topics": [], "action": null, "implausible": false}].

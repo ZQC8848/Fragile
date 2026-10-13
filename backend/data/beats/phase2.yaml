@@ -186,7 +186,10 @@
       do: "Nora presses: 'Did he say anything to you today? Anything weird?'"
       asks: { asker: nora, kind: answer, on_silence: none }
     - id: hang_up
-      do: "Nora: 'Okay. Okay. If you hear from him, call me.' She hangs up. If Julian is in the room: 'Who was that?'"
+      do: "Nora: 'Okay. Okay. If you hear from him, call me.' She hangs up."
+      lines:
+        - when: "julian_room == player_room"
+          do: "Julian: 'Who was that?'"
   outcomes:
     - id: truth
       when: "turn.nora_answer == 'truth'"

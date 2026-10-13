@@ -80,6 +80,17 @@
         }
       }
     },
+    "recovery": {
+      "type": "object",
+      "description": "Composure a host gets back on a turn that did not shake them (plan.md R25), up to `ceiling`, while `when` holds.",
+      "additionalProperties": false,
+      "required": ["per_turn", "ceiling", "when"],
+      "properties": {
+        "per_turn": { "type": "number", "exclusiveMinimum": 0 },
+        "ceiling": { "type": "object", "additionalProperties": { "type": "number" } },
+        "when": { "type": "string" }
+      }
+    },
     "per_turn_cap": {
       "type": "object",
       "additionalProperties": {

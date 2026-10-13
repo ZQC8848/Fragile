@@ -348,6 +348,9 @@
 | `silence_streak` | 整数 | 连续沉默的回合数 |
 | `private_turns` | 整数 | 你和一个主人单独在一起、另一个不在场的连续回合数（跟随规则用） |
 | `police_called` | 布尔 | 你报警打通了（没被拦住）；结局判定按说了真话处理 |
+| `police_blocks` | 整数 | Julian 拦下你报警的次数；拦过一次，再坚持就能打通 |
+| `phone_challenge` | 枚举 | Julian 问你在给谁发消息，报警短信还没发出去；下一回合撒谎就发出，说实话或沉默就被拦 |
+| `threatened_julian` | 布尔 | 你当着 Julian 的面威胁过要说出去，或者报警被他拦下过；累积，不会变回 false |
 | `player_holding` | 列表 | 你手里拿着的工具：screwdriver / drill |
 | `claims` | 列表 | 你在台词里声称知道的事实、对谁说、第几回合；不进 `revealed` |
 | `heard_by` | 映射 | 每条私下的话被谁听到 |
@@ -452,7 +455,7 @@
 | `the_witness` | 证人 | 你知道真相，偏向主人，对 Nora 撒了谎或者沉默（`nora_told == 'lie'`） | 你成了共犯。尾声：两人登机，你的手机亮了 |
 | `open_it` | 开箱 | 当着 Nora 的面揭穿 | 三人戏的高潮。Julian 先把罪揽到自己身上。`couple_unity` 高时他顶到底；低时，比如他已经知道是 Mia 叫的 Leo，他不再护着她，说出是 Mia 砸的。Mia 会不会自己承认，取决于 `side` 和她的镇定值 |
 | `confession` | 自首 | 敲门前后，某个人的 composure 被你推到临界点，而你站在他那边 | 由他自己对 Nora 说出来。对应 Façade 的最好结局。Mia 说的是真话；Julian 先崩溃时，他的"自首"是假的，还在替 Mia 顶罪 |
-| `second_crate` | 第二只箱子 | 你单独和 Julian 在一起时把他逼得太紧（`julian_composure` 接近 0，`side` 强烈反他，你威胁要说出去） | 悬念收尾：Julian 锁上门，叫了你的名字。只暗示，不描写 |
+| `second_crate` | 第二只箱子 | 你单独和 Julian 在一起时把他逼得太紧（`julian_composure` 接近 0，`side` 强烈反他，你当着他的面威胁过要说出去或报警被他拦下过） | 悬念收尾：Julian 锁上门，叫了你的名字。只暗示，不描写 |
 
 生成的结局沿用 Wrongest Person `docs/backend-design.md` §8 的规则：必须标注 `closest_authored_ending`。
 

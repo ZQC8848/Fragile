@@ -10,7 +10,7 @@ from typing import Any
 import jsonschema
 import yaml
 
-from engine.dsl import compile_expr, referenced_vars
+from engine.dsl import compile_expr, referenced_vars, truthy
 from engine.paths import SCHEMAS_DIR
 
 BEAT_SCHEMA = json.loads((SCHEMAS_DIR / "beat_v2.json").read_text(encoding="utf-8"))
@@ -114,6 +114,22 @@ class Beat:
                 out |= set(rev[1:])
         return out
 
+    def resolve(self, steps: list[dict[str, Any]], ctx: dict[str, Any]) -> list[dict[str, Any]]:
+        """The steps as the narrator gets them: each step's `do` plus every conditional line that holds now
+        (plan.md R26). The engine decides the branch; the narrator never sees a condition."""
+        out = []
+        for st in steps:
+            rules = self.compiled["lines"].get(st["id"])
+            st = {k: v for k, v in st.items() if k != "lines"}
+            if rules:
+                extra = [ln["do"] for ln, r in zip(self.raw_step(st["id"])["lines"], rules, strict=True) if truthy(r, ctx)]
+                st["do"] = " ".join([st["do"], *extra])
+            out.append(st)
+        return out
+
+    def raw_step(self, step_id: str) -> dict[str, Any]:
+        return next(s for s in self.steps if s["id"] == step_id)
+
     def text_for_scorer(self) -> str:
         """Content-only description: scorers never see the id (backend-design.md §4.1)."""
         eff = ", ".join(f"{k} {v}" for k, v in self.effects.items() if k not in ("player_room", "julian_room", "mia_room"))
@@ -156,12 +172,14 @@ def compile_beat(raw: dict[str, Any], state_vars: set[str] | None = None, source
             "must_follow": rule(raw["must_follow"]["when"]) if raw.get("must_follow") else False,
             "mix_in": [rule(m["when"]) for m in raw.get("mix_in") or []],
             "outcomes": [rule(o.get("when"), None) for o in raw.get("outcomes") or []],
+            "lines": {st["id"]: [rule(ln["when"]) for ln in st["lines"]] for st in raw.get("steps") or [] if st.get("lines")},
         }
     except ValueError as e:
         raise BeatLoadError(f"{source or raw.get('id')}: {e}") from e
     if state_vars is not None:
         nodes = [compiled["preconditions"], compiled["abort_if"], compiled["must_follow"], *compiled["entries"], *compiled["mix_in"]]
         nodes += [p["when"] for p in compiled["priority_test"]] + [o for o in compiled["outcomes"] if o is not None]
+        nodes += [r for rules in compiled["lines"].values() for r in rules]
         unknown = _rule_vars(nodes) - state_vars - RULE_NAMESPACES
         if unknown:
             raise BeatLoadError(f"{source or raw.get('id')}: rules reference unknown state variables {sorted(unknown)}")

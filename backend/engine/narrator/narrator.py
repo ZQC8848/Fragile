@@ -15,7 +15,7 @@ import re
 from dataclasses import asdict, dataclass, field
 from typing import Any
 
-from engine.llm import LLMOutputError, extract_json, get_client
+from engine.llm import LLMOutputError, call_json_chain, extract_json, fallback_clients, get_client
 from engine.models.prompts import system_prompt
 from engine.paths import SCHEMAS_DIR
 
@@ -53,6 +53,11 @@ class NarrationRequest:
     knowledge: dict[str, Any] = field(default_factory=dict)
     words: tuple[int, int] = (80, 140)
     recent: list[str] = field(default_factory=list)
+    #: plan.md R21: where everyone is, who moved this turn, what already happened, NPC lines already spoken
+    positions: dict[str, str] = field(default_factory=dict)
+    moves: list[str] = field(default_factory=list)
+    ledger: list[str] = field(default_factory=list)
+    said: list[str] = field(default_factory=list)
     hints: list[str] = field(default_factory=list)
 
     def payload(self) -> dict[str, Any]:
@@ -102,6 +107,8 @@ def mock_passage(req: dict[str, Any]) -> dict[str, Any]:
     if player.get("speech"):
         segs.append({"kind": "me_speech", "text": player["speech"]})
     world = req.get("world") or {}
+    for note in world.get("before") or []:
+        segs += line_segments(note, None, name)
     if world.get("note"):
         segs += line_segments(world["note"], None, name)
     for note in world.get("follow_notes") or []:
@@ -133,12 +140,15 @@ def mock_passage(req: dict[str, Any]) -> dict[str, Any]:
 class Narrator:
     def __init__(self, temperature: float = 0.8):
         self.client = get_client("narrator", temperature, mock_handler=self._mock)
+        #: tried in order when the main model times out or errors (LLM_FALLBACK_NARRATOR)
+        self.fallbacks = fallback_clients("narrator", temperature, mock_handler=self._mock)
 
     @staticmethod
     def _mock(system: str, user: str) -> dict[str, Any]:
         return mock_passage(extract_json(user))
 
-    async def write(self, req: NarrationRequest) -> NarrationOutput:
+    async def write(self, req: NarrationRequest, deadline: float | None = None) -> NarrationOutput:
+        """`deadline` (time.monotonic()) caps the main model and its fallbacks together."""
         prompt = system_prompt("narrator")
         payload = req.payload()
         hints = "\n".join(f"- {h}" for h in req.hints)
@@ -148,7 +158,8 @@ class Narrator:
             + f"\n\n```json\n{json.dumps(payload, ensure_ascii=False, indent=1)}\n```"
         )
         try:
-            res = await self.client.call_json(prompt.text, user, schema=NARRATOR_SCHEMA, prompt_version=prompt.version)
+            res = await call_json_chain([self.client, *self.fallbacks], prompt.text, user, schema=NARRATOR_SCHEMA,
+                                        prompt_version=prompt.version, deadline=deadline)
         except LLMOutputError as e:
             # unusable output: the decided pieces, as the mock would stage them (plan.md §3.2 fallback)
             data = mock_passage(payload)

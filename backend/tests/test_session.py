@@ -109,7 +109,7 @@ async def test_mia_blocks_the_door_in_phase_two():
     await s.control("set_state", {"patch": {"story_min": 6.5, "player_room": "hall", "mia_room": "hall", "julian_room": "living"}})
     rec = await s.submit({"action": "I walk out the front door."})
     assert rec["world"]["blocked_by"] == "mia" and rec["decision"]["chosen"] == "dont_go_yet"
-    assert s.state["mia_composure"] == pytest.approx(0.45)
+    assert s.state["mia_composure"] == pytest.approx(0.5)  # the block costs 0.15, the per-turn cap allows 0.1
 
 
 @pytest.mark.parametrize("seed", range(12))
@@ -244,3 +244,41 @@ async def test_baseline_check_scorer_a_follows_the_golden_path():
         state = apply(state, step.get("mix_in_effects"))
         state = finish_beat(state, s.pool.by_id[want].raw, step.get("outcome"))
     assert hits / total >= 0.8, f"top-1 {hits}/{total}"
+
+
+async def test_player_card_comes_first_and_says_what_the_player_knows():
+    s, rec = await new_session()
+    types = [m["type"] for m in rec.messages]
+    assert types.index("player_card") < types.index("passage")
+    card = rec.of("player_card")[0]
+    assert card["name"] == "Sam" and "college friend" in card["identity"]
+    assert any("Leo was invited" in k for k in card["knows"]) and any("Nora is Leo's sister" in k for k in card["knows"])
+
+
+async def test_narrator_gets_positions_moves_ledger_and_lines_already_said():
+    s, _ = await new_session()
+    await s.submit({"speech": "Hi Mia.", "addressee": "mia"})
+    await s.submit({"action": "I listen to the voicemail."})
+    line = {"kind": "speech", "speaker": "julian", "text": "Who's texting you, {name}?"}
+    s.passages += [{"segments": [line], "text": ""}, {"segments": [line], "text": ""}]
+    req = s._request(s.state, 3)
+    assert req.said == ["Julian: Who's texting you, {name}?"]
+    assert req.positions["Julian"] and "not here" in req.positions["Nora"]
+    assert any("voicemail" in line for line in req.ledger)
+    from engine.narrator.ledger import moves
+    assert moves({"player_room": "balcony", "julian_room": "balcony"}, {"player_room": "living", "julian_room": "balcony"}) == [
+        "I: the balcony -> the living room"]
+
+
+async def test_news_shakes_composure_repetition_does_not_and_calm_turns_recover():
+    s, _ = await new_session()
+    await s.control("set_state", {"patch": {"story_min": 6.5, "player_room": "living", "mia_room": "living", "julian_room": "living",
+                                            "julian_composure": 0.5}})
+    claim = {"units": [{"channel": "speech", "text": "Leo called me twice.", "act": "explain", "addressee": "both", "topics": ["leo"],
+                        "action": None, "implausible": False}], "claims": ["missed_call"], "channels": {"addressee": "both"}}
+    j0 = s.state["julian_composure"]
+    await s.control("inject_turn", {"channels": {"speech": "Leo called me twice.", "addressee": "both"}, "encoder": claim})
+    j1 = s.state["julian_composure"]
+    assert j1 == pytest.approx(j0 - 0.1)
+    await s.control("inject_turn", {"channels": {"speech": "Leo called me twice.", "addressee": "both"}, "encoder": claim})
+    assert s.state["julian_composure"] == pytest.approx(j1 + 0.05)  # old news: no shake, and he gets a little back

@@ -1,0 +1,27 @@
+id: mias_headache_returns
+title: Mia's Headache Returns
+type: satellite
+origin: generated
+schema_version: 2
+preconditions: player_room == 'living' and mia_room == 'living' and julian_room ==
+  'balcony'
+entries:
+- id: default
+  opening: Mia presses fingers to her temples, the same spot she wiped earlier; her
+    eyes avoid both of you.
+tension_slope: -1
+effects:
+  tension: '-0.5'
+minutes: 1.0
+max_turns: 2
+dramatic_intent: Use Mia's headache as a pressure valve; her body remembers the afternoon
+  even if her story doesn't. She seeks refuge in the illness, leaving Julian to decide
+  whether to soften.
+steps:
+- id: need_to_lie_down
+  do: Mia says, 'Actually, Julian, I think I need to lie down again. The lights are—'
+    She gestures at the bare bulb above the crate.
+- id: stay_nearly_done
+  do: Julian finally turns from the rail. 'Stay,' he says, not quite gently. 'We're
+    nearly done.'
+created_at: '2026-10-12T18:46:43'

@@ -81,7 +81,37 @@
         "note": { "type": "string" },
         "arg": { "enum": ["required", "optional"] },
         "classify": { "enum": ["nora_told"] },
-        "left_behind_composure": { "type": "string" }
+        "left_behind_composure": { "type": "string" },
+        "note_when": {
+          "type": "array",
+          "description": "Notes that replace `note` when their condition holds; the first match wins.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["when", "note"],
+            "properties": { "when": { "type": "string" }, "note": { "type": "string" } }
+          }
+        },
+        "watch": {
+          "type": "object",
+          "description": "An NPC who may notice and stop the attempt (plan.md R17). A declared attempt is always stopped; otherwise composure decides: at or above unsuspecting_at it goes unnoticed, below suspicious_below it is stopped, in between the NPC asks and the next turn's answer decides.",
+          "additionalProperties": false,
+          "required": ["who", "when", "stop_note", "on_stop"],
+          "properties": {
+            "who": { "enum": ["julian", "mia", "nora"] },
+            "when": { "type": "string" },
+            "declared": { "type": "string" },
+            "unsuspecting_at": { "type": "number" },
+            "suspicious_below": { "type": "number" },
+            "stop_note": { "type": "string" },
+            "stop_desperate_note": { "type": "string" },
+            "ask_note": { "type": "string" },
+            "unnoticed_note": { "type": "string" },
+            "answered_note": { "type": "string" },
+            "on_stop": { "type": "object" },
+            "on_ask": { "type": "object" }
+          }
+        }
       },
       "additionalProperties": false
     }

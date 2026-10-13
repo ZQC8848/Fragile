@@ -340,6 +340,29 @@
           "minLength": 1,
           "description": "What must be delivered; sample lines are guidance for the narrator."
         },
+        "lines": {
+          "type": "array",
+          "minItems": 1,
+          "description": "Conditional additions to `do`, resolved by the engine against the state when the step is delivered: every line whose `when` holds is appended, in order. Write alternatives as complementary conditions (plan.md R26). Never write conditions into `do` itself.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "when",
+              "do"
+            ],
+            "properties": {
+              "when": {
+                "type": "string",
+                "minLength": 1
+              },
+              "do": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        },
         "asks": {
           "type": "object",
           "additionalProperties": false,

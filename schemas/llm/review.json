@@ -318,6 +318,20 @@
         }
       ],
       "description": "Only when the input is addressed to Nora (speech, call or text): did the player tell her the truth (any known fact about Leo), lie (Leo never came / everything is fine), or neither. Null otherwise."
+    },
+    "side_answer": {
+      "anyOf": [
+        {
+          "enum": [
+            "julian",
+            "mia"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Only when context.asking.kind == 'side': whose side this answer takes. null when it takes neither or nothing was asked (plan.md R23)."
     }
   }
 }

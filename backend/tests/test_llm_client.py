@@ -10,6 +10,8 @@ from engine.llm import (
     LLMError,
     LLMOutputError,
     ResponseCache,
+    call_json_chain,
+    fallback_clients,
     get_client,
     load_prompt,
     prompt_versions,
@@ -229,3 +231,53 @@ async def test_provider_errors_get_one_retry_then_the_fallback_error():
     with pytest.raises(LLMOutputError) as e:
         await Down([]).call_json("sys", "the input", schema=VERDICT_SCHEMA)
     assert e.value.result.attempts == 2
+
+
+# --------------------------------------------------------------------------- fallback chain (plan.md R16)
+class Down(FakeProvider):
+    async def _provider_complete(self, provider, system, user, temp, json_mode):
+        self.prompts.append((system, user))
+        raise RuntimeError("timed out")
+
+
+async def test_chain_moves_on_after_a_provider_error_without_retrying_it():
+    first, second = Down([]), FakeProvider(['{"verdict": "ok"}'])
+    res = await call_json_chain([first, second], "sys", "the input", schema=VERDICT_SCHEMA)
+    assert res.data == {"verdict": "ok"} and len(first.prompts) == 1
+    assert any("answered by fallback 1" in e for e in res.errors)
+
+
+async def test_chain_raises_when_every_model_fails():
+    with pytest.raises(LLMOutputError) as e:
+        await call_json_chain([Down([]), Down([])], "sys", "the input", schema=VERDICT_SCHEMA)
+    assert len([x for x in e.value.result.errors if "timed out" in x]) == 2
+
+
+async def test_chain_stops_at_the_deadline():
+    import asyncio
+    import time
+
+    class Slow(FakeProvider):
+        async def _provider_complete(self, provider, system, user, temp, json_mode):
+            await asyncio.sleep(5)
+            return '{"verdict": "ok"}'
+
+    t0 = time.monotonic()
+    with pytest.raises(LLMOutputError) as e:
+        await call_json_chain([Slow([]), FakeProvider(['{"verdict": "ok"}'])], "sys", "x", schema=VERDICT_SCHEMA,
+                              deadline=time.monotonic() + 4)
+    assert time.monotonic() - t0 < 4.5 and any("turn budget" in x or "deadline" in x for x in e.value.result.errors)
+
+
+def test_fallbacks_borrow_another_roles_endpoint(monkeypatch):
+    monkeypatch.setenv("LLM_PROVIDER_GUARD", "openai")
+    monkeypatch.setenv("LLM_MODEL_GUARD", "fast-model")
+    monkeypatch.setenv("LLM_BASE_URL_GUARD", "https://fast.example/v1")
+    monkeypatch.setenv("LLM_PROVIDER_PROPOSER", "openai")
+    monkeypatch.setenv("LLM_MODEL_PROPOSER", "pro-model")
+    monkeypatch.setenv("LLM_FALLBACK_NARRATOR", "guard, proposer:other-model")
+    fb = fallback_clients("narrator", 0.8)
+    assert [(c.config.role, c.config.model, c.config.base_url) for c in fb] == [
+        ("narrator", "fast-model", "https://fast.example/v1"), ("narrator", "other-model", None)]
+    assert fb[0].timeout_s() == 30.0
+    assert fallback_clients("review", 0.2) == []

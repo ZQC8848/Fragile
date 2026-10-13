@@ -6,6 +6,7 @@ ranks, effects, clock events). It checks the CONTENT; the engine gets its own te
 
 from __future__ import annotations
 
+import re
 from copy import deepcopy
 from typing import Any
 
@@ -24,6 +25,7 @@ from helpers import (
     load_yaml,
 )
 
+from engine.beats import BeatPool, rule_ctx
 from engine.dsl import apply_effects, compile_expr, truthy
 
 BEAT_SCHEMA = load_json(SCHEMAS / "beat_v2.json")
@@ -268,8 +270,16 @@ ENDING_CASES = [
     ("open_it_police", default_state(police_called=True, player_room="living", story_min=12.0, story_phase="late"), {}, "open_it"),
     (
         "second_crate",
-        default_state(player_room="balcony", julian_room="balcony", mia_room="kitchen", julian_composure=0.1, side=1.6, story_min=13.0, story_phase="late"),
+        default_state(player_room="balcony", julian_room="balcony", mia_room="kitchen", julian_composure=0.1, side=1.6,
+                      story_min=13.0, story_phase="late", threatened_julian=True),
         {"acts": ["threaten_to_tell"], "addressee": "julian"},
+        "second_crate",
+    ),
+    (  # plan.md R18: the threat was made earlier; being alone with him now is enough
+        "second_crate_threatened_before",
+        default_state(player_room="balcony", julian_room="balcony", mia_room="kitchen", julian_composure=0.1, side=1.6,
+                      story_min=13.0, story_phase="late", threatened_julian=True),
+        {"acts": ["ask_about_leo"], "addressee": "julian"},
         "second_crate",
     ),
 ]
@@ -326,3 +336,38 @@ def random_walk(seed: int) -> tuple[str, list[str]]:
 def test_random_walks_never_dead_end_and_reach_several_endings():
     endings = {random_walk(seed)[0] for seed in range(300)}
     assert {"bon_voyage", "the_witness", "open_it"} <= endings, endings
+
+
+# --------------------------------------------------------------------------- conditional lines (plan.md R26)
+POOL = BeatPool.from_dir(DATA / "beats", set(STATE_PROPS))
+#: a stage direction that hides a branch: "If couple_unity < 2:", "Unless ...:", "Or Julian:", "Left early:"
+CONDITION_PROSE = re.compile(r"\b(If|Unless|Otherwise)\b[^.]*?(:|<|>|==)|\bOr (Julian|Mia|Nora):|Left early:")
+
+
+def _unquoted(text: str) -> str:
+    """Sample dialogue may say 'If you hear from him'; only the stage direction around it counts."""
+    return re.sub(r"'[^']*'", "''", text)
+
+
+@pytest.mark.parametrize("beat_id", sorted(POOL.by_id))
+def test_no_step_hides_a_branch_in_its_prose(beat_id: str):
+    for step in POOL.by_id[beat_id].steps:
+        for text in [step["do"], *(ln["do"] for ln in step.get("lines") or [])]:
+            assert not CONDITION_PROSE.search(_unquoted(text)), f"{beat_id}.{step['id']}: write the branch as `lines`: {text!r}"
+
+
+def test_lines_resolve_against_the_state():
+    offer = next(b for b in POOL.beats if any(s["id"] == "the_leverage" for s in b.steps))
+    step = [s for s in offer.steps if s["id"] == "the_leverage"]
+    heard = offer.resolve(step, rule_ctx(default_state(heard_by={"missed_call": ["julian", "mia"]}), {}))[0]
+    unheard = offer.resolve(step, rule_ctx(default_state(), {}))[0]
+    assert "Two missed calls" in heard["do"] and "ate off that crate" not in heard["do"] and "lines" not in heard
+    assert "ate off that crate" in unheard["do"]
+
+    open_it = POOL.by_id["open_it"]
+    edge = default_state(police_called=True, mia_composure=0.1, side=1.5, couple_unity=3)
+    text = " ".join(s["do"] for s in open_it.resolve(open_it.steps, rule_ctx(edge, {})))
+    assert "The screws come out" in text and "already said it" in text and "throat" not in text and "Ask her" not in text
+    late = default_state(nora_told="truth", mia_composure=0.2, side=1.5, couple_unity=1, crate="opened")
+    text = " ".join(s["do"] for s in open_it.resolve(open_it.steps, rule_ctx(late, {})))
+    assert "already off" in text and "throat" in text and "Ask her" in text

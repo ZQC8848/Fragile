@@ -67,6 +67,7 @@ def empty_output(channels: dict[str, Any]) -> dict[str, Any]:
         "claims": [],
         "coverage": 0.0,
         "nora_answer": None,
+        "side_answer": None,
     }
 
 

@@ -1,0 +1,27 @@
+id: a_knock_that_waits
+title: A Knock That Waits
+type: satellite
+origin: generated
+schema_version: 2
+preconditions: nora_room == 'outside' and player_room == 'living' and julian_room
+  == 'balcony' and mia_room == 'living'
+entries:
+- id: default
+  opening: Three short knocks, too quick for a stranger, land on the door. Julian's
+    hand leaves his pocket.
+tension_slope: 2
+effects:
+  tension: '+1.0'
+  julian_composure: '-0.5'
+minutes: 1.5
+max_turns: 2
+dramatic_intent: Introduce Nora's arrival as an interruption that compels Julian to
+  choose between the phone and the door, without letting her in yet. The beat withholds
+  her entrance, ending on the threshold.
+steps:
+- id: knocks_repeat
+  do: The knocks repeat, harder. Mia says, 'That'll be Nora,' and doesn't move.
+- id: dont_answer_it
+  do: Julian looks from the door to you, to his jacket. 'Don't answer it,' he says,
+    and steps back inside, pulling the balcony door shut behind him.
+created_at: '2026-10-12T18:46:43'

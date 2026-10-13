@@ -16,7 +16,11 @@ priorities: { local: 10, blocked: 9, push_too_far: 8, pattern: 6, topic: 5, obje
 
 phase_tier_cap: { early: 1, mid: 2, late: 3 }
 
-per_turn_cap: { side: 1, couple_unity: 1, julian_composure: 0.2, mia_composure: 0.2, tension: 1 }
+per_turn_cap: { side: 1, couple_unity: 1, julian_composure: 0.1, mia_composure: 0.1, tension: 1 }
+
+# Composure comes back a little on a turn that did not shake that host (plan.md R25), so pressure has to be
+# kept up rather than banked; once Leo's death is out in the open nobody recovers.
+recovery: { per_turn: 0.05, ceiling: { julian_composure: 0.6, mia_composure: 0.5 }, when: "not has(revealed, 'leo_dead')" }
 
 # Who answers a topic when the player addressed both or nobody. less_composed = whichever host has
 # the lower composure; any = whoever spoke last.
@@ -38,8 +42,8 @@ rules:
   - id: hard_on_julian
     when: "(has(turn.acts, 'criticize') or has(turn.acts, 'provoke') or has(turn.acts, 'accuse_julian')) and turn.addressee in ['julian', 'both']"
     effects: { side: "+0.5", julian_composure: "-0.2" }
-  - id: evidence_to_julian
-    when: "(has(turn.acts, 'mention_car') or has(turn.acts, 'mention_voicemail')) and turn.addressee in ['julian', 'both']"
+  - id: evidence_to_julian   # only news shakes him (plan.md R25): the same evidence again does not
+    when: "(has(turn.acts, 'mention_car') or has(turn.acts, 'mention_voicemail')) and turn.addressee in ['julian', 'both'] and count(turn.fresh.julian) > 0"
     effects: { julian_composure: "-0.15" }
   - id: leo_or_afternoon_to_mia
     when: "(has(turn.acts, 'ask_about_leo') or has(turn.acts, 'ask_about_afternoon')) and turn.addressee in ['mia', 'both']"
@@ -47,11 +51,14 @@ rules:
   - id: threaten_both
     when: "has(turn.acts, 'threaten_to_tell') and turn.addressee == 'both'"
     effects: { couple_unity: "+1" }
+  - id: threaten_in_front_of_julian   # cumulative (plan.md R18); a stopped police attempt sets it too
+    when: "has(turn.acts, 'threaten_to_tell') and julian_room == player_room"
+    effects: { threatened_julian: true }
   - id: claims_shake_julian
-    when: "count(turn.claims) > 0 and julian_room == player_room"
+    when: "count(turn.fresh.julian) > 0 and julian_room == player_room"
     effects: { julian_composure: "-0.15" }
   - id: claims_shake_mia
-    when: "count(turn.claims) > 0 and mia_room == player_room"
+    when: "count(turn.fresh.mia) > 0 and mia_room == player_room"
     effects: { mia_composure: "-0.15" }
   - id: tell_julian_mia_called
     when: "has(turn.claims, 'mia_called_leo') and turn.addressee in ['julian', 'both']"

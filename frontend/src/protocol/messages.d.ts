@@ -15,6 +15,7 @@ export type InputSource = 'typed_accepted' | 'typed_edited' | 'filled' | 'option
 export type ServerToClient =
   | Hello
   | SessionState
+  | PlayerCard
   | InputReviewResult
   | TurnAccepted
   | Passage
@@ -110,6 +111,15 @@ export interface SessionState {
   type: 'session_state'
   phase: 'lobby' | 'playing' | 'ended'
   turn?: number
+}
+/**
+ * Sent once at session start, before the opening passage: who the player is and what they know walking in (plan.md R24). The client can show it again at any time.
+ */
+export interface PlayerCard {
+  type: 'player_card'
+  name: string
+  identity: string
+  knows: string[]
 }
 export interface InputReviewResult {
   type: 'input_review_result'

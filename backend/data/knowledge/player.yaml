@@ -1,4 +1,6 @@
-# Knowledge card: the player (story.md §3.1). The player's knowledge at any moment is this card plus
+# Knowledge card: the player (story.md §3.1). What the player knows at the start (identity plus every fact
+# sayable in the initial state) is also shown to them as the player card (plan.md R24).
+# The player's knowledge at any moment is this card plus
 # `revealed` plus what is perceivable in the current room (objects in data/interactions.yaml with
 # `where` containing player_room). M3 checks narration against it; options may only use it.
 
@@ -13,6 +15,10 @@ persona:
 facts:
   - id: dinner_invitation
     text: "Julian and Mia are emigrating tomorrow; tonight is the farewell dinner; Leo was invited too."
+    knows: true
+    may_say_when: "true"
+  - id: who_is_who
+    text: "Julian and Mia are married. Nora is Leo's sister."
     knows: true
     may_say_when: "true"
   - id: missed_calls_exist

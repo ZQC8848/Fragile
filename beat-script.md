@@ -319,7 +319,7 @@ beat 的前提**不按阶段写，按"哪些拍演过了"写**。否则时钟和
 3. 事实摆在桌上：Leo 死了，在箱子里。两人都看着你。→ 钩子：等你的反应。
 
 **本地 mix-in**：
-- 你说要报警（`threaten_to_tell`）→ Julian："Wait. Just wait. Let us explain." （真的拨号是动作，Julian 在场且镇定值够就会拦。）
+- 你说要报警（`threaten_to_tell`）→ Julian："Wait. Just wait. Let us explain." （真的拨号是动作：Julian 在场、Nora 不在时一定会拦，第二次坚持就能打通；发短信报警要看他察觉没有，见 plan.md R17。）
 - 你转身要走（动作：leave）→ Mia 拦住你，接必接拍 `dont_go_yet`。
 - 你问"怎么死的"（`ask_about_afternoon`）→ 留给 `the_versions`：Julian："Sit down. I'll tell you. I'll tell you everything."
 
@@ -474,7 +474,7 @@ beat 的前提**不按阶段写，按"哪些拍演过了"写**。否则时钟和
 
 ### 18. `open_it` · 开箱
 
-**条件**：`nora_told == truth`，或者你报警打通了。报警版由警察开箱，第 1 步换成楼下的警笛和敲门声。
+**条件**：`nora_told == truth`，或者你报警打通了。报警版由警察开箱，第 1 步换成楼下的警笛和敲门声。如果报警打通时 Mia 已经到了自首的边缘（`mia_composure < 0.15`，`side ≥ 1`），她在开箱之前就站起来承认（入口 `police_mia_first`，plan.md R19）。
 **步**：
 1. Nora 从玄关的 TOOLS 箱里拿出电钻；如果箱子已经开了，就跳过这一步。螺丝一颗一颗落在地板上。
 2. 桌布滑下来。一只鞋。Nora 没出声。
@@ -504,7 +504,7 @@ beat 的前提**不按阶段写，按"哪些拍演过了"写**。否则时钟和
 - 你和 Julian 单独在一起（同一个房间，Mia 不在）；
 - `julian_composure < 0.15`；
 - `side ≥ +1.5`（强烈反他）；
-- 这一回合你威胁要说出去（`threaten_to_tell`）。
+- 你当着他的面威胁过要说出去，或者报警时被他拦下过（`threatened_julian`，累积，见 plan.md R18）。
 
 **步**：
 1. Julian 不笑了。他把阳台门拉上，或者把客厅的门关上，锁舌响了一声："Sit down, {name}."
@@ -526,3 +526,4 @@ beat 的前提**不按阶段写，按"哪些拍演过了"写**。否则时钟和
 | 6 | **新动作**：搜 Julian 的外套（Julian 阻拦）、看窗外、把手机递给别人、回短信（按内容判真话还是谎话） | interaction-design.md §3.6、plan.md M1 |
 | 7 | **`two_afternoons` 的写法**：Julian 说两人一整天在一起打包；Mia 说她头疼躺着，"什么都没看见" | 本文 §2 第 6 拍 |
 | 8 | **`confession` 的反讽**：Julian 先崩溃时，他的"自首"是假的，还在替 Mia 顶罪 | story.md §10 |
+| 9 | **分支写成 `lines`**（2026-10-13）：一步里"谁更崩溃谁说""如果 Julian 在场"这类分支，不写进 `do` 的正文，写成 `lines` 的条件行，由引擎按状态挑选；本文里的"或者""如果"在 YAML 里都对应条件行 | plan.md R26、schemas/beat_v2.json |

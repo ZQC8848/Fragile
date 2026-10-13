@@ -17,11 +17,14 @@ Configuration and keys come only from backend/.env, which git ignores (`load_env
 - a response cache, LLM_CACHE=1 (engine/llm/cache.py);
 - prompt versions (engine/llm/prompts.py), carried on every call result so they reach the logs;
 - JSON output validation against a JSON Schema with one corrective retry, then LLMOutputError so the
-  caller can fall back.
+  caller can fall back;
+- a fallback chain per role (LLM_FALLBACK_<ROLE>, `fallback_clients`, `call_json_chain`): when a model times
+  out or errors, the next one answers instead of the same one being asked again.
 """
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import os
@@ -51,8 +54,10 @@ ROLE_MAX_TOKENS = {
 
 #: seconds before a request is abandoned (then retried once, then the role's fallback). The SDK's own default
 #: is 600 s plus silent retries, which once froze a turn for ten minutes. LLM_TIMEOUT_<ROLE> overrides.
-ROLE_TIMEOUT_S = {"narrator": 90.0, "proposer": 120.0, "judge": 120.0}
+ROLE_TIMEOUT_S = {"narrator": 45.0, "proposer": 120.0, "judge": 120.0}
 DEFAULT_TIMEOUT_S = 60.0
+#: per call to a fallback model (LLM_TIMEOUT_<ROLE>_FALLBACK overrides)
+FALLBACK_TIMEOUT_S = 30.0
 
 ENV_FILE = Path(__file__).resolve().parents[2] / ".env"
 _env_loaded = False
@@ -95,18 +100,24 @@ class LLMConfig:
     live: bool = False
     #: read and write the on-disk response cache (LLM_CACHE=1)
     cache: bool = False
+    #: request timeout in seconds; None = the role's default (`LLMClient.timeout_s`)
+    timeout: float | None = None
 
     @classmethod
-    def for_role(cls, role: str, temperature: float, max_tokens: int = 1200) -> LLMConfig:
+    def for_role(cls, role: str, temperature: float, max_tokens: int = 1200, endpoint_of: str | None = None) -> LLMConfig:
+        """`endpoint_of` borrows another role's provider, model, endpoint and key (a fallback model)."""
         if role.lower() not in ROLES:
             raise LLMError(f"unknown LLM role {role!r}; known roles: {', '.join(ROLES)}")
+        if endpoint_of is not None and endpoint_of.lower() not in ROLES:
+            raise LLMError(f"unknown LLM role {endpoint_of!r} in LLM_FALLBACK_{role.upper()}")
         load_env()
-        key = role.upper()
+        key = (endpoint_of or role).upper()
         # empty values (as copied from .env.example) count as unset
         provider = (os.getenv(f"LLM_PROVIDER_{key}") or os.getenv("LLM_PROVIDER") or "mock").lower()
         model = os.getenv(f"LLM_MODEL_{key}") or os.getenv("LLM_MODEL") or "claude-sonnet-5"
         base_url = os.getenv(f"LLM_BASE_URL_{key}") or os.getenv("OPENAI_BASE_URL") or None
         api_key = os.getenv(f"LLM_API_KEY_{key}") or None
+        # a fallback goes live together with the role it stands in for
         live = role.lower() in {r.strip().lower() for r in os.getenv("LLM_LIVE_ROLES", "").split(",") if r.strip()}
         cache = os.getenv("LLM_CACHE", "0").strip().lower() in ("1", "true", "yes", "on")
         return cls(
@@ -271,9 +282,11 @@ class LLMClient:
         temperature: float | None = None,
         schema: dict[str, Any] | None = None,
         prompt_version: int | None = None,
+        provider_retry: bool = True,
     ) -> LLMResult:
         """Parse (and validate) the reply. On failure ask once more with the error appended to the user
-        prompt; if that also fails raise LLMOutputError, whose `.result` carries the log fields."""
+        prompt; if that also fails raise LLMOutputError, whose `.result` carries the log fields.
+        `provider_retry=False`: a provider error (timeout, 4xx, 5xx) is not retried, so a chain moves on."""
         validator = None
         if schema is not None:
             jsonschema.Draft202012Validator.check_schema(schema)
@@ -297,6 +310,8 @@ class LLMClient:
                 res.attempts, res.errors, res.latency_ms = attempt, errors, latency
                 errors.append(error)
                 log.warning("llm %s attempt %d failed: %s", self.config.role, attempt, error)
+                if not provider_retry:
+                    break
                 continue
             latency += res.latency_ms
             res.attempts, res.errors, res.latency_ms = attempt, errors, latency
@@ -391,6 +406,8 @@ class LLMClient:
         raise LLMError(f"unknown provider {provider!r} for role {self.config.role}")
 
     def timeout_s(self) -> float:
+        if self.config.timeout is not None:
+            return self.config.timeout
         raw = os.getenv(f"LLM_TIMEOUT_{self.config.role.upper()}")
         return float(raw) if raw else ROLE_TIMEOUT_S.get(self.config.role, DEFAULT_TIMEOUT_S)
 
@@ -472,6 +489,70 @@ def get_client(role: str, temperature: float, mock_handler=None, max_tokens: int
     elif mock_handler is not None and _clients[role]._mock_handler is None:
         _clients[role]._mock_handler = mock_handler
     return _clients[role]
+
+
+def fallback_clients(role: str, temperature: float, mock_handler=None) -> list[LLMClient]:
+    """The role's fallback models, in order, from LLM_FALLBACK_<ROLE>: a comma list of other roles whose
+    endpoint to borrow, each optionally with its own model ("guard, proposer:deepseek-v4-pro"). Keys stay
+    in one place per endpoint. Every fallback keeps this role's prompt budget and its own short timeout."""
+    load_env()
+    raw = os.getenv(f"LLM_FALLBACK_{role.upper()}", "")
+    timeout = float(os.getenv(f"LLM_TIMEOUT_{role.upper()}_FALLBACK") or FALLBACK_TIMEOUT_S)
+    out = []
+    for item in (x.strip() for x in raw.split(",")):
+        if not item:
+            continue
+        other, _, model = item.partition(":")
+        config = LLMConfig.for_role(role, temperature, ROLE_MAX_TOKENS.get(role, 1200), endpoint_of=other.strip())
+        if model.strip():
+            config.model = model.strip()
+        config.timeout = timeout
+        out.append(LLMClient(config, mock_handler))
+    return out
+
+
+async def call_json_chain(
+    clients: list[LLMClient],
+    system: str,
+    user: str,
+    *,
+    schema: dict[str, Any] | None = None,
+    prompt_version: int | None = None,
+    deadline: float | None = None,
+) -> LLMResult:
+    """Ask each client in turn until one returns usable JSON. A provider error moves straight to the next
+    model; an unusable reply still gets that model's one corrective retry. `deadline` (time.monotonic())
+    caps the whole chain: a model is skipped when too little time is left, and a call is cut at the
+    deadline. Raises LLMOutputError (the last attempt's result, with every model's errors) when all fail."""
+    errors: list[str] = []
+    last: LLMResult | None = None
+    for i, client in enumerate(clients):
+        if i:
+            client.config.live = clients[0].config.live  # the Console's live switch covers the whole chain
+        remaining = None if deadline is None else deadline - time.monotonic()
+        if remaining is not None and remaining < 3:
+            errors.append(f"{client.config.model}: skipped, turn budget spent")
+            break
+        try:
+            call = client.call_json(system, user, schema=schema, prompt_version=prompt_version, provider_retry=False)
+            res = await (call if remaining is None else asyncio.wait_for(call, remaining))
+            res.errors = errors + res.errors
+            if i:
+                res.errors.append(f"answered by fallback {i}")
+            return res
+        except LLMOutputError as e:
+            last = e.result
+            errors += [f"{client.config.model}: {x}" for x in e.result.errors]
+        except TimeoutError:
+            c = client.config
+            last = LLMResult(c.role, c.effective_provider, c.model, prompt_version, errors=[])
+            errors.append(f"{c.model}: cut at the turn deadline")
+            _log_call(last)
+    if last is None:
+        c = clients[0].config
+        last = LLMResult(c.role, c.effective_provider, c.model, prompt_version)
+    last.errors = errors
+    raise LLMOutputError(last)
 
 
 def llm_roles() -> list[dict[str, Any]]:

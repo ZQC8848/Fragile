@@ -13,13 +13,13 @@ Fact ids: car_downstairs (that the yellow car downstairs is LEO's), missed_call 
 - speaker_allowed: per NPC, extra facts that speaker may state.
 - player_input: what the player actually wrote this turn (speech, action, expression); world_note = true if the world produced a result the narration may describe.
 - ending: true = this is the final scene; facts may come out freely.
-- scene: where "I" am (room), who is present, the other characters' rooms (nora_room "outside" = not arrived yet), the crate (sealed/opened), Leo's phone, my phone (unchecked = I have not heard the voicemail), and heard_by (who was present when each fact was claimed). Someone not present did not hear the player this turn.
+- scene: where "I" am (room), who is present, the other characters' rooms (nora_room "outside" = not arrived yet), the crate (sealed/opened), Leo's phone, my phone (unchecked = I have not heard the voicemail), heard_by (who was present when each fact was claimed), and moves (who changed room this turn). Someone not present did not hear the player this turn.
 - knowledge: what each character may say now, and what the player knows.
 
 # Labels (one per segment)
 - consistent: fine. Hints, evasions, jokes and dramatic irony are fine ("Books. And the bodies of my enemies." is a joke, not a leak). Stating a fact that is in allowed_facts or speaker_allowed is fine.
 - premature_leak: the segment STATES or unmistakably implies a fact that is not allowed (narration says the body is in the crate before body_in_crate is allowed; Julian says "the studio money" before embezzlement is allowed for him). Name the `fact`.
-- contradiction: the segment contradicts the secret or earlier facts (Julian says he hasn't seen Leo in months is a lie, which is fine; narration saying Leo left the flat is a contradiction), or an NPC reacts to words they could not have heard (not present). Characters LYING is not a contradiction; the narration lying is.
+- contradiction: the segment contradicts the secret or earlier facts (Julian says he hasn't seen Leo in months is a lie, which is fine; narration saying Leo left the flat is a contradiction), or an NPC reacts to words they could not have heard (not present), or the narration puts someone in a room the scene does not (scene rooms and moves are facts). Characters LYING is not a contradiction; the narration lying is.
 - player_overreach: a me / me_speech segment adds words, actions, decisions, feelings or thoughts the player did not write; or narration states the player's inner life ("I feel sick with dread", "I decide to stay") or makes the player act. Light rephrasing of the player's input is fine; perception ("I notice...") is fine.
 
 # Output

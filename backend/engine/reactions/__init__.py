@@ -93,6 +93,8 @@ class ReactionLayer:
         self.topic_owner: dict[str, str] = raw["topic_owner"]
         self.rules = [{**r, "_when": compile_expr(r["when"])} for r in raw.get("rules", [])]
         self.reactions = [{**r, "_when": compile_expr(r["when"])} for r in raw.get("reactions", [])]
+        rec = raw.get("recovery")
+        self.recovery = {**rec, "_when": compile_expr(rec["when"])} if rec else None
 
     @classmethod
     def from_file(cls, path: Path | None = None) -> ReactionLayer:
@@ -204,6 +206,19 @@ class ReactionLayer:
                 capped = a + (cap if delta > 0 else -cap)
                 after[var] = int(round(capped)) if isinstance(a, int) and isinstance(b, int) else round(capped, 4)
         return after, clipped
+
+    def recover(self, before: dict[str, Any], after: dict[str, Any]) -> dict[str, Any]:
+        """A host the turn did not shake gets a little composure back (plan.md R25): pressure has to be kept up,
+        not banked. Never above the ceiling, never once the truth is out (`when`)."""
+        rec = self.recovery
+        if rec is None or not truthy(rec["_when"], {**after, "turn": {}}):
+            return after
+        after = dict(after)
+        for var, ceiling in rec["ceiling"].items():
+            a, b = before.get(var), after.get(var)
+            if isinstance(a, (int, float)) and a == b and b < ceiling:
+                after[var] = round(min(ceiling, b + float(rec["per_turn"])), 4)
+        return after
 
     @staticmethod
     def record_claims(state: dict[str, Any], turn: dict[str, Any], turn_no: int) -> dict[str, Any]:

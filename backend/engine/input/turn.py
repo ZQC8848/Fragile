@@ -6,9 +6,23 @@ at this turn and the two before it, for the pattern reactions.
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 STREAK = 3
+
+#: speech that says out loud the police are being called (plan.md R17)
+POLICE_WORDS = re.compile(r"\b(police|cops?|911|emergency services)\b", re.I)
+#: an action that takes a host along (plan.md R22): a cue word and the host's name in the same action text
+LEAD_CUES = re.compile(r"\b(with me|with her|with him|take|takes|taking|bring|brings|bringing|lead|leads|leading|pull|pulls|pulling|"
+                       r"drag|drags|dragging|guide|guides|guiding|steer|steers|steering|hand|hands|arm|arms)\b", re.I)
+HOSTS = re.compile(r"\b(mia|julian)\b", re.I)
+
+
+def leads(action_text: str) -> str | None:
+    """The host an action takes along, if any: "I keep hold of Mia's hand and go to the hall" -> mia."""
+    m = HOSTS.search(action_text or "")
+    return m.group(1).lower() if m and LEAD_CUES.search(action_text) else None
 
 
 def build_turn(output: dict[str, Any], silent: bool, history: list[dict[str, Any]]) -> dict[str, Any]:
@@ -22,6 +36,7 @@ def build_turn(output: dict[str, Any], silent: bool, history: list[dict[str, Any
                 topics.append(t)
     action = next((u["action"] for u in units if u.get("action")), None)
     addressee = (output.get("channels") or {}).get("addressee")
+    speech = (output.get("channels") or {}).get("speech") or ""
     if addressee is None:
         addressee = next((u.get("addressee") for u in units if u.get("addressee")), None)
     turn: dict[str, Any] = {
@@ -34,6 +49,9 @@ def build_turn(output: dict[str, Any], silent: bool, history: list[dict[str, Any
         "blocked_action": None,
         "silent": silent,
         "nora_answer": None if silent else output.get("nora_answer"),
+        "declared_police": not silent and ("threaten_to_tell" in acts or bool(POLICE_WORDS.search(speech))),
+        "side_answer": None if silent else output.get("side_answer"),
+        "leads": None if silent else leads((output.get("channels") or {}).get("action") or ""),
         "streak_addressee": None,
         "streak_topic": None,
     }

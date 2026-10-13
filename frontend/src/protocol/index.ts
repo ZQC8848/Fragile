@@ -11,6 +11,7 @@ export type ServerMessageType = ServerToClient['type']
 const SERVER_TYPES: ReadonlySet<string> = new Set<ServerMessageType>([
   'hello',
   'session_state',
+  'player_card',
   'input_review_result',
   'turn_accepted',
   'passage',

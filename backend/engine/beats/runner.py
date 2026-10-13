@@ -114,7 +114,9 @@ class BeatRun:
         if turn.get("silent") and silence:
             return silence
         if asks["kind"] == "side":
-            side = side_answer(asks["asker"], turn)
+            # M2 reads the whole answer ("I'll be kind to her, but I won't promise you that"); the act rules
+            # only stand in when it gave no verdict (plan.md R23)
+            side = turn.get("side_answer") or side_answer(asks["asker"], turn)
             if side in by_id:
                 return by_id[side]
             return by_id.get("neutral") or silence or self.beat.outcomes[-1]
