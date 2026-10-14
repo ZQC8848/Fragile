@@ -1,8 +1,8 @@
-# Phase 1 · 表演正常 (beat-script.md §1). Schema: schemas/beat_v2.json.
+# Phase 1 · Performing normal (beat-script.md §1). Schema: schemas/beat_v2.json.
 # Tension effects = slope x 0.5 (beat-script.md §5 rule 1). Lines are samples for the narrator.
 
 - id: the_door
-  title: "迎客"
+  title: "Welcome"
   type: spine
   origin: authored
   author: "beat-script v0"
@@ -37,7 +37,7 @@
   tableau: door_mia
 
 - id: dinner_on_the_crate
-  title: "木箱上的晚餐"
+  title: "Dinner on the Crate"
   type: spine
   origin: authored
   author: "beat-script v0"
@@ -76,7 +76,7 @@
   tableau: dinner_on_crate
 
 - id: the_fourth_setting
-  title: "第四副碗筷"
+  title: "The Fourth Place Setting"
   type: spine
   origin: authored
   author: "beat-script v0"

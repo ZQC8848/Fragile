@@ -2,7 +2,7 @@
 # fits real content. M2 writes the full pool into data/beats/.
 
 - id: julian_on_the_balcony
-  title: "阳台上的 Julian"
+  title: "Julian on the Balcony"
   type: spine
   origin: authored
   author: "beat-script v0"
@@ -51,7 +51,7 @@
   tableau: balcony
 
 - id: the_witness
-  title: "证人"
+  title: "The Witness"
   type: ending
   origin: authored
   author: "beat-script v0"

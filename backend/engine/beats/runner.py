@@ -17,7 +17,7 @@ from engine.beats.loader import Beat
 from engine.dsl import truthy
 
 #: a primary reaction of these types takes the turn: no step is delivered, the thread resumes next turn
-#: (interaction-design.md §6.2 "逼过头"). plan.md §3.1 writes this as "priority >= 8", but that would also stop the
+#: (interaction-design.md §6.2, "pushing too far"). plan.md §3.1 writes this as "priority >= 8", but that would also stop the
 #: beat for every local mix-in (10) and every blocked action (9), which are meant to be answered in passing.
 INTERRUPT_TYPES = frozenset({"push_too_far"})
 

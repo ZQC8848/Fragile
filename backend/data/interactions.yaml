@@ -151,7 +151,7 @@ objects:
           - { who: mia,    when: "mia_room == player_room and mia_composure >= 0.3" }
           - { who: julian, when: "julian_room == player_room and julian_composure >= 0.3" }
         blocked_note: "'That's just rubbish. Leave it, it's disgusting.'"
-        # [待定] T2 clue: the broken whisky bottle wrapped in a dish towel. Does not add to `revealed`.
+        # [TBD] T2 clue: the broken whisky bottle wrapped in a dish towel. Does not add to `revealed`.
         note: "Glass. The neck of a whisky bottle, wrapped in a dish towel."
 
   bedroom_door:

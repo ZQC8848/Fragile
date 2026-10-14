@@ -4,7 +4,7 @@
 # ending_rank: confession 1, open_it 2, the_witness 3, bon_voyage 4 (fallback).
 
 - id: bon_voyage
-  title: "送别"
+  title: "Bon Voyage"
   type: ending
   origin: authored
   author: "beat-script v0"
@@ -34,7 +34,7 @@
   tableau: ending_bon_voyage
 
 - id: the_witness
-  title: "证人"
+  title: "The Witness"
   type: ending
   origin: authored
   author: "beat-script v0"
@@ -54,7 +54,7 @@
   tableau: ending_the_witness
 
 - id: open_it
-  title: "开箱"
+  title: "Open It"
   type: ending
   origin: authored
   author: "beat-script v0"
@@ -103,7 +103,7 @@
   tableau: ending_open_it
 
 - id: confession
-  title: "自首"
+  title: "Confession"
   type: ending
   origin: authored
   author: "beat-script v0"
@@ -136,7 +136,7 @@
   tableau: ending_confession
 
 - id: second_crate
-  title: "第二只箱子"
+  title: "The Second Crate"
   type: ending
   origin: authored
   author: "beat-script v0"

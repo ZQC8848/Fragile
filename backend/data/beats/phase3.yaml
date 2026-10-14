@@ -1,7 +1,7 @@
-# Phase 3 · 摊牌 (beat-script.md §3). Must-follow ranks: see phase2.yaml header.
+# Phase 3 · Showdown (beat-script.md §3). Must-follow ranks: see phase2.yaml header.
 
 - id: the_admission
-  title: "他没走"
+  title: "He Never Left"
   type: spine
   origin: authored
   author: "beat-script v0"
@@ -66,7 +66,7 @@
       do: "Julian: 'Sit down. I'll tell you. I'll tell you everything.'"
 
 - id: the_versions
-  title: "两个版本"
+  title: "Two Versions"
   type: spine
   origin: authored
   author: "beat-script v0"
@@ -115,7 +115,7 @@
       effects: { revealed: [add, embezzlement] }
 
 - id: the_offer
-  title: "交易"
+  title: "The Deal"
   type: spine
   origin: authored
   author: "beat-script v0"
@@ -165,7 +165,7 @@
       do: "Julian: 'Nora doesn't need to know anything.'"
 
 - id: downstairs
-  title: "楼下"
+  title: "Downstairs"
   type: spine
   origin: authored
   author: "beat-script v0"
@@ -199,7 +199,7 @@
       do: "Someone is standing by the yellow car, looking up at the building."
 
 - id: the_knock
-  title: "敲门"
+  title: "The Knock"
   type: spine
   origin: authored
   author: "beat-script v0"
@@ -226,7 +226,7 @@
   tableau: nora_at_door
 
 - id: testimony
-  title: "证词"
+  title: "Testimony"
   type: spine
   origin: authored
   author: "beat-script v0"

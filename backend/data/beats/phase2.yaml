@@ -1,10 +1,10 @@
-# Phase 2 · 裂缝 (beat-script.md §2), plus the must-follow beats that can fire from phase 2 on.
+# Phase 2 · Cracks (beat-script.md §2), plus the must-follow beats that can fire from phase 2 on.
 # Must-follow ranks follow story.md §9.4 with the two early endings in front:
 #   1 bon_voyage (left)  2 second_crate  3 open_it (police)  4 the_admission (crate opened)
 #   5 noras_call  6 the_buzz  7 dont_go_yet  8 downstairs  9 the_knock  10 testimony
 
 - id: mia_in_the_kitchen
-  title: "厨房里的 Mia"
+  title: "Mia in the Kitchen"
   type: spine
   origin: authored
   author: "beat-script v0"
@@ -60,7 +60,7 @@
   tableau: kitchen_island
 
 - id: julian_on_the_balcony
-  title: "阳台上的 Julian"
+  title: "Julian on the Balcony"
   type: spine
   origin: authored
   author: "beat-script v0"
@@ -111,7 +111,7 @@
   tableau: balcony_car
 
 - id: two_afternoons
-  title: "两个下午"
+  title: "Two Afternoons"
   type: spine
   origin: authored
   author: "beat-script v0"
@@ -159,7 +159,7 @@
   tableau: two_afternoons
 
 - id: noras_call
-  title: "Nora 的电话"
+  title: "Nora's Call"
   type: spine
   origin: authored
   author: "beat-script v0"
@@ -209,7 +209,7 @@
       effects: { julian_composure: "-0.2", mia_composure: "-0.2" }
 
 - id: the_buzz
-  title: "手机在震"
+  title: "The Phone Buzzes"
   type: spine
   origin: authored
   author: "beat-script v0"
@@ -247,7 +247,7 @@
   tableau: jacket_light
 
 - id: dont_go_yet
-  title: "别走"
+  title: "Don't Go"
   type: satellite
   origin: authored
   author: "beat-script v0"
