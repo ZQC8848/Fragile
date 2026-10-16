@@ -335,7 +335,7 @@ class TensionEstimator:  def estimate(self, window, state=None) -> float
 ### 7.4 Console
 
 - **Decision Log**：沿用，显示 A/B/C 三路分数。
-- **新增回合检查器**：每回合一行，展开后看原文、整理草稿、合规判定、M2 单元、反应候选和选中项、数值变化、步指针、叙述者分段、M3 判定、选项和各阶段延迟（interaction-design.md §10.6）。
+- **新增回合检查器**：每回合一行，展开后看原文、整理草稿、合规判定、M2 单元、反应候选和选中项、数值变化、步指针、叙述者分段、M3 判定、选项和各阶段延迟（interaction-design.md §10.7）。
 - **新增 Models 标签页**：每回合输入的 M2 输出、每段文字的 M3 判定、M4 测出的张力曲线叠在目标弧上。
 - Poster 的截图和现场演示都从这里来。
 
