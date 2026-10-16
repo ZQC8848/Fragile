@@ -252,7 +252,7 @@ async def test_player_card_comes_first_and_says_what_the_player_knows():
     assert types.index("player_card") < types.index("passage")
     card = rec.of("player_card")[0]
     assert card["name"] == "Sam" and "college friend" in card["identity"]
-    assert any("Leo was invited" in k for k in card["knows"]) and any("Nora is Leo's sister" in k for k in card["knows"])
+    assert any("Leo was invited" in k for k in card["knows"]) and any("Nora is Leo's younger sister" in k for k in card["knows"])
 
 
 async def test_narrator_gets_positions_moves_ledger_and_lines_already_said():

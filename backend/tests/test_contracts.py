@@ -14,6 +14,7 @@ from helpers import (
     DATA,
     FACTS,
     FIXTURES,
+    REPO,
     ROOMS,
     SCHEMAS,
     STATE,
@@ -105,7 +106,7 @@ def test_beat_schema_requires_minutes_except_for_endings():
 MESSAGES = load_json(SCHEMAS / "messages_v2.json")
 
 GOOD_MESSAGES = [
-    {"type": "session_start", "name": "Sam", "gender": "nonbinary"},
+    {"type": "session_start", "name": "Sam", "gender": "male"},
     {"type": "input_review", "mode": "single", "text": "*I look down at the street* Isn't that Leo's car?"},
     {"type": "input_review", "mode": "channels", "channels": {"speech": "Isn't that Leo's car?", "addressee": "julian"}},
     {"type": "turn_submit", "channels": {"speech": "", "action": "", "expression": ""}, "source": "filled"},
@@ -298,3 +299,29 @@ def test_knowledge_matches_story_table():
     assert knows("nora", "nora_pushed_leo") is True and knows("julian", "nora_pushed_leo") is False
     for name in ("julian", "mia", "nora"):
         assert knows(name, "missed_call") is False
+
+
+# --------------------------------------------------------------------------- the pre-game intro (data/cast.yaml)
+CAST = load_yaml(DATA / "cast.yaml")
+
+
+def test_cast_matches_its_schema_and_the_protocol_genders():
+    assert errors(load_json(SCHEMAS / "data" / "cast.json"), CAST) == []
+    genders = set(load_json(SCHEMAS / "messages_v2.json")["$defs"]["Gender"]["enum"])
+    assert {c["gender"] for c in CAST["player"]["cards"]} == genders
+
+
+def test_cast_text_never_states_a_secret():
+    """The intro is read before anything is revealed: no line may state any fact the guard protects."""
+    from engine.models.guard import FACT_PATTERNS
+
+    lines = [CAST["title"], *CAST["premise"], CAST["player"]["relation"]]
+    lines += [c[k] for c in CAST["cast"] for k in ("relation", "memory", "footer") if c.get(k)]
+    for line in lines:
+        hits = [fact for fact, pattern in FACT_PATTERNS.items() if pattern.search(line)]
+        assert not hits, f"{line!r} states {hits}"
+
+
+def test_every_portrait_exists():
+    for c in [*CAST["cast"], *CAST["player"]["cards"]]:
+        assert (REPO / "art" / c["portrait"]).exists(), c["portrait"]

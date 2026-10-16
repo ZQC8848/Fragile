@@ -45,8 +45,7 @@
       "type": "string",
       "enum": [
         "female",
-        "male",
-        "nonbinary"
+        "male"
       ]
     },
     "InputSource": {

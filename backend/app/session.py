@@ -101,7 +101,7 @@ class Session:
     def _reset_runtime(self) -> None:
         self.phase = "lobby"
         self.name = ""
-        self.gender = "nonbinary"
+        self.gender = "female"
         self.state: dict[str, Any] = self.schema.initial_state()
         self.run: BeatRun | None = None
         self.used: set[str] = set()
@@ -233,7 +233,7 @@ class Session:
         args = args or {}
         self.logger.event("control", {"command": command, "args": args})
         if command == "start":
-            await self.start(args.get("name", "Sam"), args.get("gender", "nonbinary"))
+            await self.start(args.get("name", "Sam"), args.get("gender", "female"))
         elif command == "reset":
             self._reset_runtime()
             await self.push({"type": "session_state", "phase": "lobby", "turn": 0})

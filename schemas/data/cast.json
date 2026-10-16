@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fragile.dev/schemas/data/cast.json",
+  "title": "data/cast.yaml",
+  "description": "The pre-game intro served by GET /api/intro (interaction-design.md §10.4): title, premise, cast cards and player cards. Only what the player character knows walking in; backend/tests/test_contracts.py checks the text against the guard's fact patterns.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["title", "premise", "cast", "player"],
+  "properties": {
+    "title": { "type": "string", "minLength": 1 },
+    "premise": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
+    "cast": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "name", "portrait", "relation", "memory"],
+        "properties": {
+          "id": { "enum": ["julian", "mia", "leo", "nora"] },
+          "name": { "type": "string", "minLength": 1 },
+          "portrait": { "type": "string", "pattern": "^portraits/[a-z_-]+\\.png$" },
+          "relation": { "type": "string", "minLength": 1 },
+          "memory": { "type": "string", "minLength": 1 },
+          "footer": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "player": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["relation", "default_name", "cards"],
+      "properties": {
+        "relation": { "type": "string", "minLength": 1 },
+        "default_name": { "type": "string", "minLength": 1 },
+        "cards": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["gender", "portrait"],
+            "properties": {
+              "gender": { "enum": ["female", "male"] },
+              "portrait": { "type": "string", "pattern": "^portraits/[a-z_-]+\\.png$" }
+            }
+          }
+        }
+      }
+    }
+  }
+}

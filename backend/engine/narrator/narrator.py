@@ -21,7 +21,7 @@ from engine.paths import SCHEMAS_DIR
 
 NARRATOR_SCHEMA = json.loads((SCHEMAS_DIR / "llm" / "narrator.json").read_text(encoding="utf-8"))
 
-PRONOUNS = {"female": "she/her", "male": "he/him", "nonbinary": "they/them"}
+PRONOUNS = {"female": "she/her", "male": "he/him"}
 
 #: used when a segment fails the guard twice (interaction-design.md §9.4)
 DEFLECTIONS = {
@@ -62,7 +62,7 @@ class NarrationRequest:
 
     def payload(self) -> dict[str, Any]:
         d = asdict(self)
-        d["pronouns"] = PRONOUNS.get(self.gender, "they/them")
+        d["pronouns"] = PRONOUNS.get(self.gender, "she/her")
         d["steps"] = [{"id": s["id"], "do": s["do"], "length": s.get("length", "normal")} for s in self.steps]
         return d
 

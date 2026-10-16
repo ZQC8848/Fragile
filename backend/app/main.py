@@ -14,12 +14,13 @@ import logging
 from typing import Any
 
 import jsonschema
+import yaml
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.session import Session, SessionError
 from engine.llm import llm_roles, load_env
-from engine.paths import SCHEMAS_DIR
+from engine.paths import DATA_DIR, SCHEMAS_DIR
 
 # providers and keys live only in backend/.env (gitignored)
 load_env()
@@ -35,6 +36,9 @@ app.add_middleware(
 _PROTOCOL = json.loads((SCHEMAS_DIR / "messages_v2.json").read_text(encoding="utf-8"))
 _CLIENT = jsonschema.Draft202012Validator({**_PROTOCOL, "oneOf": [{"$ref": "#/$defs/ClientToServer"}]})
 
+#: the pre-game intro: premise, cast cards, player cards (interaction-design.md §10.4)
+INTRO: dict[str, Any] = yaml.safe_load((DATA_DIR / "cast.yaml").read_text(encoding="utf-8"))
+
 SESSIONS: dict[str, Session] = {}
 
 
@@ -49,6 +53,12 @@ def _session(session_id: str) -> Session:
 @app.get("/api/health")
 async def health() -> dict[str, Any]:
     return {"ok": True, "sessions": len(SESSIONS)}
+
+
+@app.get("/api/intro")
+async def intro() -> dict[str, Any]:
+    """What the player reads before the session starts; the cast cards can be reopened in play."""
+    return INTRO
 
 
 @app.get("/api/sessions/{session_id}/state")

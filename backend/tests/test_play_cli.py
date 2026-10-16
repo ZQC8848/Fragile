@@ -31,7 +31,7 @@ async def test_cli_plays_from_the_opening_to_an_ending():
         return "I walk out the front door." if cli.session.state["player_room"] == "hall" else "I go to the hall."
 
     cli = Cli(read, out.append, seed=3, save_generated=False)
-    await cli.run("Sam", "nonbinary")
+    await cli.run("Sam", "male")
     text = " ".join(" ".join(out).split())
     assert "I ring the bell." in text and "— the end —" in text
     assert "[npc_action]" in text and "voicemail · Leo" in text and "story_min=" in text and "latency ms" in text

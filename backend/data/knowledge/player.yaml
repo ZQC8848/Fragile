@@ -18,7 +18,7 @@ facts:
     knows: true
     may_say_when: "true"
   - id: who_is_who
-    text: "Julian and Mia are married. Nora is Leo's sister."
+    text: "Julian and Mia are married. Julian and Leo run a small design studio they started after college. Mia knew Leo before any of you did. Nora is Leo's younger sister."
     knows: true
     may_say_when: "true"
   - id: missed_calls_exist

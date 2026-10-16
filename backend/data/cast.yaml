@@ -1,0 +1,46 @@
+# The pre-game intro (interaction-design.md §10.4): title, premise, the four cast cards and the two player
+# cards. Served before a session starts by GET /api/intro; the cast cards can be reopened in play. Schema:
+# schemas/data/cast.json.
+#
+# Only what the player character knows walking in. No secret, no fact the story has not unlocked: the tests
+# check every line against the guard's fact patterns and against data/knowledge/player.yaml.
+# Portraits are paths under art/ (art/portraits/).
+
+title: "Fragile"
+
+premise:
+  - "Tomorrow at six the movers come for the last of Julian and Mia's things. At 07:40 they fly to Australia, for good."
+  - "Tonight is the farewell dinner, for the old crowd from college. You have not seen much of them these last few years. Leo is invited too."
+  - "This afternoon your phone buzzed a few times: two missed calls from Leo, and a voicemail. You have not listened to it yet."
+
+cast:
+  - id: julian
+    name: "Julian"
+    portrait: "portraits/julian.png"
+    relation: "Mia's husband. Started a small design studio with Leo after college."
+    memory: "The host. He pours, he jokes, he never lets a silence sit."
+  - id: mia
+    name: "Mia"
+    portrait: "portraits/mia.png"
+    relation: "Julian's wife. Knew Leo before any of you did."
+    memory: "Warm, attentive, always apologising for something that isn't her fault."
+  - id: leo
+    name: "Leo"
+    portrait: "portraits/leo.png"
+    relation: "The one who held the old crowd together."
+    memory: "Always late, always forgiven. The friend who would drive two hours at midnight if you called."
+    footer: "Invited tonight."
+  - id: nora
+    name: "Nora"
+    portrait: "portraits/nora.png"
+    relation: "Leo's younger sister."
+    memory: "Direct, impatient. You have only met her a few times."
+
+player:
+  relation: "An old college friend of Julian, Mia and Leo. Out of touch the last few years."
+  default_name: "Sam"
+  cards:
+    - gender: female
+      portrait: "portraits/player-female.png"
+    - gender: male
+      portrait: "portraits/player-male.png"

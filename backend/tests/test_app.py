@@ -102,3 +102,11 @@ def test_reconnect_resumes_the_session():
         with client.websocket_connect("/ws/again") as ws:
             assert ws.receive_json()["type"] == "hello"
             assert ws.receive_json() == {"type": "session_state", "phase": "playing", "turn": 0}
+
+
+def test_intro_serves_the_premise_and_the_cards():
+    with TestClient(app) as client:
+        intro = client.get("/api/intro").json()
+    assert [c["id"] for c in intro["cast"]] == ["julian", "mia", "leo", "nora"]
+    assert {c["gender"] for c in intro["player"]["cards"]} == {"female", "male"}
+    assert intro["premise"] and intro["title"] == "Fragile"

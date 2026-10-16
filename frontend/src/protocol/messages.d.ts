@@ -9,7 +9,7 @@
  */
 export type FragileWebSocketProtocolV2 = ClientToServer | ServerToClient
 export type ClientToServer = SessionStart | InputReview | TurnSubmit | OptionsRequest | PhoneOpen | Control
-export type Gender = 'female' | 'male' | 'nonbinary'
+export type Gender = 'female' | 'male'
 export type Addressee = 'julian' | 'mia' | 'both' | 'nora' | 'self'
 export type InputSource = 'typed_accepted' | 'typed_edited' | 'filled' | 'option' | 'option_edited'
 export type ServerToClient =

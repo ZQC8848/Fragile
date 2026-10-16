@@ -1,6 +1,6 @@
 """Play Fragile in the terminal, against the same Session the WebSocket uses (plan.md M3).
 
-    uv run python tools/play_cli.py [--name Sam] [--gender female|male|nonbinary] [--seed 1] [--scorer A|B|C|random]
+    uv run python tools/play_cli.py [--name Sam] [--gender female|male] [--seed 1] [--scorer A|B|C|random]
                                     [--live all | --live review,narrator,guard]
 
 Without --live every LLM role answers from its offline mock (unless backend/.env lists it in LLM_LIVE_ROLES).
@@ -276,7 +276,7 @@ class Cli:
 def main() -> None:
     ap = argparse.ArgumentParser(description="Play Fragile in the terminal.")
     ap.add_argument("--name", default=None)
-    ap.add_argument("--gender", default=None, choices=["female", "male", "nonbinary"])
+    ap.add_argument("--gender", default=None, choices=["female", "male"])
     ap.add_argument("--seed", type=int, default=None)
     ap.add_argument("--scorer", default=None, help="A|B|C|random (default: MODEL_SCORER or B)")
     ap.add_argument("--tau", type=float, default=1.0)
@@ -290,9 +290,9 @@ def main() -> None:
 
     async def go() -> None:
         name = args.name or (await stdin_line("Your name: ") or "Sam").strip() or "Sam"
-        gender = args.gender or ((await stdin_line("Gender (female/male/nonbinary): ") or "").strip().lower() or "nonbinary")
-        if gender not in ("female", "male", "nonbinary"):
-            gender = "nonbinary"
+        gender = args.gender or ((await stdin_line("Gender (female/male): ") or "").strip().lower() or "female")
+        if gender not in ("female", "male"):
+            gender = "female"
         cli = Cli(stdin_line, print, seed=args.seed, scorer=args.scorer, tau=args.tau)
         await cli.run(name, gender)
 
