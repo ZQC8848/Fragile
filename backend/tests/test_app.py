@@ -20,6 +20,7 @@ SERVER = jsonschema.Draft202012Validator({**PROTOCOL, "oneOf": [{"$ref": "#/$def
 @pytest.fixture(autouse=True)
 def fresh_sessions(monkeypatch):
     monkeypatch.setattr(main_mod, "SESSIONS", {})
+    monkeypatch.setattr(main_mod, "CLIENTS", {})
 
 
 def receive_until(ws, type_: str, limit: int = 60) -> list[dict]:
@@ -110,3 +111,46 @@ def test_intro_serves_the_premise_and_the_cards():
     assert [c["id"] for c in intro["cast"]] == ["julian", "mia", "leo", "nora"]
     assert {c["gender"] for c in intro["player"]["cards"]} == {"female", "male"}
     assert intro["premise"] and intro["title"] == "Fragile"
+
+
+def test_the_play_screen_never_receives_console_state():
+    with TestClient(app) as client, client.websocket_connect("/ws/player?mode=play") as ws:
+        receive_until(ws, "session_state")
+        ws.send_json({"type": "session_start", "name": "Sam", "gender": "female"})
+        receive_until(ws, "room_state")
+        ws.send_json({"type": "phone_open"})
+        ws.send_json({"type": "options_request"})
+        types = [m["type"] for m in receive_until(ws, "options")]
+        assert "drama_state" not in types and "turn_trace" not in types
+
+
+def test_the_truth_waits_for_the_ending():
+    with TestClient(app) as client, client.websocket_connect("/ws/truth") as ws:
+        receive_until(ws, "session_state")
+        ws.send_json({"type": "session_start", "name": "Sam", "gender": "female"})
+        receive_until(ws, "drama_state")
+        assert client.get("/api/sessions/truth/truth").status_code == 403
+        main_mod.SESSIONS["truth"].phase = "ended"
+        r = client.get("/api/sessions/truth/truth")
+        assert r.status_code == 200 and r.json()["timeline"]
+
+
+def test_art_is_served():
+    with TestClient(app) as client:
+        r = client.get("/art/portraits/leo.png")
+    assert r.status_code == 200 and r.headers["content-type"] == "image/png"
+
+
+def test_the_console_watches_a_game_without_taking_it_from_the_player():
+    with TestClient(app) as client, client.websocket_connect("/ws/both?mode=play") as play:
+        receive_until(play, "session_state")
+        with client.websocket_connect("/ws/both?mode=console") as console:
+            receive_until(console, "session_state")
+            play.send_json({"type": "session_start", "name": "Sam", "gender": "male"})
+            assert receive_until(play, "passage")[-1]["turn"] == 0
+            console_msgs = receive_until(console, "drama_state")
+            assert any(m["type"] == "passage" for m in console_msgs) and "arc" in console_msgs[-1]
+            listed = client.get("/api/sessions").json()
+            assert listed[0]["id"] == "both" and listed[0]["watchers"] == 2
+            play.send_json({"type": "options_request"})
+            assert "drama_state" not in [m["type"] for m in receive_until(play, "options")]

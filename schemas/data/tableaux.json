@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fragile.dev/schemas/data/tableaux.json",
+  "title": "data/tableaux.yaml",
+  "description": "Illustrated moments: a caption per tableau id, and optionally an image per player gender (paths under art/). Every tableau a beat names must have an entry (backend/tests/test_contracts.py).",
+  "type": "object",
+  "propertyNames": { "pattern": "^[a-z][a-z0-9_]*$" },
+  "additionalProperties": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["caption"],
+    "properties": {
+      "caption": { "type": "string", "minLength": 1 },
+      "images": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "female": { "type": "string", "pattern": "^[a-z_-]+/[a-z0-9_-]+\\.png$" },
+          "male": { "type": "string", "pattern": "^[a-z_-]+/[a-z0-9_-]+\\.png$" }
+        }
+      }
+    }
+  }
+}

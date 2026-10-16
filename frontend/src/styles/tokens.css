@@ -1,13 +1,14 @@
-/* Backstage design tokens: "stage manager's cue sheet". Single dark theme. */
+/* Backstage (Console) tokens: the same "rain-washed slate" as the play screen (interaction-design.md §10.6),
+   mapped onto the Console's roles. Defined in terms of the play tokens below. */
 :root {
-  --bg: #16120f;          /* near-black warm base (dark wood / slate) */
-  --bg-elev: #201a16;     /* elevated panels */
-  --bg-elev-2: #2a221c;   /* hover / selected rows */
-  --line: #4a3a2c;        /* thin wood-toned dividers */
-  --ink: #f2e8d8;         /* paper-white primary text */
-  --ink-dim: #a08f7a;     /* secondary text */
-  --accent: #b8332b;      /* restrained red: chosen candidate, tension spikes, danger */
-  --cool: #6e8ea3;        /* window blue-cyan for the target curve and outdoor */
+  --bg: var(--night);           /* page */
+  --bg-elev: var(--slate);      /* inputs, buttons, tooltips */
+  --bg-elev-2: #2e3846;         /* hover, selected and chosen rows */
+  --line: #34404f;              /* dividers and panel borders */
+  --ink: var(--paper);          /* primary text */
+  --ink-dim: var(--rain);       /* secondary text */
+  --accent: #c98a83;            /* danger and errors: Wine raised to 5.7:1 on Night for text */
+  --cool: #6e8ea3;
   --mono: ui-monospace, "JetBrains Mono", "Cascadia Code", Consolas, monospace;
   --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
@@ -19,8 +20,8 @@
 :root {
   --night: #1b222c;  /* page background: the rain-washed night outside the window */
   --slate: #252e3a;  /* drawers, input, map panel: the bare walls, one step up */
-  --rain: #7d8896;   /* secondary text, rules, idle controls (5:1 on night) */
-  --paper: #e4dfd3;  /* body text and NPC lines: the tablecloth (13:1 on night) */
+  --rain: #8c97a5;   /* secondary text, rules, idle controls (5.4:1 on night, 4.6:1 on slate) */
+  --paper: #e4dfd3;  /* body text and NPC lines: the tablecloth (12:1 on night) */
   --wine: #9e5a5a;   /* rejected input only: Julian's glass, dimmed */
   --leo: #e3b23c;    /* reserved: Leo's missed calls and voicemail, nothing else */
 }

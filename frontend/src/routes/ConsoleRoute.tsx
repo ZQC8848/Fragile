@@ -1,6 +1,6 @@
-import { Placeholder } from './Placeholder'
+import { Console } from '../console/Console'
 
-/** Backstage view (backend-design.md section 7.4). M0: connection check only. */
+/** Backstage view (backend-design.md §7.4, interaction-design.md §10.7). */
 export function ConsoleRoute() {
-  return <Placeholder mode="console" title="Console" />
+  return <Console />
 }

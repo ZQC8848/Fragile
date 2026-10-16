@@ -184,3 +184,193 @@ pre.json {
     transition: none !important;
   }
 }
+
+/* ---- the Console (backend-design.md §7.4): dense, monospace, every value on screen ---- */
+.console {
+  height: 100%;
+  overflow: auto;
+  box-sizing: border-box;
+  padding: 12px 16px 24px;
+}
+.console-head {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.console-head select {
+  max-width: 340px;
+}
+.console-link {
+  color: var(--ink-dim);
+  margin-left: auto;
+}
+.console-empty {
+  color: var(--ink-dim);
+}
+.console-grid {
+  display: grid;
+  grid-template-columns: minmax(240px, 300px) minmax(0, 1fr) minmax(300px, 380px);
+  gap: 12px;
+  align-items: start;
+}
+.console-col {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+.console .panel-section {
+  border: 1px solid var(--line);
+}
+.console .dim {
+  color: var(--ink-dim);
+}
+.console .is-dim td {
+  opacity: 0.5;
+}
+.console .is-chosen td {
+  color: var(--ink);
+  background: var(--bg-elev-2);
+}
+.console textarea {
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+}
+.console-error {
+  color: var(--accent);
+  margin: 6px 0 0;
+}
+.control-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0;
+  flex-wrap: wrap;
+}
+.turns {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.turns li {
+  border-top: 1px solid var(--line);
+}
+.turn-row {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 2.5em minmax(0, 1fr) 11em 9em 5em;
+  gap: 8px;
+  text-align: left;
+  background: none !important;
+  border: 0 !important;
+  padding: 6px 2px !important;
+}
+.turn-row > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.turns li.is-open .turn-row,
+.turn-row:hover {
+  background: var(--bg-elev-2) !important;
+}
+.turn-no {
+  color: var(--ink-dim);
+}
+.turn-time {
+  text-align: right;
+}
+.turn-detail {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 10px;
+  padding: 8px 2px 14px;
+}
+.turn-detail .block h3 {
+  font-size: 11px;
+  color: var(--ink-dim);
+  margin: 0 0 4px;
+  font-weight: 600;
+}
+.turn-detail .kv {
+  overflow-wrap: anywhere;
+}
+.segments {
+  margin: 4px 0 0;
+  padding-left: 18px;
+}
+.chart-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.legend {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  padding: 0;
+  margin: 4px 0 6px;
+  color: var(--ink-dim);
+}
+.legend li {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.chart {
+  position: relative;
+}
+.chart svg {
+  width: 100%;
+  display: block;
+}
+.chart .grid {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+.chart .tick {
+  fill: var(--ink-dim);
+  font-size: 9px;
+  font-family: var(--mono);
+}
+.chart .crosshair {
+  stroke: var(--ink-dim);
+  stroke-width: 1;
+}
+.tooltip {
+  position: absolute;
+  top: 4px;
+  transform: translateX(-50%);
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  padding: 4px 6px;
+  pointer-events: none;
+  white-space: nowrap;
+}
+.tip-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+@media (max-width: 1100px) {
+  .console-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.console-col > * {
+  min-width: 0;
+  overflow: hidden;
+}
+.console-col select,
+.console-col input:not([type="range"]),
+.console-col textarea {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.console-col .control-row select {
+  flex: 1;
+  min-width: 0;
+}

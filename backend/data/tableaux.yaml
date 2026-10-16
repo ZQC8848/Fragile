@@ -1,0 +1,33 @@
+# Illustrated moments (story.md §12, interaction-design.md §10.5). Beats name a tableau id on a step or an
+# ending; the passage that reaches it carries this entry to the client, so no caption is sent before its
+# moment. `images` maps the player's gender to a file under art/ (the college photo on the wall shows the
+# player); a missing image shows the caption card instead. Schema: schemas/data/tableaux.json.
+
+door_mia:
+  caption: "The door opens almost before the bell has finished. Mia, smiling a little too hard."
+dinner_on_crate:
+  caption: "Dinner on the crate: a tablecloth, takeaway boxes, four glasses."
+  images:
+    female: "scenes/tableau-03-dinner-on-the-crate-female.png"
+fourth_setting:
+  caption: "Julian clears away the fourth place setting."
+balcony_car:
+  caption: "From the balcony: the wet street, and the yellow car with two wheels up on the kerb."
+kitchen_island:
+  caption: "The kitchen island. Mia's cloth has stopped on the same corner."
+jacket_light:
+  caption: "A light, glowing through Julian's jacket pocket."
+two_afternoons:
+  caption: "Two afternoons, told across the crate."
+nora_at_door:
+  caption: "Nora at the door, wet from the rain, her phone in her fist."
+ending_bon_voyage:
+  caption: "Six in the morning. The movers lift the crate."
+ending_the_witness:
+  caption: "07:40. Somewhere above the clouds, your phone lights up."
+ending_open_it:
+  caption: "The crate, open. Everyone in the room."
+ending_confession:
+  caption: "Nora, sitting on the floor beside the crate."
+ending_second_crate:
+  caption: "Julian, closing the door."

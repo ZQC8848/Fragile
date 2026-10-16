@@ -299,11 +299,12 @@ Sonnet 玩家试玩（2026-10-12，`sonnet_playthrough.md`）之后定下的改�
 
 ### M5 · 前端（10/11–10/16）· 负责 #6
 
-- [ ] Play 界面（interaction-design.md §10）：
+- [x] Play 界面（interaction-design.md §10，2026-10-16 完成第一版，离线 mock 下用 Chrome 走通了开局、草稿、被拒、选项、地图、手机、桌面和移动端）：
   - 开局页（名字、性别）、正文记录（分段拼成文字，上面一行玩家原文）；
   - 输入区：单框和分栏切换，草稿确认（含翻译），被拒提示和一键改写；
   - 生成选项按钮、手机抽屉、房间和在场人物条、插图占位、"生成中"状态、结束页。
-- [ ] Console：拍子架、决策日志、状态、控制面板沿用；新增回合检查器；张力曲线横轴改成剧情分钟
+- [x] Console（2026-10-16 第一版）：会话选择、回合检查器（每回合完整链路）、状态、按剧情分钟的张力曲线（目标、beat 自报、M4 实测，附表格视图）、决策记录、拍子架、控制面板（scorer、tau、指定下一拍、跳时钟、状态补丁、重置、各 LLM 角色切换 live）。一个会话可以同时被玩家页和 Console 连接，`GET /api/sessions` 列出全部会话
+- [x] 后端配套：`GET /api/intro`、`/art` 静态资源、`passage.illustration`（`data/tableaux.yaml`）、结局后才开放的 `GET /api/sessions/{id}/truth`（`data/truth.yaml`）；`?mode=play` 的连接收不到 `drama_state` 和 `turn_trace`
 - [ ] 前端不理解剧情：只显示后端给的内容，只上报玩家输入（沿用 Wrongest Person 的规矩）
 
 **验收**：浏览器里玩到结局；Console 能逐回合看到完整链路。

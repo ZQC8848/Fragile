@@ -325,3 +325,21 @@ def test_cast_text_never_states_a_secret():
 def test_every_portrait_exists():
     for c in [*CAST["cast"], *CAST["player"]["cards"]]:
         assert (REPO / "art" / c["portrait"]).exists(), c["portrait"]
+
+
+# --------------------------------------------------------------------------- illustrations and the truth
+TABLEAUX = load_yaml(DATA / "tableaux.yaml")
+
+
+def test_every_tableau_a_beat_names_has_a_caption_and_its_images_exist():
+    assert errors(load_json(SCHEMAS / "data" / "tableaux.json"), TABLEAUX) == []
+    named = {s.get("tableau") for p in sorted((DATA / "beats").glob("*.yaml")) for b in load_yaml(p)
+             for s in [b, *b.get("steps", [])] if s.get("tableau")}
+    assert named <= set(TABLEAUX), sorted(named - set(TABLEAUX))
+    for entry in TABLEAUX.values():
+        for src in (entry.get("images") or {}).values():
+            assert (REPO / "art" / src).exists(), src
+
+
+def test_truth_matches_its_schema():
+    assert errors(load_json(SCHEMAS / "data" / "truth.json"), load_yaml(DATA / "truth.yaml")) == []

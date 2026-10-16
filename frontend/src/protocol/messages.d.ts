@@ -167,6 +167,11 @@ export interface Passage {
    * true on the ending passage.
    */
   final?: boolean
+  illustration?: null | {
+    id: string
+    caption: string
+    src?: string
+  }
 }
 /**
  * One piece of a passage (interaction-design.md §9.1); the frontend joins them into first-person prose.

@@ -25,6 +25,8 @@ from collections.abc import Awaitable, Callable
 from copy import deepcopy
 from typing import Any
 
+import yaml
+
 import engine.journal.decisions as _journal
 from engine.beats import INTERRUPT_TYPES, BeatPool, BeatRun, accepts_invite, rule_ctx
 from engine.clock import ClockEvent, StoryClock
@@ -85,6 +87,7 @@ class Session:
         self.reactions = ReactionLayer.from_file()
         self.knowledge = Knowledge.from_dir()
         self.prologue = (DATA_DIR / "prologue.txt").read_text(encoding="utf-8").strip()
+        self.tableaux: dict[str, Any] = yaml.safe_load((DATA_DIR / "tableaux.yaml").read_text(encoding="utf-8"))
         shadow = shadow_from_env()
         self.encoder = Encoder(self.world.object_topics(), shadow=shadow, action_table=self.world.action_table())
         self.guard = Guard(shadow=shadow)
@@ -121,6 +124,8 @@ class Session:
         self.traces: list[dict[str, Any]] = []
         self.last_decision: Decision | None = None
         self.card: dict[str, Any] | None = None
+        #: tableaux already shown this session: each illustrated moment appears once
+        self.shown_tableaux: set[str] = set()
 
     # ===================================================================== public entry points
     async def start(self, name: str, gender: str) -> None:
@@ -672,9 +677,22 @@ class Session:
                 break
         text = " ".join(s["text"] for s in segments)
         self.passages.append({"turn": turn_no, "player": player, "segments": segments, "text": text})
-        msg: dict[str, Any] = {"type": "passage", "turn": turn_no, "player": player, "segments": segments, "tableau": tableau, "final": final}
+        msg: dict[str, Any] = {"type": "passage", "turn": turn_no, "player": player, "segments": segments, "tableau": tableau, "final": final,
+                               "illustration": self._illustration(tableau)}
         await self.push(msg)
         await self.push({"type": "room_state", "player_room": self.state["player_room"], "present": self.world.present(self.state)})
+
+    def _illustration(self, tableau: str | None) -> dict[str, Any] | None:
+        """The caption (and the image for the player's gender, when there is one) of a moment not shown yet."""
+        entry = self.tableaux.get(tableau or "")
+        if entry is None or tableau in self.shown_tableaux:
+            return None
+        self.shown_tableaux.add(tableau)
+        out = {"id": tableau, "caption": entry["caption"]}
+        src = (entry.get("images") or {}).get(self.gender)
+        if src:
+            out["src"] = src
+        return out
 
     # ===================================================================== bookkeeping
     async def _finish_turn(self, record: dict[str, Any]) -> None:
@@ -731,6 +749,7 @@ class Session:
             "tension_measured": self.tension_measured,
             "tension_trace": self.tension_trace,
             "target_now": self.dm.arc.target_at(self.state["story_min"]),
+            "arc": self.dm.arc.points,
             "used_reactions": sorted(self.used),
             "scorer": self.dm.scorer,
             "tau": self.dm.tau,

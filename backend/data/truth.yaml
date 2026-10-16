@@ -1,0 +1,40 @@
+# What really happened (story.md §5), shown after the ending only: GET /api/sessions/{id}/truth refuses
+# while a session is still playing. Schema: schemas/data/truth.json.
+
+title: "What really happened"
+
+timeline:
+  - when: "Months ago"
+    what: "Julian took a large sum from the studio's account to cover his own losses."
+  - when: "Two weeks ago"
+    what: "Leo noticed the money was missing and asked Julian about it. Julian promised to put it back."
+  - when: "Last week"
+    what: "Julian announced the move to Australia and booked the flight."
+  - when: "Yesterday"
+    what: "Leo told Nora. She told him to go and get what was his before Julian ran."
+  - when: "14:00"
+    what: "Mia called Leo behind Julian's back: he's leaving tomorrow, if you want to stop him, come now."
+  - when: "15:10"
+    what: "On his way over, Leo called you twice and left a voicemail. You didn't pick up."
+  - when: "15:30"
+    what: "Leo arrived and asked for his money. In the kitchen it turned into a fight; Leo had his hands on Julian's throat. Mia hit Leo with a whisky bottle, and he fell against the corner of the marble island."
+  - when: "15:40"
+    what: "Leo stopped breathing. Nobody called an ambulance."
+  - when: "16:00 to 18:30"
+    what: "They cleaned the kitchen and threw away the rug, moved the books out of the shipping crate, put Leo inside and screwed the lid down. His phone went into Julian's jacket on silent. His keys stayed in his pocket, so his car stayed in the street."
+  - when: "18:45"
+    what: "They decided cancelling the dinner would look worse. They laid a fourth place on purpose, to clear it in front of you."
+  - when: "19:00"
+    what: "You rang the bell."
+
+shares:
+  - who: "Julian"
+    what: "Took the money, fought Leo, hid him, and took the blame for Mia."
+  - who: "Mia"
+    what: "Called Leo over, struck the blow, and helped hide him."
+  - who: "Leo"
+    what: "Came for his money, not to talk."
+  - who: "Nora"
+    what: "Told him to go."
+  - who: "You"
+    what: "Didn't answer the phone."

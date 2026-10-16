@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fragile.dev/schemas/data/truth.json",
+  "title": "data/truth.yaml",
+  "description": "What really happened (story.md §5), served only once a session has ended.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["title", "timeline", "shares"],
+  "properties": {
+    "title": { "type": "string", "minLength": 1 },
+    "timeline": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["when", "what"],
+        "properties": { "when": { "type": "string", "minLength": 1 }, "what": { "type": "string", "minLength": 1 } }
+      }
+    },
+    "shares": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["who", "what"],
+        "properties": { "who": { "type": "string", "minLength": 1 }, "what": { "type": "string", "minLength": 1 } }
+      }
+    }
+  }
+}

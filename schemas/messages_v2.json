@@ -481,6 +481,33 @@
         "final": {
           "type": "boolean",
           "description": "true on the ending passage."
+        },
+        "illustration": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "id",
+                "caption"
+              ],
+              "description": "The illustrated moment this passage reaches (interaction-design.md §10.5): shown above the passage text. `src` is a path under /art/; without it the client shows the caption card.",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "caption": {
+                  "type": "string"
+                },
+                "src": {
+                  "type": "string"
+                }
+              }
+            }
+          ]
         }
       }
     },
