@@ -124,3 +124,63 @@ pre.json {
 .suggestion-btn:hover {
   background: rgba(42, 34, 28, 0.9);
 }
+
+/* ---- the play screen (interaction-design.md §10) ---- */
+.stage {
+  background: var(--night);
+  color: var(--paper);
+}
+
+.stage a,
+.stage .link {
+  color: var(--paper);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+.stage a:hover,
+.stage .link:hover {
+  text-decoration-thickness: 2px;
+}
+
+.stage :focus-visible {
+  outline: 2px solid var(--paper);
+  outline-offset: 2px;
+}
+
+.stage .muted {
+  color: var(--rain);
+}
+
+/* primary action: Paper outline, filled when pressed */
+.stage .action {
+  background: transparent;
+  color: var(--paper);
+  border: 1px solid var(--paper);
+}
+.stage .action:active {
+  background: var(--paper);
+  color: var(--night);
+}
+
+/* rejected input: a Wine rule on the left, the offending span underlined in Wine */
+.stage .rejected {
+  border-left: 2px solid var(--wine);
+}
+.stage .rejected mark {
+  background: none;
+  color: inherit;
+  text-decoration: underline var(--wine) 2px;
+}
+
+/* the one yellow thing in the interface */
+.stage .from-leo {
+  color: var(--leo);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stage * {
+    animation: none !important;
+    transition: none !important;
+  }
+}

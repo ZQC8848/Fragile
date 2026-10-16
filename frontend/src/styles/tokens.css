@@ -11,3 +11,16 @@
   --mono: ui-monospace, "JetBrains Mono", "Cascadia Code", Consolas, monospace;
   --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
+
+/* The play screen: "rain-washed slate" (interaction-design.md §10.6). Dark only for now.
+   No standing accent colour: hierarchy is Paper brightness and underlines. The only saturated colour is
+   Leo's yellow, which belongs to the illustrations and, in the UI, only to Leo's missed calls and
+   voicemail in the phone drawer. */
+:root {
+  --night: #1b222c;  /* page background: the rain-washed night outside the window */
+  --slate: #252e3a;  /* drawers, input, map panel: the bare walls, one step up */
+  --rain: #7d8896;   /* secondary text, rules, idle controls (5:1 on night) */
+  --paper: #e4dfd3;  /* body text and NPC lines: the tablecloth (13:1 on night) */
+  --wine: #9e5a5a;   /* rejected input only: Julian's glass, dimmed */
+  --leo: #e3b23c;    /* reserved: Leo's missed calls and voicemail, nothing else */
+}
