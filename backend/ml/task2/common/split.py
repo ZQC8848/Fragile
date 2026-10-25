@@ -68,10 +68,34 @@ class NearDupIndex:
         return [i for i, c in counts.items() if c >= need * 0.5 and jaccard(sh, self.items[i]) >= self.threshold]
 
 
+def assign_sessions(examples: list[dict], ratios: tuple[float, float] = (0.8, 0.1), seed: str = "task2") -> dict[str, str]:
+    """Sessions ordered by a seeded hash, then cut so train/val/test hold ~80/10/10% of the examples.
+
+    With only tens of games, assigning each session independently at random gives very uneven splits;
+    cutting the hash-ordered list by example count keeps the proportions while staying deterministic.
+    Rewrite examples are not counted, since they can only go to train.
+    """
+    counts: dict[str, int] = defaultdict(int)
+    for ex in examples:
+        if ex.get("source") != "rewrite":
+            counts[ex["session"]] += 1
+    order = sorted(counts, key=lambda s: hashlib.sha1(f"{seed}:{s}".encode()).hexdigest())
+    total = sum(counts.values())
+    out, acc = {}, 0
+    for s in order:
+        frac = acc / total if total else 0.0
+        out[s] = "train" if frac < ratios[0] else "val" if frac < ratios[0] + ratios[1] else "test"
+        acc += counts[s]
+    for ex in examples:
+        out.setdefault(ex["session"], "train")
+    return out
+
+
 def split_examples(examples: list[dict], threshold: float = 0.9, cap: int = 3, rewrite_frac: float = 0.15) -> tuple[dict[str, list[dict]], dict]:
     buckets: dict[str, list[dict]] = {"train": [], "val": [], "test": []}
+    assignment = assign_sessions(examples)
     for ex in examples:
-        split = session_split(ex["session"])
+        split = assignment[ex["session"]]
         if ex.get("source") == "rewrite" and split != "train":
             continue
         buckets[split].append(ex)

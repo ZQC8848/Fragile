@@ -37,3 +37,13 @@ def test_rewrites_only_in_train():
     assert all(r["source"] != "rewrite" for r in buckets["val"] + buckets["test"])
     n_rw = sum(r["source"] == "rewrite" for r in buckets["train"])
     assert n_rw <= int(0.15 * len(buckets["train"])) + 1
+
+
+def test_example_count_cut_gives_close_to_80_10_10_with_few_sessions():
+    import random
+    rng = random.Random(1)
+    exs = [_ex(f"g{i}", f"game {i} turn {t} says something new about item {rng.random()}") for i in range(50) for t in range(rng.randint(5, 45))]
+    buckets, _ = split_examples(exs)
+    n = sum(len(v) for v in buckets.values())
+    assert 0.75 < len(buckets["train"]) / n < 0.85
+    assert 0.05 < len(buckets["test"]) / n < 0.16
