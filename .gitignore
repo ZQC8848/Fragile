@@ -14,3 +14,6 @@ dist/
 .ruff_cache/
 .pytest_cache/
 .idea/
+
+# task 2: data lives outside the repo ($TASK2_DATA, default ~/fragile_task2_data)
+backend/ml/task2/**/__pycache__/

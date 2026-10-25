@@ -1,0 +1,199 @@
+{
+ "source": "data/interactions.yaml",
+ "rooms": [
+  "hall",
+  "living",
+  "kitchen",
+  "balcony",
+  "bathroom"
+ ],
+ "verb_targets": {
+  "answer_call": [
+   "nora"
+  ],
+  "call": [
+   "leo",
+   "nora",
+   "police"
+  ],
+  "decline_call": [
+   "nora"
+  ],
+  "drink": [
+   "wine"
+  ],
+  "eat": [
+   "takeaway"
+  ],
+  "examine": [
+   "boxes",
+   "car",
+   "crate",
+   "julian_jacket",
+   "kitchen_floor",
+   "kitchen_island",
+   "movers_sign",
+   "photo",
+   "takeaway",
+   "tickets",
+   "tools_box",
+   "trash_bag"
+  ],
+  "give_phone": [
+   "phone"
+  ],
+  "go_to": [
+   "balcony",
+   "bathroom",
+   "hall",
+   "kitchen",
+   "living"
+  ],
+  "grab": [
+   "julian",
+   "mia",
+   "nora"
+  ],
+  "hit": [
+   "julian",
+   "mia"
+  ],
+  "hug": [
+   "julian",
+   "mia",
+   "nora"
+  ],
+  "knock": [
+   "crate"
+  ],
+  "leave": [
+   "front_door"
+  ],
+  "listen_voicemail": [
+   "phone"
+  ],
+  "look_out": [
+   "car",
+   "window"
+  ],
+  "open": [
+   "bedroom_door",
+   "boxes",
+   "crate",
+   "trash_bag"
+  ],
+  "place": [
+   "crate"
+  ],
+  "pour": [
+   "wine"
+  ],
+  "push": [
+   "julian",
+   "mia"
+  ],
+  "search": [
+   "julian_jacket"
+  ],
+  "sit": [
+   "crate"
+  ],
+  "smell": [
+   "kitchen_floor"
+  ],
+  "take": [
+   "drill",
+   "photo",
+   "screwdriver"
+  ],
+  "take_aside": [
+   "julian",
+   "mia"
+  ],
+  "text": [
+   "nora",
+   "police"
+  ],
+  "toast": [
+   "wine"
+  ],
+  "touch": [
+   "crate",
+   "julian",
+   "kitchen_island",
+   "mia",
+   "nora"
+  ]
+ },
+ "target_rooms": {
+  "balcony": null,
+  "bathroom": null,
+  "bedroom_door": [
+   "hall"
+  ],
+  "boxes": [
+   "living",
+   "hall"
+  ],
+  "car": [
+   "balcony"
+  ],
+  "crate": [
+   "living"
+  ],
+  "drill": [
+   "hall"
+  ],
+  "front_door": null,
+  "hall": null,
+  "julian": null,
+  "julian_jacket": [
+   "hall",
+   "living",
+   "kitchen",
+   "balcony"
+  ],
+  "kitchen": null,
+  "kitchen_floor": [
+   "kitchen"
+  ],
+  "kitchen_island": [
+   "kitchen"
+  ],
+  "leo": null,
+  "living": null,
+  "mia": null,
+  "movers_sign": [
+   "hall"
+  ],
+  "nora": null,
+  "phone": null,
+  "photo": [
+   "living"
+  ],
+  "police": null,
+  "screwdriver": [
+   "hall"
+  ],
+  "takeaway": [
+   "living"
+  ],
+  "tickets": [
+   "hall"
+  ],
+  "tools_box": [
+   "hall"
+  ],
+  "trash_bag": [
+   "kitchen"
+  ],
+  "window": [
+   "living"
+  ],
+  "wine": [
+   "living",
+   "kitchen",
+   "balcony"
+  ]
+ }
+}
