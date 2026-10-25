@@ -252,7 +252,8 @@ def main() -> None:
     os.environ["MODEL_ENCODER"] = "llm"
     os.environ["LLM_CACHE"] = "0"
     os.environ.setdefault("LLM_TIMEOUT_REVIEW", "30")
-    os.environ.setdefault("LLM_TIMEOUT_SELFPLAY", "90")
+    os.environ.setdefault("LLM_TIMEOUT_SELFPLAY", "60")
+    os.environ.setdefault("LLM_FALLBACK_SELFPLAY", "review")  # DeepSeek writes the turn when Kimi times out
     asyncio.run(Generator(args).run())
 
 

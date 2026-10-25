@@ -10,9 +10,11 @@ from __future__ import annotations
 
 import json
 import random
+import time
 from typing import Any
 
 from engine.llm import get_client
+from engine.llm.client import call_json_chain, fallback_clients
 from engine.models.prompts import system_prompt
 from engine.paths import SCHEMAS_DIR
 
@@ -69,9 +71,13 @@ def build_request(s, persona: str, name: str, mode: str, violate: str | None, la
 
 
 class LLMPlayer:
-    def __init__(self, temperature: float = 0.9):
-        self.client = get_client("selfplay", temperature)
+    """Kimi first; when it times out or errors, the models in LLM_FALLBACK_SELFPLAY (default: DeepSeek, borrowed
+    from the review role's endpoint) write the turn instead. The model actually used is in the returned meta."""
+
+    def __init__(self, temperature: float = 0.9, turn_budget_s: float = 150.0):
+        self.clients = [get_client("selfplay", temperature), *fallback_clients("selfplay", temperature)]
         self.prompt = system_prompt("selfplay")
+        self.turn_budget_s = turn_budget_s
 
     async def turn(self, req: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any], int, int]:
         """(output, meta, chars_in, chars_out)."""
@@ -80,7 +86,8 @@ class LLMPlayer:
             "Write the next turn. Return only the JSON object.\n\n"
             f"```json\n{json.dumps(req, ensure_ascii=False, indent=1)}\n```"
         )
-        res = await self.client.call_json(self.prompt.text, user, schema=SELFPLAY_SCHEMA, prompt_version=self.prompt.version)
+        res = await call_json_chain(self.clients, self.prompt.text, user, schema=SELFPLAY_SCHEMA, prompt_version=self.prompt.version,
+                                    deadline=time.monotonic() + self.turn_budget_s)
         return res.data, res.meta(), len(self.prompt.text) + len(user), len(json.dumps(res.data, ensure_ascii=False))
 
 
