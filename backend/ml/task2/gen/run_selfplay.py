@@ -77,7 +77,7 @@ class Generator:
 
         self.Session = Session
         self.PERSONAS, self.VIOLATIONS, self.MockPlayer = PERSONAS, VIOLATIONS, MockPlayer
-        self.llm_player = None if args.mock_player else LLMPlayer()
+        self.players = {} if args.mock_player else {"kimi": LLMPlayer(primary="kimi"), "deepseek": LLMPlayer(primary="deepseek")}
         self.review_prompt_chars: int | None = None
         self._system_prompt = system_prompt
 
@@ -139,7 +139,8 @@ class Generator:
         persona = self.PERSONAS[i % len(self.PERSONAS)]
         lang = rng.choices(list(LANG_WEIGHTS), weights=list(LANG_WEIGHTS.values()))[0]
         gender = rng.choice(["female", "male"])
-        player = self.MockPlayer(seed) if a.mock_player else self.llm_player
+        player_model = "kimi" if (a.player_mix == "kimi" or (a.player_mix == "split" and i % 2 == 0)) else "deepseek"
+        player = self.MockPlayer(seed) if a.mock_player else self.players[player_model]
         s = self.Session(sid, None, seed=seed, log_root=self.out / "logs", save_generated=False)
         await s.start("Sam", gender)
         rows: list[dict[str, Any]] = []
@@ -171,7 +172,7 @@ class Generator:
                 stats["player_chars_out"] += cout
                 base = {
                     "schema_version": SCHEMA_VERSION, "run": a.run, "session": sid, "game_seed": seed, "turn": turn,
-                    "persona": persona, "lang": lang, "mode": mode, "violate_requested": violate,
+                    "persona": persona, "lang": lang, "mode": mode, "violate_requested": violate, "player_model": player_model,
                     "selfplay": {"output": out, "deliberate_violation": out.get("deliberate_violation"), "meta": pmeta},
                     "scene_notes": req["scene_notes"], "phone": req["phone"], "git_sha": self.git_sha,
                 }
@@ -209,7 +210,7 @@ class Generator:
             status, error = "failed", f"{type(e).__name__}: {e}"
             traceback.print_exc()
         summary = {
-            "session": sid, "seed": seed, "persona": persona, "lang": lang, "gender": gender, "status": status, "error": error,
+            "session": sid, "seed": seed, "persona": persona, "lang": lang, "gender": gender, "player_model": player_model, "status": status, "error": error,
             "n_turns": len(rows), "ending": s.state.get("ending"), "latency_s": round(time.time() - t0, 1), **stats,
         }
         async with self.lock:
@@ -243,6 +244,8 @@ def main() -> None:
     ap.add_argument("--review-slots", type=int, default=6)
     ap.add_argument("--player-slots", type=int, default=4)
     ap.add_argument("--max-calls", type=int, default=0, help="stop starting new turns after this many API calls (0 = no limit)")
+    ap.add_argument("--player-mix", choices=["split", "kimi", "deepseek"], default="split",
+                    help="which model writes the player's turns: split = even games Kimi, odd games DeepSeek (each falls back to the other)")
     ap.add_argument("--mock-player", action="store_true", help="offline smoke test: mock player and mock teacher, no API calls")
     args = ap.parse_args()
 
