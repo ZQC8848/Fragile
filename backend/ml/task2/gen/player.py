@@ -74,7 +74,7 @@ class LLMPlayer:
     """Kimi first; when it times out or errors, the models in LLM_FALLBACK_SELFPLAY (default: DeepSeek, borrowed
     from the review role's endpoint) write the turn instead. The model actually used is in the returned meta."""
 
-    def __init__(self, temperature: float = 0.9, turn_budget_s: float = 150.0):
+    def __init__(self, temperature: float = 1.0, turn_budget_s: float = 150.0):  # Kimi k2.6 accepts only temperature 1
         self.clients = [get_client("selfplay", temperature), *fallback_clients("selfplay", temperature)]
         self.prompt = system_prompt("selfplay")
         self.turn_budget_s = turn_budget_s
