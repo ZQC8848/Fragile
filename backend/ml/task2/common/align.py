@@ -114,8 +114,8 @@ def fuzzy_find(original: str, needle: str, threshold: float = 0.75) -> tuple[int
     if k < 0:
         best, best_k, best_len = 0.0, -1, 0
         L = len(needle_n)
-        for length in {max(1, int(L * f)) for f in (0.8, 0.9, 1.0, 1.1, 1.2)}:
-            for i in range(0, max(1, len(n_orig) - length + 1)):
+        for length in {min(len(n_orig), max(1, int(L * f))) for f in (0.8, 0.9, 1.0, 1.1, 1.2)}:
+            for i in range(0, len(n_orig) - length + 1):
                 r = difflib.SequenceMatcher(None, n_orig[i:i + length], needle_n, autojunk=False).ratio()
                 if r > best:
                     best, best_k, best_len = r, i, length

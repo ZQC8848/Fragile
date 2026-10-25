@@ -81,3 +81,9 @@ def test_normalize_map_points_back_to_original():
     norm, idx = normalize_with_map(text)
     assert norm == 'a "b"'
     assert [text[i] for i in idx] == ["a", "　", "“", "b", "”"]
+
+
+def test_fuzzy_find_needle_longer_than_text():
+    assert fuzzy_find("Hi.", "Hi there, how are you doing tonight?") is None
+    s, e = fuzzy_find("Hi Mia", "Hi Mia!")
+    assert (s, e) == (0, 6)
