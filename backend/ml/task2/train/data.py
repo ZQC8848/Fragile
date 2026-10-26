@@ -80,5 +80,38 @@ def char_tags(text: str, segments: list[dict[str, Any]]) -> list[str]:
     return tags
 
 
+#: characters that never carry a channel: whitespace and quotation marks (the teacher drops quotes from speech)
+EDGE_CHARS = set(" \t\r\n\"'\u201c\u201d\u2018\u2019\u300c\u300d\u300e\u300f\u3000")
+
+
+def token_tags(offsets: list[tuple[int, int]], ctags: list[str], text: str) -> list[str]:
+    """One tag per subword token: the majority tag of its characters, ignoring whitespace and quotes.
+
+    SentencePiece tokens often include the leading space in their offsets (" don"), so a plain majority vote
+    over a one-letter word and its space would be a tie and could drop the letter's tag.
+    """
+    out = []
+    for s, e in offsets:
+        votes = [ctags[i] for i in range(s, min(e, len(ctags))) if text[i] not in EDGE_CHARS]
+        if not votes:
+            out.append("O")
+            continue
+        counts: dict[str, int] = {}
+        for v in votes:
+            counts[v] = counts.get(v, 0) + 1
+        out.append(max(counts, key=lambda k: (counts[k], k != "O")))
+    return out
+
+
+def chars_from_tokens(n: int, offsets: list[tuple[int, int]], ttags: list[str], text: str) -> list[str]:
+    """Back from token tags to character tags; whitespace and quotes stay O."""
+    ct = ["O"] * n
+    for (s, e), t in zip(offsets, ttags):
+        for i in range(s, min(e, n)):
+            if text[i] not in EDGE_CHARS:
+                ct[i] = t
+    return ct
+
+
 def model_input(ex: dict[str, Any], with_context: bool = True) -> str:
     return f"{ex['text']} || {ex['context_text']}" if with_context else ex["text"]

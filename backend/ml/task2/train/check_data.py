@@ -10,36 +10,14 @@ of its characters, then turn the token tags back into character spans and compar
 from __future__ import annotations
 
 import argparse
-from collections import Counter
 
 from transformers import AutoTokenizer
 
-from .data import char_tags, load_jsonl
-
-EDGE = set(" \t\n\"'“”‘’「」")
-
-
-def token_tags(offsets, ctags):
-    out = []
-    for s, e in offsets:
-        if e <= s:
-            out.append("O")
-            continue
-        c = Counter(ctags[s:e]).most_common(1)[0][0]
-        out.append(c)
-    return out
-
-
-def back_to_chars(n, offsets, ttags):
-    ct = ["O"] * n
-    for (s, e), t in zip(offsets, ttags):
-        for i in range(s, e):
-            ct[i] = t
-    return ct
+from .data import EDGE_CHARS, char_tags, chars_from_tokens, load_jsonl, token_tags
 
 
 def canon(text, tags):
-    return [t if not text[i] in EDGE else "O" for i, t in enumerate(tags)]
+    return ["O" if text[i] in EDGE_CHARS else t for i, t in enumerate(tags)]
 
 
 def main() -> None:
@@ -56,7 +34,8 @@ def main() -> None:
         ct = char_tags(text, e["segments"])
         enc = tok(text, return_offsets_mapping=True, add_special_tokens=False)
         lens.append(len(enc["input_ids"]))
-        rt = back_to_chars(len(text), enc["offset_mapping"], token_tags(enc["offset_mapping"], ct))
+        offs = enc["offset_mapping"]
+        rt = chars_from_tokens(len(text), offs, token_tags(offs, ct, text), text)
         if canon(text, rt) == canon(text, ct):
             ok += 1
         else:
