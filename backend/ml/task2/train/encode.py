@@ -54,7 +54,8 @@ def build_item(tok, ex: dict[str, Any], max_length: int, context_dropout: float 
     rng = rng or random
     ctx = ex["context_text"] if use_context and rng.random() >= context_dropout else ""
     enc = encode_text(tok, ex["text"], ctx, max_length)
-    item: dict[str, Any] = {"input_ids": enc.input_ids, "attention_mask": enc.attention_mask, "enc": enc}
+    item: dict[str, Any] = {"input_ids": enc.input_ids, "attention_mask": enc.attention_mask, "enc": enc,
+                            "player_mask": enc.player_mask}
     # segmentation labels on player tokens
     if ex["mask"]["seg"]:
         ct = char_tags(ex["text"], ex["segments"])
@@ -99,12 +100,14 @@ def collate(items: list[dict[str, Any]], pad_id: int) -> dict[str, torch.Tensor]
     ids = torch.full((B, T), pad_id, dtype=torch.long)
     att = torch.zeros((B, T), dtype=torch.long)
     seg = torch.full((B, T), -100, dtype=torch.long)
+    pm = torch.zeros((B, T), dtype=torch.bool)
     pools, ub, ua, ut, uv, utg, ui = [], [], [], [], [], [], []
     for b, it in enumerate(items):
         n = len(it["input_ids"])
         ids[b, :n] = torch.tensor(it["input_ids"])
         att[b, :n] = torch.tensor(it["attention_mask"])
         seg[b, :n] = torch.tensor(it["seg_labels"])
+        pm[b, :n] = torch.tensor(it["player_mask"])
         for u in it["units"]:
             p = torch.zeros(T)
             p[:n] = torch.tensor(u["pool"])
@@ -112,7 +115,7 @@ def collate(items: list[dict[str, Any]], pad_id: int) -> dict[str, torch.Tensor]
             ub.append(b)
             ua.append(u["act"]); ut.append(u["topics"]); uv.append(u["verb"]); utg.append(u["target"]); ui.append(u["implausible"])
     return {
-        "input_ids": ids, "attention_mask": att, "seg_labels": seg,
+        "input_ids": ids, "attention_mask": att, "seg_labels": seg, "player_mask": pm,
         "unit_pool": torch.stack(pools) if pools else torch.zeros((0, T)),
         "unit_batch": torch.tensor(ub, dtype=torch.long),
         "unit_act": torch.tensor(ua, dtype=torch.long), "unit_topics": torch.tensor(ut, dtype=torch.float).reshape(-1, len(TOPICS)),

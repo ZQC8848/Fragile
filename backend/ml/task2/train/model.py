@@ -4,7 +4,7 @@
   unit level    mean-pooled over each unit's character span:
                   act (27), topics (6, multi-label), verb (27 + none),
                   target (+ none), implausible                                 CE / sigmoid BCE
-  turn level    on the first token ([CLS]):
+  turn level    on the first token ([CLS]), the mean of the player-text tokens, or both concatenated (--turn-pool):
                   addressee (5 + none), suspicion (0-3), claims (10, multi-label),
                   nora answer (3), side answer (julian / mia / none)          CE / BCE / MSE
 
@@ -44,24 +44,30 @@ class HeadSizes:
     side: int = len(SIDE_LABELS)
 
 
-def _mlp(d: int, out: int, dropout: float) -> nn.Module:
-    return nn.Sequential(nn.Dropout(dropout), nn.Linear(d, d), nn.GELU(), nn.Dropout(dropout), nn.Linear(d, out))
+TURN_POOLS = ("cls", "mean", "both")
+
+
+def _mlp(d: int, out: int, dropout: float, d_in: int | None = None) -> nn.Module:
+    return nn.Sequential(nn.Dropout(dropout), nn.Linear(d_in or d, d), nn.GELU(), nn.Dropout(dropout), nn.Linear(d, out))
 
 
 class MultiHeadEncoder(nn.Module):
-    def __init__(self, encoder: nn.Module, heads: tuple[str, ...] = HEADS, dropout: float = 0.1, uncertainty: bool = False):
+    def __init__(self, encoder: nn.Module, heads: tuple[str, ...] = HEADS, dropout: float = 0.1, uncertainty: bool = False,
+                 turn_pool: str = "cls"):
         super().__init__()
         self.encoder = encoder
         d = encoder.config.hidden_size
+        dt = 2 * d if turn_pool == "both" else d  # input size of the turn-level heads
+        self.turn_pool = turn_pool
         s = HeadSizes()
         self.heads = set(heads)
         self.seg = nn.Sequential(nn.Dropout(dropout), nn.Linear(d, s.seg))
         self.act, self.topics = _mlp(d, s.act, dropout), _mlp(d, s.topics, dropout)
         self.verb, self.target = _mlp(d, s.verb, dropout), _mlp(d, s.target, dropout)
         self.implausible = _mlp(d, 1, dropout)
-        self.addressee, self.claims = _mlp(d, s.addressee, dropout), _mlp(d, s.claims, dropout)
-        self.nora, self.side = _mlp(d, s.nora, dropout), _mlp(d, s.side, dropout)
-        self.suspicion = _mlp(d, 1, dropout)
+        self.addressee, self.claims = _mlp(d, s.addressee, dropout, dt), _mlp(d, s.claims, dropout, dt)
+        self.nora, self.side = _mlp(d, s.nora, dropout, dt), _mlp(d, s.side, dropout, dt)
+        self.suspicion = _mlp(d, 1, dropout, dt)
         self.uncertainty = uncertainty
         if uncertainty:  # log sigma^2 per head (Kendall, Gal & Cipolla 2018)
             self.log_vars = nn.ParameterDict({h: nn.Parameter(torch.zeros(())) for h in HEADS})
@@ -70,17 +76,22 @@ class MultiHeadEncoder(nn.Module):
     def from_pretrained(cls, name: str, **kw) -> "MultiHeadEncoder":
         return cls(AutoModel.from_pretrained(name), **kw)
 
-    def forward(self, input_ids, attention_mask, unit_pool, unit_batch, token_type_ids=None):
-        """unit_pool: (n_units, seq) weights summing to 1 over each unit's tokens; unit_batch: (n_units,) example index."""
+    def forward(self, input_ids, attention_mask, unit_pool, unit_batch, token_type_ids=None, player_mask=None):
+        """unit_pool: (n_units, seq) weights summing to 1 over each unit's tokens; unit_batch: (n_units,) example index;
+        player_mask: (B, seq) True on the player-text tokens, needed unless turn_pool is "cls"."""
         kw = {"input_ids": input_ids, "attention_mask": attention_mask}
         if token_type_ids is not None:
             kw["token_type_ids"] = token_type_ids
         h = self.encoder(**kw).last_hidden_state  # (B, T, d)
-        cls_vec = h[:, 0]
+        turn = h[:, 0]
+        if self.turn_pool != "cls":
+            w = player_mask.to(h.dtype)
+            mean = torch.einsum("bt,btd->bd", w, h) / w.sum(1, keepdim=True).clamp(min=1)
+            turn = mean if self.turn_pool == "mean" else torch.cat([turn, mean], -1)
         out = {
             "seg": self.seg(h),
-            "addressee": self.addressee(cls_vec), "claims": self.claims(cls_vec), "nora": self.nora(cls_vec),
-            "side": self.side(cls_vec), "suspicion": self.suspicion(cls_vec).squeeze(-1),
+            "addressee": self.addressee(turn), "claims": self.claims(turn), "nora": self.nora(turn),
+            "side": self.side(turn), "suspicion": self.suspicion(turn).squeeze(-1),
         }
         if unit_pool.shape[0]:
             u = torch.einsum("nt,ntd->nd", unit_pool.to(h.dtype), h[unit_batch])

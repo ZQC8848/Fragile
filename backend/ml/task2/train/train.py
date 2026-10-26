@@ -4,7 +4,8 @@
     python -m task2.train.train   --data $DATA --out $RUNS --name rung4_mdeberta_s0 --seed 0          (CARC)
 
 Ablation switches: --heads (single-task runs), --uncertainty (learned loss weights), --train-frac (scaling
-curve), --no-context, --freeze-embeddings (saves memory), --smoke (tiny random model, CPU, code check only).
+curve), --no-context, --turn-pool (what the turn-level heads read), --freeze-embeddings (saves memory),
+--smoke (tiny random model, CPU, code check only).
 
 Writes <out>/<name>/metrics.json in the same format as the baselines (scored with predicted segmentation),
 <out>/<name>_goldspans/metrics.json (unit heads scored on the teacher's unit spans, to separate
@@ -21,6 +22,7 @@ import time
 from pathlib import Path
 
 import torch
+import transformers
 from transformers import AutoConfig, AutoModel, AutoTokenizer, get_linear_schedule_with_warmup
 
 from ..common.labels import ACTS, CLAIMS, NORA_ANSWERS, TOPICS
@@ -28,7 +30,7 @@ from .baselines.common import evaluate, load_splits
 from .data import targets
 from .encode import build_item, char_tags_from_logits, collate, spans_from_char_tags, spans_from_segments
 from .metrics import score_system
-from .model import ADDRESSEE_LABELS, HEADS, NONE, SIDE_LABELS, TARGET_LABELS, VERB_LABELS, MultiHeadEncoder
+from .model import ADDRESSEE_LABELS, HEADS, NONE, SIDE_LABELS, TARGET_LABELS, TURN_POOLS, VERB_LABELS, MultiHeadEncoder
 
 
 def set_seed(seed: int) -> None:
@@ -44,8 +46,11 @@ def build_model(args, tok) -> MultiHeadEncoder:
                     "pooler_hidden_size": 64, "embedding_size": 64})
         enc = AutoModel.from_config(cfg)
     else:
-        enc = AutoModel.from_pretrained(args.model)
-    model = MultiHeadEncoder(enc, heads=tuple(args.heads), dropout=args.dropout, uncertainty=args.uncertainty)
+        # transformers 5.x loads mDeBERTa in float16 by default; AdamW on float16 weights goes NaN in the first epoch.
+        # Weights stay float32 here and bf16 comes only from autocast.
+        enc = AutoModel.from_pretrained(args.model).float()
+    model = MultiHeadEncoder(enc, heads=tuple(args.heads), dropout=args.dropout, uncertainty=args.uncertainty,
+                             turn_pool=args.turn_pool)
     if args.freeze_embeddings:
         for p in model.encoder.embeddings.parameters():
             p.requires_grad = False
@@ -68,7 +73,8 @@ def predict(model, tok, exs, args, device, gold_spans: bool = False):
         items = [build_item(tok, ex, args.max_length, use_context=not args.no_context, spans=[]) for ex in chunk]
         batch = to_device(collate(items, tok.pad_token_id), device)
         with torch.autocast(device.type, dtype=torch.bfloat16, enabled=use_bf16):
-            out = model(batch["input_ids"], batch["attention_mask"], batch["unit_pool"], batch["unit_batch"])
+            out = model(batch["input_ids"], batch["attention_mask"], batch["unit_pool"], batch["unit_batch"],
+                        player_mask=batch["player_mask"])
         ctags_all, span_lists = [], []
         for b, ex in enumerate(chunk):
             ct = char_tags_from_logits(items[b], out["seg"][b].float().cpu(), ex["text"])
@@ -84,7 +90,8 @@ def predict(model, tok, exs, args, device, gold_spans: bool = False):
         items2 = [build_item(tok, ex, args.max_length, use_context=not args.no_context, spans=sp) for ex, sp in zip(chunk, span_lists)]
         batch2 = to_device(collate(items2, tok.pad_token_id), device)
         with torch.autocast(device.type, dtype=torch.bfloat16, enabled=use_bf16):
-            out2 = model(batch2["input_ids"], batch2["attention_mask"], batch2["unit_pool"], batch2["unit_batch"])
+            out2 = model(batch2["input_ids"], batch2["attention_mask"], batch2["unit_pool"], batch2["unit_batch"],
+                         player_mask=batch2["player_mask"])
         ub = batch2["unit_batch"].tolist()
         acts = out2["act"].float().argmax(-1).tolist()
         topics = (out2["topics"].float().sigmoid() > 0.5).tolist()
@@ -117,13 +124,16 @@ def predict(model, tok, exs, args, device, gold_spans: bool = False):
     return preds, segs
 
 
-def val_score(model, tok, val, args, device) -> float:
+def val_score(model, tok, val, args, device) -> tuple[float, dict[str, float]]:
+    """Model-selection score (mean of acts µF1, topics µF1, addressee accuracy, seg char-F1) and per-head val metrics."""
     preds, segs = predict(model, tok, val, args, device)
     m = score_system(val, preds, segs, ci=False)
     parts = [m["act_set"]["micro_f1"], m["topics"]["micro_f1"], m["addressee"]["accuracy"]]
     if "seg" in m:
         parts.append(m["seg"]["char_f1"])
-    return sum(parts) / len(parts)
+    detail = {"acts": m["act_set"]["micro_f1"], "topics": m["topics"]["micro_f1"], "claims": m["claims"]["micro_f1"],
+              "addressee": m["addressee"]["accuracy"], "nora": m["nora"]["accuracy"], "seg": m.get("seg", {}).get("char_f1")}
+    return sum(parts) / len(parts), {k: round(v, 4) for k, v in detail.items() if v is not None}
 
 
 def main() -> None:
@@ -148,6 +158,8 @@ def main() -> None:
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--uncertainty", action="store_true")
     ap.add_argument("--no-context", action="store_true")
+    ap.add_argument("--turn-pool", default="cls", choices=TURN_POOLS,
+                    help="input of the turn-level heads: [CLS], mean of the player-text tokens, or both concatenated")
     ap.add_argument("--freeze-embeddings", action="store_true")
     ap.add_argument("--smoke", action="store_true", help="tiny random encoder, 2 epochs, CPU: checks the code path only")
     ap.add_argument("--save-model", action="store_true", help="keep model.pt (about 1.1 GB for mDeBERTa-base)")
@@ -181,13 +193,19 @@ def main() -> None:
         order = list(range(len(train)))
         rng.shuffle(order)
         tot, n = 0.0, 0
+        head_tot: dict[str, float] = {}
+        head_n: dict[str, int] = {}
         for i in range(0, len(order), args.batch):
             exs = [train[j] for j in order[i:i + args.batch]]
             items = [build_item(tok, ex, args.max_length, args.context_dropout, not args.no_context, rng=rng) for ex in exs]
             batch = to_device(collate(items, tok.pad_token_id), device)
             with torch.autocast(device.type, dtype=torch.bfloat16, enabled=use_bf16):
-                out = model(batch["input_ids"], batch["attention_mask"], batch["unit_pool"], batch["unit_batch"])
+                out = model(batch["input_ids"], batch["attention_mask"], batch["unit_pool"], batch["unit_batch"],
+                            player_mask=batch["player_mask"])
             loss, parts = model.loss(out, batch)
+            if not torch.isfinite(loss):
+                raise RuntimeError(f"non-finite loss at epoch {epoch + 1}, step {n + 1}: {parts}. "
+                                   f"Encoder dtype {next(model.encoder.parameters()).dtype}, transformers {transformers.__version__}.")
             opt.zero_grad(set_to_none=True)
             loss.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
@@ -195,9 +213,15 @@ def main() -> None:
             sched.step()
             tot += float(loss.detach())
             n += 1
-        score = val_score(model, tok, splits["val"], args, device) if splits.get("val") else -tot
+            for h, v in parts.items():
+                head_tot[h] = head_tot.get(h, 0.0) + v
+                head_n[h] = head_n.get(h, 0) + 1
+        score, val_heads = val_score(model, tok, splits["val"], args, device) if splits.get("val") else (-tot, {})
         rec = {"epoch": epoch + 1, "train_loss": tot / max(1, n), "val_score": score, "elapsed_s": round(time.time() - t0, 1),
-               "max_mem_gb": round(torch.cuda.max_memory_allocated() / 2**30, 2) if device.type == "cuda" else None}
+               "max_mem_gb": round(torch.cuda.max_memory_allocated() / 2**30, 2) if device.type == "cuda" else None,
+               "head_loss": {h: round(head_tot[h] / head_n[h], 4) for h in head_tot}, "val": val_heads}
+        if model.uncertainty:
+            rec["log_vars"] = {h: round(float(v), 3) for h, v in model.log_vars.items()}
         log.write(json.dumps(rec) + "\n")
         log.flush()
         print(json.dumps(rec), flush=True)
@@ -215,6 +239,7 @@ def main() -> None:
         torch.save(model.state_dict(), out_dir / "model.pt")
     extra = {"rung": 4, "method": f"{'tiny random encoder (smoke)' if args.smoke else args.model} multi-head fine-tuned",
              "n_train": len(train), "args": {k: v for k, v in vars(args).items()}, "best_val_score": best,
+             "versions": {"torch": torch.__version__, "transformers": transformers.__version__},
              "train_time_s": round(time.time() - t0, 1)}
     evaluate(args.name, splits, lambda exs: predict(model, tok, exs, args, device), args.out, extra)
     evaluate(f"{args.name}_goldspans", splits, lambda exs: predict(model, tok, exs, args, device, gold_spans=True), args.out,
