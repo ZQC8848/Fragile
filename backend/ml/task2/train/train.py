@@ -4,7 +4,8 @@
     python -m task2.train.train   --data $DATA --out $RUNS --name rung4_mdeberta_s0 --seed 0          (CARC)
 
 Ablation switches: --heads (single-task runs), --uncertainty (learned loss weights), --train-frac (scaling
-curve), --no-context, --turn-pool (what the turn-level heads read), --freeze-embeddings (saves memory),
+curve), --no-context, --turn-pool (what the turn-level heads read), --loss-weight (scale one head's loss),
+--freeze-embeddings (saves memory),
 --smoke (tiny random model, CPU, code check only).
 
 Writes <out>/<name>/metrics.json in the same format as the baselines (scored with predicted segmentation),
@@ -50,7 +51,7 @@ def build_model(args, tok) -> MultiHeadEncoder:
         # Weights stay float32 here and bf16 comes only from autocast.
         enc = AutoModel.from_pretrained(args.model).float()
     model = MultiHeadEncoder(enc, heads=tuple(args.heads), dropout=args.dropout, uncertainty=args.uncertainty,
-                             turn_pool=args.turn_pool)
+                             turn_pool=args.turn_pool, loss_weights=args.loss_weights)
     if args.freeze_embeddings:
         for p in model.encoder.embeddings.parameters():
             p.requires_grad = False
@@ -124,15 +125,32 @@ def predict(model, tok, exs, args, device, gold_spans: bool = False):
     return preds, segs
 
 
+SELECTION_PRIMARY = ("act", "topics", "addressee", "seg")
+SELECTION_FALLBACK = ("claims", "nora", "suspicion")
+
+
+def selection_metrics(m: dict, heads) -> list[float]:
+    """Val metrics behind model selection: the primary heads that are trained (all four for the full model, as in
+    batches 2-3). A run training none of them uses its own turn-level heads instead. Untrained heads never count:
+    their random outputs would decide early stopping."""
+    value = {"act": m["act_set"]["micro_f1"], "topics": m["topics"]["micro_f1"], "addressee": m["addressee"]["accuracy"],
+             "seg": m["seg"]["char_f1"] if "seg" in m else None, "claims": m["claims"]["micro_f1"],
+             "nora": m["nora"]["accuracy"] if m["nora"]["n"] else None, "suspicion": m["suspicion"]["qwk"]}
+    for group in (SELECTION_PRIMARY, SELECTION_FALLBACK):
+        vals = [value[h] for h in group if h in heads and value[h] is not None]
+        if vals:
+            return vals
+    return [0.0]
+
+
 def val_score(model, tok, val, args, device) -> tuple[float, dict[str, float]]:
-    """Model-selection score (mean of acts µF1, topics µF1, addressee accuracy, seg char-F1) and per-head val metrics."""
+    """Model-selection score (mean of selection_metrics) and per-head val metrics."""
     preds, segs = predict(model, tok, val, args, device)
     m = score_system(val, preds, segs, ci=False)
-    parts = [m["act_set"]["micro_f1"], m["topics"]["micro_f1"], m["addressee"]["accuracy"]]
-    if "seg" in m:
-        parts.append(m["seg"]["char_f1"])
+    parts = selection_metrics(m, args.heads)
     detail = {"acts": m["act_set"]["micro_f1"], "topics": m["topics"]["micro_f1"], "claims": m["claims"]["micro_f1"],
-              "addressee": m["addressee"]["accuracy"], "nora": m["nora"]["accuracy"], "seg": m.get("seg", {}).get("char_f1")}
+              "addressee": m["addressee"]["accuracy"], "nora": m["nora"]["accuracy"], "suspicion_qwk": m["suspicion"]["qwk"],
+              "seg": m.get("seg", {}).get("char_f1")}
     return sum(parts) / len(parts), {k: round(v, 4) for k, v in detail.items() if v is not None}
 
 
@@ -160,10 +178,18 @@ def main() -> None:
     ap.add_argument("--no-context", action="store_true")
     ap.add_argument("--turn-pool", default="cls", choices=TURN_POOLS,
                     help="input of the turn-level heads: [CLS], mean of the player-text tokens, or both concatenated")
+    ap.add_argument("--loss-weight", action="append", default=[], metavar="HEAD=W",
+                    help="multiply one head's loss by W, e.g. --loss-weight addressee=3 (repeatable)")
     ap.add_argument("--freeze-embeddings", action="store_true")
     ap.add_argument("--smoke", action="store_true", help="tiny random encoder, 2 epochs, CPU: checks the code path only")
     ap.add_argument("--save-model", action="store_true", help="keep model.pt (about 1.1 GB for mDeBERTa-base)")
     args = ap.parse_args()
+    args.loss_weights = {}
+    for spec in args.loss_weight:
+        head, _, w = spec.partition("=")
+        if head not in HEADS or not w:
+            ap.error(f"--loss-weight wants HEAD=W with HEAD in {HEADS}, got {spec!r}")
+        args.loss_weights[head] = float(w)
     if args.epochs is None:
         args.epochs = 2 if args.smoke else 10
     set_seed(args.seed)

@@ -9,7 +9,8 @@
                   nora answer (3), side answer (julian / mia / none)          CE / BCE / MSE
 
 Every head's loss is masked where its label is absent (e.g. nora_answer outside a call with Nora).
-The losses are summed with equal weight, or with learned uncertainty weights (Kendall et al. 2018).
+The losses are summed with equal weight (optionally scaled per head with loss_weights), or with learned
+uncertainty weights (Kendall et al. 2018).
 """
 
 from __future__ import annotations
@@ -53,12 +54,13 @@ def _mlp(d: int, out: int, dropout: float, d_in: int | None = None) -> nn.Module
 
 class MultiHeadEncoder(nn.Module):
     def __init__(self, encoder: nn.Module, heads: tuple[str, ...] = HEADS, dropout: float = 0.1, uncertainty: bool = False,
-                 turn_pool: str = "cls"):
+                 turn_pool: str = "cls", loss_weights: dict[str, float] | None = None):
         super().__init__()
         self.encoder = encoder
         d = encoder.config.hidden_size
         dt = 2 * d if turn_pool == "both" else d  # input size of the turn-level heads
         self.turn_pool = turn_pool
+        self.loss_weights = dict(loss_weights or {})
         s = HeadSizes()
         self.heads = set(heads)
         self.seg = nn.Sequential(nn.Dropout(dropout), nn.Linear(d, s.seg))
@@ -125,6 +127,7 @@ class MultiHeadEncoder(nn.Module):
             parts["suspicion"] = F.mse_loss(out["suspicion"].float(), batch["suspicion"]) / 3.0
         total = out["seg"].new_zeros((), dtype=torch.float32)
         for h, l in parts.items():
+            l = l * self.loss_weights.get(h, 1.0)
             if self.uncertainty:
                 lv = self.log_vars[h]
                 total = total + torch.exp(-lv) * l + lv
