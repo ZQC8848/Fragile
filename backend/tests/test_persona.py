@@ -130,7 +130,7 @@ def test_the_opening_card_and_the_player_prompt_hint_at_nothing():
             assert not PRIMING.search(line), line
     for g in GEN.goals:
         assert not PRIMING.search(g["text"]), g["text"]
-    prompt = (BACKEND / "prompts" / "selfplay_v1.md").read_text(encoding="utf-8").split("# Personas")[0]
+    prompt = (BACKEND / "prompts" / "selfplay_v2.md").read_text(encoding="utf-8")
     assert not PRIMING.search(prompt), PRIMING.search(prompt)
 
 

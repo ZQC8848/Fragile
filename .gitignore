@@ -4,6 +4,8 @@
 # Runtime output
 backend/data/logs/
 backend/data/cache/
+# self-play sessions before packing (the packs in backend/data/selfplay/ are committed)
+backend/data/selfplay_raw/
 
 # Dependencies / build
 node_modules/

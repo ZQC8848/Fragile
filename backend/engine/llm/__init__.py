@@ -2,6 +2,7 @@ from .cache import ResponseCache, cache_key
 from .client import (
     CALL_LOG,
     ROLES,
+    USAGE,
     LLMClient,
     LLMConfig,
     LLMError,
@@ -22,6 +23,7 @@ __all__ = [
     "CALL_LOG",
     "PROMPTS_DIR",
     "ROLES",
+    "USAGE",
     "LLMClient",
     "LLMConfig",
     "LLMError",

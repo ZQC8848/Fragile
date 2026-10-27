@@ -98,6 +98,22 @@ uv run python tools/play_cli.py --live all                       # 全部角色�
 
 游戏中可用 `/phone`、`/card`、`/options`、`/state`、`/trace`，`/help` 列出全部命令。
 
+## 自博弈
+
+LLM 扮演玩家、整局在进程里跑，详见 [selfplay.md](selfplay.md) §7 和 §7.1。模型配置全部写在 `backend/selfplay/profiles.yaml`，`.env` 里只需要 key（模板见 `backend/.env.selfplay.example`）。
+
+```bash
+cd backend
+uv run python -m selfplay doctor --probe                                  # key、端点、claude 和 codex 是否可用
+uv run python -m selfplay manifest --round r1 --n 30 --shards 6          # 负责人每轮生成一次，提交后打 tag selfplay-r1
+uv run python -m selfplay run --shard selfplay/manifests/r1/shard-03.json --budget-usd 5   # 中断后重跑同一条命令即续跑
+uv run python -m selfplay pack --shard selfplay/manifests/r1/shard-03.json                # 写进 data/selfplay/r1/shard-03/
+uv run python -m selfplay check r1                                         # 校验整轮
+uv run python -m selfplay report r1                                        # 人格与行为、坍缩、覆盖、费用
+```
+
+未打包的原始记录在 `backend/data/selfplay_raw/`（gitignore），打包后的 `backend/data/selfplay/` 直接进仓库。
+
 ## 测试与检查
 
 ```bash

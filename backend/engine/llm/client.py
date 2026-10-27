@@ -3,7 +3,7 @@
 Every role (see ROLES, plan.md section 3.3) gets its own provider/model from the environment so they can
 be mixed freely:
 
-    LLM_PROVIDER_<ROLE> = openai | anthropic | mock      (default mock)
+    LLM_PROVIDER_<ROLE> = openai | anthropic | claude_cli | codex_cli | mock      (default mock)
     LLM_MODEL_<ROLE>    = model id
     LLM_BASE_URL_<ROLE> = OpenAI-compatible endpoint, so one role can run on DeepSeek and another on Kimi
     LLM_API_KEY_<ROLE>  = key for that endpoint
@@ -19,7 +19,13 @@ Configuration and keys come only from backend/.env, which git ignores (`load_env
 - JSON output validation against a JSON Schema with one corrective retry, then LLMOutputError so the
   caller can fall back;
 - a fallback chain per role (LLM_FALLBACK_<ROLE>, `fallback_clients`, `call_json_chain`): when a model times
-  out or errors, the next one answers instead of the same one being asked again.
+  out or errors, the next one answers instead of the same one being asked again;
+- token usage per call (`LLMResult.usage`, and the USAGE list a caller can collect a whole session into).
+
+`claude_cli` and `codex_cli` answer through the local Claude Code and Codex command lines, on the user's own
+subscription (selfplay.md §2). Each call runs in a fresh empty temporary directory with no tools, no project
+or user settings, and a minimal environment, so the agent can read nothing of the repository or backend/.env
+and an API key in the environment cannot switch it from the subscription to API billing.
 """
 
 from __future__ import annotations
@@ -29,6 +35,8 @@ import json
 import logging
 import os
 import re
+import shutil
+import tempfile
 import time
 from collections.abc import AsyncIterator
 from contextvars import ContextVar
@@ -58,6 +66,11 @@ ROLE_TIMEOUT_S = {"narrator": 45.0, "proposer": 120.0, "judge": 120.0}
 DEFAULT_TIMEOUT_S = 60.0
 #: per call to a fallback model (LLM_TIMEOUT_<ROLE>_FALLBACK overrides)
 FALLBACK_TIMEOUT_S = 30.0
+#: a command-line call starts an agent process: slower than an HTTP request
+CLI_TIMEOUT_S = 180.0
+CLI_PROVIDERS = {"claude_cli": "claude", "codex_cli": "codex"}
+#: the only environment a command-line provider sees: enough to find the binary and its login
+_CLI_ENV = ("PATH", "HOME", "USER", "LOGNAME", "LANG", "LC_ALL", "TERM", "TMPDIR", "SHELL", "CLAUDE_CONFIG_DIR", "CODEX_HOME")
 
 ENV_FILE = Path(__file__).resolve().parents[2] / ".env"
 _env_loaded = False
@@ -65,6 +78,9 @@ _env_loaded = False
 #: when set to a list, every finished call_json appends its LLMResult.meta() here: the turn loop collects the
 #: provider, model, prompt version and latency of each call for the turn log
 CALL_LOG: ContextVar[list[dict[str, Any]] | None] = ContextVar("llm_call_log", default=None)
+#: when set to a list, every call a provider actually answered (not the mock, not a cache hit) appends
+#: {role, provider, model, input_tokens, output_tokens} here: the self-play runner totals a session's cost
+USAGE: ContextVar[list[dict[str, Any]] | None] = ContextVar("llm_usage", default=None)
 
 _FENCE_RE = re.compile(r"```(?:json)?\s*(.*?)```", re.DOTALL)
 
@@ -144,6 +160,8 @@ class LLMConfig:
             return bool(self.api_key or os.getenv("OPENAI_API_KEY"))
         if self.provider == "anthropic":
             return bool(self.api_key or os.getenv("ANTHROPIC_API_KEY"))
+        if self.provider in CLI_PROVIDERS:
+            return shutil.which(CLI_PROVIDERS[self.provider]) is not None
         return False
 
 
@@ -164,9 +182,11 @@ class LLMResult:
     #: why earlier attempts were rejected (parse or schema errors)
     errors: list[str] = field(default_factory=list)
     latency_ms: float = 0.0
+    #: {input_tokens, output_tokens} of the provider calls behind this result; None for the mock and cache hits
+    usage: dict[str, int] | None = None
 
     def meta(self) -> dict[str, Any]:
-        return {
+        out = {
             "role": self.role,
             "provider": self.provider,
             "model": self.model,
@@ -176,6 +196,9 @@ class LLMResult:
             "errors": self.errors,
             "latency_ms": round(self.latency_ms, 1),
         }
+        if self.usage is not None:
+            out["usage"] = self.usage
+        return out
 
 
 class LLMOutputError(LLMError):
@@ -215,6 +238,98 @@ def _log_call(res: LLMResult) -> None:
     log_list = CALL_LOG.get()
     if log_list is not None:
         log_list.append(res.meta())
+
+
+def _log_usage(res: LLMResult) -> None:
+    usage = USAGE.get()
+    if usage is not None:
+        usage.append({"role": res.role, "provider": res.provider, "model": res.model, **(res.usage or {"input_tokens": 0, "output_tokens": 0})})
+
+
+def _parse_claude_cli(stdout: str) -> tuple[str, dict[str, int] | None]:
+    """`claude -p --output-format json`: one result object; `structured_output` when a schema was given."""
+    try:
+        d = json.loads(stdout)
+    except json.JSONDecodeError:
+        raise LLMError(f"claude printed no JSON result: {stdout[:200]!r}") from None
+    if d.get("is_error"):
+        raise LLMError(f"claude reported an error: {str(d.get('result'))[:300]}")
+    u = d.get("usage") or {}
+    usage = {
+        "input_tokens": int(u.get("input_tokens", 0)) + int(u.get("cache_creation_input_tokens", 0)) + int(u.get("cache_read_input_tokens", 0)),
+        "output_tokens": int(u.get("output_tokens", 0)),
+    }
+    if d.get("structured_output") is not None:
+        return json.dumps(d["structured_output"], ensure_ascii=False), usage
+    return str(d.get("result") or ""), usage
+
+
+def _allows_null(schema: dict[str, Any]) -> bool:
+    t = schema.get("type")
+    return t == "null" or (isinstance(t, list) and "null" in t) or any(_allows_null(x) for x in schema.get("anyOf", []))
+
+
+def _strict_schema(schema: dict[str, Any]) -> dict[str, Any]:
+    """OpenAI's strict structured outputs (codex --output-schema): every object lists all its properties as
+    required and allows no others; a property that was optional becomes nullable instead."""
+    if not isinstance(schema, dict):
+        return schema
+    out = {k: _strict_schema(v) if isinstance(v, dict) else [_strict_schema(x) for x in v] if isinstance(v, list) and k == "anyOf" else v
+           for k, v in schema.items()}
+    if out.get("type") == "object" and "properties" in out:
+        required = set(schema.get("required", []))
+        props = {}
+        for name, sub in out["properties"].items():
+            props[name] = sub if name in required or _allows_null(sub) else {"anyOf": [sub, {"type": "null"}]}
+        out["properties"] = props
+        out["required"] = list(props)
+        out["additionalProperties"] = False
+    return out
+
+
+def _prune_nulls(data: Any, schema: dict[str, Any]) -> Any:
+    """Undo _strict_schema on a reply: drop the nulls it forced into properties that were only optional."""
+    if not isinstance(data, dict) or not isinstance(schema, dict):
+        return data
+    props = schema.get("properties") or {}
+    out = {}
+    for k, v in data.items():
+        sub = props.get(k, {})
+        if v is None and not _allows_null(sub):
+            continue
+        out[k] = _prune_nulls(v, sub)
+    return out
+
+
+def _codex_error(stdout: str) -> str | None:
+    """The message of the last `error` event of `codex exec --json`."""
+    msg = None
+    for line in stdout.splitlines():
+        try:
+            ev = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(ev, dict) and ev.get("type") == "error":
+            msg = str(ev.get("message"))
+            try:
+                msg = json.loads(msg)["error"]["message"]
+            except (ValueError, KeyError, TypeError):
+                pass
+    return msg[:300] if msg else None
+
+
+def _codex_usage(stdout: str) -> dict[str, int] | None:
+    """The `turn.completed` event of `codex exec --json` carries the token counts."""
+    usage = None
+    for line in stdout.splitlines():
+        try:
+            ev = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(ev, dict) and ev.get("type") == "turn.completed" and isinstance(ev.get("usage"), dict):
+            u = ev["usage"]
+            usage = {"input_tokens": int(u.get("input_tokens", 0)), "output_tokens": int(u.get("output_tokens", 0))}
+    return usage
 
 
 def _parse_and_validate(text: str, validator: jsonschema.protocols.Validator | None) -> tuple[Any, str | None]:
@@ -300,7 +415,7 @@ class LLMClient:
         for attempt in (1, 2):
             t0 = time.perf_counter()
             try:
-                res = await self.call_text(system, prompt, temperature=temperature, json_mode=True, prompt_version=prompt_version)
+                res = await self.call_text(system, prompt, temperature=temperature, json_mode=True, prompt_version=prompt_version, schema=schema)
             except Exception as e:  # noqa: BLE001 - a provider error (4xx, 5xx, timeout) gets the same retry, then the fallback
                 p = self.config.effective_provider
                 res = LLMResult(self.config.role, p, "mock" if p == "mock" else self.config.model, prompt_version)
@@ -334,7 +449,10 @@ class LLMClient:
         temperature: float | None = None,
         json_mode: bool = False,
         prompt_version: int | None = None,
+        schema: dict[str, Any] | None = None,
     ) -> LLMResult:
+        """`schema` only reaches the command-line providers, which can enforce it; the others are asked for
+        JSON mode and validated afterwards (call_json)."""
         temp = self.config.temperature if temperature is None else temperature
         p = self.config.effective_provider
         res = LLMResult(
@@ -355,7 +473,8 @@ class LLMClient:
                 if hit is not None:
                     res.text, res.cached = hit, True
             if not res.cached:
-                res.text = await self._provider_complete(p, system, user, temp, json_mode)
+                res.text, res.usage = await self._provider_complete(p, system, user, temp, json_mode, schema)
+                _log_usage(res)
                 if key is not None:
                     self.cache.put(key, res.text, role=self.config.role, model=self.config.model, prompt_version=prompt_version)
         res.latency_ms = (time.perf_counter() - t0) * 1000
@@ -398,18 +517,27 @@ class LLMClient:
         raise LLMError(f"unknown provider {p!r}")
 
     # -- providers -------------------------------------------------------------
-    async def _provider_complete(self, provider: str, system: str, user: str, temp: float, json_mode: bool) -> str:
+    async def _provider_complete(
+        self, provider: str, system: str, user: str, temp: float, json_mode: bool, schema: dict[str, Any] | None = None
+    ) -> tuple[str, dict[str, int] | None]:
+        """(text, usage)."""
         if provider == "openai":
             return await self._openai_complete(system, user, temp, json_mode)
         if provider == "anthropic":
             return await self._anthropic_complete(system, user, temp)
+        if provider in CLI_PROVIDERS:
+            return await self._cli_complete(provider, system, user, schema)
         raise LLMError(f"unknown provider {provider!r} for role {self.config.role}")
 
     def timeout_s(self) -> float:
         if self.config.timeout is not None:
             return self.config.timeout
         raw = os.getenv(f"LLM_TIMEOUT_{self.config.role.upper()}")
-        return float(raw) if raw else ROLE_TIMEOUT_S.get(self.config.role, DEFAULT_TIMEOUT_S)
+        if raw:
+            return float(raw)
+        if self.config.provider in CLI_PROVIDERS:
+            return CLI_TIMEOUT_S
+        return ROLE_TIMEOUT_S.get(self.config.role, DEFAULT_TIMEOUT_S)
 
     def _get_openai(self):
         if self._openai is None:
@@ -458,7 +586,9 @@ class LLMClient:
             # client's life; the role's temperature setting simply stops applying to it.
             self._no_temperature = True
             resp = await call(False)
-        return resp.choices[0].message.content or ""
+        u = getattr(resp, "usage", None)
+        usage = {"input_tokens": u.prompt_tokens or 0, "output_tokens": u.completion_tokens or 0} if u else None
+        return resp.choices[0].message.content or "", usage
 
     async def _anthropic_complete(self, system: str, user: str, temp: float) -> str:
         client = self._get_anthropic()
@@ -469,7 +599,62 @@ class LLMClient:
             system=system,
             messages=[{"role": "user", "content": user}],
         )
-        return "".join(block.text for block in resp.content if getattr(block, "type", "") == "text")
+        u = getattr(resp, "usage", None)
+        usage = {"input_tokens": u.input_tokens or 0, "output_tokens": u.output_tokens or 0} if u else None
+        return "".join(block.text for block in resp.content if getattr(block, "type", "") == "text"), usage
+
+    async def _cli_complete(self, provider: str, system: str, user: str, schema: dict[str, Any] | None) -> tuple[str, dict[str, int] | None]:
+        """One call through the Claude Code (`claude -p`) or Codex (`codex exec`) command line."""
+        exe = shutil.which(CLI_PROVIDERS[provider])
+        if exe is None:
+            raise LLMError(f"{CLI_PROVIDERS[provider]} is not installed (provider {provider} for role {self.config.role})")
+        env = {k: os.environ[k] for k in _CLI_ENV if k in os.environ}
+        # both command lines refuse a schema that names its draft ($schema) or carries an $id
+        schema = {k: v for k, v in schema.items() if k not in ("$schema", "$id")} if schema is not None else None
+        with tempfile.TemporaryDirectory(prefix="fragile-llm-") as tmp:
+            work = Path(tmp) / "work"
+            work.mkdir()
+            if provider == "claude_cli":
+                cmd = [exe, "-p", "--tools", "", "--setting-sources", "", "--strict-mcp-config", "--no-session-persistence",
+                       "--exclude-dynamic-system-prompt-sections", "--output-format", "json", "--system-prompt", system]
+                if self.config.model not in ("", "default"):
+                    cmd += ["--model", self.config.model]
+                if schema is not None:
+                    cmd += ["--json-schema", json.dumps(schema)]
+                stdin = user
+            else:
+                last = Path(tmp) / "last.txt"
+                cmd = [exe, "exec", "--skip-git-repo-check", "--ephemeral", "--ignore-user-config", "--ignore-rules",
+                       "-s", "read-only", "-C", str(work), "--json", "-o", str(last)]
+                if self.config.model not in ("", "default"):
+                    cmd += ["-m", self.config.model]
+                if schema is not None:
+                    (Path(tmp) / "schema.json").write_text(json.dumps(_strict_schema(schema)), encoding="utf-8")
+                    cmd += ["--output-schema", str(Path(tmp) / "schema.json")]
+                # codex exec has no system prompt option: the instructions go first in the one prompt
+                stdin = f"{system}\n\nDo not run commands or use tools; answer directly.\n\n{user}"
+            proc = await asyncio.create_subprocess_exec(
+                *cmd, cwd=work, env=env, stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
+            )
+            try:
+                out, err = await asyncio.wait_for(proc.communicate(stdin.encode("utf-8")), self.timeout_s())
+            except BaseException:
+                if proc.returncode is None:
+                    proc.kill()
+                    await proc.wait()
+                raise
+            if proc.returncode != 0:
+                tail = _codex_error(out.decode("utf-8", "replace")) or (err or out).decode("utf-8", "replace").strip()[-300:]
+                raise LLMError(f"{CLI_PROVIDERS[provider]} exited with {proc.returncode}: {tail}")
+            if provider == "claude_cli":
+                return _parse_claude_cli(out.decode("utf-8", "replace"))
+            text = last.read_text(encoding="utf-8") if last.exists() else ""
+            if schema is not None:
+                try:
+                    text = json.dumps(_prune_nulls(json.loads(text), schema), ensure_ascii=False)
+                except json.JSONDecodeError:
+                    pass  # call_json reports the unusable reply
+            return text, _codex_usage(out.decode("utf-8", "replace"))
 
     def _mock(self, system: str, user: str) -> str:
         if self._mock_handler is None:

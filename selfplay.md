@@ -223,16 +223,25 @@ uv run python -m selfplay doctor   # 检查依赖、key、端点连通，claude 
 
 | 项 | 说明 |
 |---|---|
-| `claude_cli` 和 `codex_cli` 两种供应商 | `engine/llm/client.py` 新增：每次调用在空临时目录里起子进程，不开工具、不读项目记忆，用 JSON schema 约束输出；超时 180 秒；结果全部缓存；日志记录供应商和模型。没装或没登录时报清楚的错，不影响其他角色 |
-| 多 profile 的模型配置 | 现在每个角色只有一套 `LLM_*_<ROLE>`。自博弈玩家需要按局切换模型：在 `engine/llm/client.py` 里支持按名字取一套端点（可以复用叙述者兜底链"借用别的角色端点"的写法），清单里写 profile 名 |
+| `claude_cli` 和 `codex_cli` 两种供应商 | ✅ `engine/llm/client.py`。每次调用在新建的空临时目录里起子进程，环境变量只留 PATH、HOME 等登录所需的几项（`.env` 里的 `ANTHROPIC_API_KEY` 不会让 claude 改走 API 计费）。claude：`-p --tools "" --setting-sources "" --strict-mcp-config --no-session-persistence --system-prompt …`，用 `--json-schema` 约束输出；codex：`exec -s read-only --ignore-user-config --ephemeral --output-schema`，schema 自动转成 OpenAI 严格模式（可选字段改成可为 null，回来再删掉 null）。超时 180 秒，结果进缓存，token 用量照常记录。实测 claude 每次约 3 秒，codex 约 6 秒。claude 命令行总会注入账号邮箱，这对玩家人格无影响；CLAUDE.md、用户画像和项目文件都读不到 |
+| 多 profile 的模型配置 | ✅ `selfplay/profiles.yaml` 和 `selfplay/profiles.py`：profile 写供应商、端点、模型、key 的环境变量名和估算价格；`engine_roles` 规定自博弈时每个引擎角色用哪个 profile，运行时覆盖 `.env` 里的 `LLM_*_<ROLE>`，保证每台电脑配置一致。玩家按局从 profile 直接建客户端 |
 | HEXACO 抽样和行为轴 | ✅ 2026-10-26 完成：`backend/selfplay/persona.py`，配置在 `persona_config.yaml`（抽样参数和行为轴权重）、`persona_rules.yaml`（形容词、规则模板、组合规则、站队和立场）、`goals.yaml`（32 条目标）；测试 `tests/test_persona.py`。预览：`uv run python -m selfplay persona --n 10`；分布检查：`--stats --n 3000`；A/B 对照用的数值版人格卡：`--render numeric` |
 | 目标列表 | ✅ `backend/selfplay/goals.yaml`：32 条，每条带一个对行为轴的亲和向量 |
-| 玩家 prompt v2 | `prompts/selfplay_v2.md`（§5） |
-| 运行器 | `selfplay/run.py`：清单生成、并发、上限、续跑、记录（§7） |
-| 报告 | `tools/selfplay_report.py`（§8） |
-| profiles 和 doctor | `selfplay/profiles.yaml`、`.env.selfplay.example`、`python -m selfplay doctor`（§7.1） |
-| 分片、打包、校验 | 清单切片、`pack`（每局一个 tar.gz 写进 `backend/data/selfplay/`）、`check`（§7.1） |
-| 测试 | 抽样分布和相关性、清单的分层均衡、离线 mock 下跑通 3 局、报告能生成、`check` 能发现缺局和版本不一致 |
+| 玩家 prompt v2 | ✅ `prompts/selfplay_v2.md`：每回合把人格卡（`card_at`，真相揭露后加上立场）、玩家卡、所在房间和在场的人、最近 6 段正文、自己最近 5 句话、手机、输入方式、违规指令和上次被拒的原因一起发给玩家 |
+| 运行器 | ✅ `selfplay/run.py`：在进程里驱动 `Session`；单框输入先走 review 再提交，被拒后带着原因重写，最多 3 次，之后本回合沉默；有改写建议时一半概率直接采用。每局写 `persona.json`、`player.jsonl`（玩家每次尝试）、`selfplay.json`（状态、结局、各模型 token 和费用、耗时、git commit、prompt 版本）。费用账本 `_ledger.jsonl` 跨续跑累计：到 `--budget-usd` 不再开新局，超出 25% 时中止在跑的局（下次重跑） |
+| 报告 | ✅ `tools/selfplay_report.py`（`python -m selfplay report r1`）：运行统计、行为轴和 HEXACO 与实际行为的相关、各玩家模型的 distinct-n 和行为熵、结局和 beat 覆盖、被拒率、guard 重写率、叙述兜底率、延迟 |
+| profiles 和 doctor | ✅ `selfplay/profiles.yaml`、`backend/.env.selfplay.example`、`python -m selfplay doctor [--probe]`。key 按 `key_env` 依次找，已经为在线游玩配过 `.env` 的电脑不用再填 |
+| 分片、打包、校验 | ✅ `selfplay/manifest.py`（`manifest --round r1 --n 30 --shards 6 [--subscription 5]`，按层分配玩家模型、DM 策略和 split；同一轮名永远生成同一份清单，已存在就拒绝覆盖）、`selfplay/pack.py`（压缩包可逐字节复现，重打包不产生 git 改动；`check` 拒收不属于清单、放错分片、重复、commit 不等于本轮 tag、工作区有改动、prompt 或生成器版本不一致的局） |
+| 测试 | ✅ `tests/test_selfplay.py`：清单均衡和确定性、分片、profile 解析、离线 mock 下跑通 3 局并续跑、打包、`check` 查出各类问题、预算上限、被拒后重写、命令行调用的隔离 |
+
+### 9.1 实测（2026-10-26，实现后的在线检查）
+
+| 项 | 结果 |
+|---|---|
+| deepseek-flash 当玩家，8 回合 | 共 $0.052，16 万 token（46 次调用，其中玩家 9 次）；玩家每次 2 到 5 秒。按此估计，一局 40 到 60 回合约 $0.3 |
+| 每回合耗时 | 中位约 20 秒，慢的回合 70 到 80 秒，全部耗在叙述者：deepseek-flash 偶尔回复被截断或连接中断，兜底的 v4-pro 和 kimi-k2.6 是慢速推理模型，30 秒的兜底超时内从没答完 |
+| 由此改动 | 自博弈时叙述者的兜底改为再调两次 deepseek-flash（`profiles.yaml` 的 `narrator_fallback`）：新的一次调用就能解决截断和断线，也不违反"叙述者固定"（§2）。在线游玩的 `.env` 不受影响 |
+| claude、gpt 当玩家，各 3 回合 | 跑通；每次约 3 秒和 6 秒 |
 
 ## 10. 分轮执行
 

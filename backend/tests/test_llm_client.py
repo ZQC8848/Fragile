@@ -45,9 +45,9 @@ class FakeProvider(LLMClient):
         self.replies = replies
         self.prompts: list[tuple[str, str]] = []
 
-    async def _provider_complete(self, provider, system, user, temp, json_mode):
+    async def _provider_complete(self, provider, system, user, temp, json_mode, schema=None):
         self.prompts.append((system, user))
-        return self.replies[min(len(self.prompts), len(self.replies)) - 1]
+        return self.replies[min(len(self.prompts), len(self.replies)) - 1], {"input_tokens": len(user), "output_tokens": 7}
 
 
 def scripted(replies):
@@ -213,11 +213,11 @@ async def test_without_schema_any_json_passes():
 
 async def test_provider_errors_get_one_retry_then_the_fallback_error():
     class Flaky(FakeProvider):
-        async def _provider_complete(self, provider, system, user, temp, json_mode):
+        async def _provider_complete(self, provider, system, user, temp, json_mode, schema=None):
             self.prompts.append((system, user))
             if len(self.prompts) == 1:
                 raise RuntimeError("503 overloaded")
-            return self.replies[0]
+            return self.replies[0], None
 
     ok = Flaky(['{"verdict": "ok"}'])
     res = await ok.call_json("sys", "the input", schema=VERDICT_SCHEMA)
@@ -225,7 +225,7 @@ async def test_provider_errors_get_one_retry_then_the_fallback_error():
     assert ok.prompts[0][1].endswith("Reply in json.")  # JSON mode needs the word for some endpoints
 
     class Down(FakeProvider):
-        async def _provider_complete(self, provider, system, user, temp, json_mode):
+        async def _provider_complete(self, provider, system, user, temp, json_mode, schema=None):
             raise RuntimeError("connection refused")
 
     with pytest.raises(LLMOutputError) as e:
@@ -235,7 +235,7 @@ async def test_provider_errors_get_one_retry_then_the_fallback_error():
 
 # --------------------------------------------------------------------------- fallback chain (plan.md R16)
 class Down(FakeProvider):
-    async def _provider_complete(self, provider, system, user, temp, json_mode):
+    async def _provider_complete(self, provider, system, user, temp, json_mode, schema=None):
         self.prompts.append((system, user))
         raise RuntimeError("timed out")
 
@@ -258,9 +258,9 @@ async def test_chain_stops_at_the_deadline():
     import time
 
     class Slow(FakeProvider):
-        async def _provider_complete(self, provider, system, user, temp, json_mode):
+        async def _provider_complete(self, provider, system, user, temp, json_mode, schema=None):
             await asyncio.sleep(5)
-            return '{"verdict": "ok"}'
+            return '{"verdict": "ok"}', None
 
     t0 = time.monotonic()
     with pytest.raises(LLMOutputError) as e:

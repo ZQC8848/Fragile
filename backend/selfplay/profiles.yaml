@@ -1,0 +1,102 @@
+# Self-play models (selfplay.md §2, §7.1). Committed; keys are not. A teammate fills two keys in backend/.env
+# (see backend/.env.selfplay.example) and every engine role and player is configured from this file: during a
+# self-play run it overrides the LLM_*_<ROLE> settings of backend/.env, so every machine runs the same setup.
+#
+# A profile's key is the first of `key_env` that is set. The later names are the per-role keys of an older
+# backend/.env, so a machine already set up for live play needs nothing new.
+#
+# Prices are USD per million tokens, ESTIMATES used for the --budget-usd cap and the cost report. Check the
+# providers' pricing pages before round 3 (selfplay.md S3); a token count is logged per call, so costs can be
+# recomputed afterwards. Subscription models cost 0 here: they spend the subscription's quota instead.
+
+profiles:
+  deepseek-flash:
+    provider: openai
+    base_url: https://api.deepseek.com
+    model: deepseek-flash
+    key_env: [DEEPSEEK_API_KEY, LLM_API_KEY_REVIEW, LLM_API_KEY_GUARD]
+    price: { input: 0.28, output: 0.42 }
+  deepseek-v4-pro:
+    provider: openai
+    base_url: https://api.deepseek.com
+    model: deepseek-v4-pro
+    key_env: [DEEPSEEK_API_KEY, LLM_API_KEY_PROPOSER, LLM_API_KEY_REVIEW]
+    price: { input: 0.55, output: 2.20 }
+  kimi-k2.6:
+    provider: openai
+    base_url: https://api.moonshot.ai/v1
+    model: kimi-k2.6
+    key_env: [MOONSHOT_API_KEY, LLM_API_KEY_SELFPLAY, LLM_API_KEY_JUDGE]
+    price: { input: 0.60, output: 2.50 }
+  kimi-k3:
+    provider: openai
+    base_url: https://api.moonshot.ai/v1
+    model: kimi-k3
+    key_env: [MOONSHOT_API_KEY, LLM_API_KEY_JUDGE, LLM_API_KEY_NARRATOR]
+    price: { input: 1.00, output: 4.00 }
+  # Subscription models through the local command lines; one session at a time, test split only.
+  claude:
+    provider: claude_cli
+    model: sonnet
+    concurrency: 1
+    price: { input: 0, output: 0 }
+  gpt:
+    provider: codex_cli
+    model: ""  # empty: whatever `codex exec` uses by default
+    concurrency: 1
+    price: { input: 0, output: 0 }
+  # The third provider (selfplay.md S1): add it here once the key exists, then name it in `players.third`.
+  # qwen:
+  #   provider: openai
+  #   base_url: https://dashscope-intl.aliyuncs.com/compatible-mode/v1
+  #   model: <model id>
+  #   key_env: [QWEN_API_KEY]
+  #   price: { input: 0, output: 0 }
+
+# Which profile each engine role uses during self-play (fixed, selfplay.md §2).
+engine_roles:
+  review: deepseek-flash
+  narrator: deepseek-flash
+  guard: deepseek-flash
+  tension: deepseek-flash
+  scorer: deepseek-flash
+  options: deepseek-flash
+  proposer: deepseek-v4-pro
+  judge: kimi-k3
+
+# The narrator's fallback chain, in order (LLM_FALLBACK_NARRATOR): a fresh call to the same model, twice. The
+# live check showed what fails is a cut-off reply or a dropped connection, which a new call fixes, while the
+# slower models (v4-pro, kimi-k2.6) never finish inside the 30 s fallback timeout; and a passage by another
+# model would break "the narrator is fixed" (selfplay.md §2).
+narrator_fallback: [deepseek-flash, deepseek-flash]
+
+players:
+  # shares of the API sessions in a round; `third` takes its share once it names a profile, until then its
+  # share is split evenly between the first two
+  shares: { deepseek-flash: 0.35, deepseek-v4-pro: 0.25, third: 0.25, kimi-k2.6: 0.15 }
+  third: null
+  # sessions played by these models go to the test split only (the unseen-player test, selfplay.md §2)
+  test_only: [kimi-k2.6, claude, gpt]
+  # subscription models are added on top of the API sessions, a fixed number per round (`manifest --subscription`)
+  subscription: [claude, gpt]
+
+# DM policy mix (selfplay.md §6); scorer = rule | llm | random
+dm:
+  - { policy: B, scorer: llm, tau: 1.0, share: 0.5 }
+  - { policy: A, scorer: rule, tau: 1.0, share: 0.3 }
+  - { policy: explore_random, scorer: random, tau: 1.0, share: 0.1 }
+  - { policy: explore_hot, scorer: llm, tau: 2.0, share: 0.1 }
+
+# train / dev / test shares for the sessions not reserved for test
+splits: { train: 0.7, dev: 0.15, test: 0.15 }
+
+run:
+  concurrency: 6
+  max_turns: 60
+  # a rejected input is written again at most this many times, then the turn is passed in silence
+  max_attempts: 3
+  # chance a player accepts the reviewer's suggested rewrite instead of writing the turn again
+  accept_rewrite: 0.5
+  # passages and own lines the player sees each turn
+  passages: 6
+  own_lines: 5
