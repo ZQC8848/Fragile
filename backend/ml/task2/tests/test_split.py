@@ -60,3 +60,11 @@ def test_pinned_sessions_keep_their_split_and_new_ones_split_80_10_10():
     new_train = sum(where[f"new{i}"] == "train" for i in range(400))
     assert 0.75 < new_train / 400 < 0.85
     assert leaks(second) == 0
+
+
+def test_each_language_is_split_on_its_own():
+    exs = [{**_ex(f"en{i}", f"english game {i} line about the crate"), "lang": "en"} for i in range(180)]
+    exs += [{**_ex(f"zh{i}", f"chinese game {i} line about the voicemail"), "lang": "zh"} for i in range(20)]
+    buckets, _ = split_examples(exs)
+    for name in ("train", "val", "test"):
+        assert any(r["lang"] == "zh" for r in buckets[name])

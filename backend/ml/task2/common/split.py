@@ -79,20 +79,25 @@ def assign_sessions(examples: list[dict], ratios: tuple[float, float] = (0.8, 0.
     With only tens of games, assigning each session independently at random gives very uneven splits;
     cutting the hash-ordered list by example count keeps the proportions while staying deterministic.
     Rewrite examples are not counted, since they can only go to train. Sessions in `pinned` keep their split
-    and the cut is made over the remaining sessions only.
+    and the cut is made over the remaining sessions only. The cut is made separately per game language
+    (a session's `lang`), since only ~10% of games are Chinese and an unstratified cut can leave val without any.
     """
     pinned = pinned or {}
     counts: dict[str, int] = defaultdict(int)
+    stratum: dict[str, str] = {}
     for ex in examples:
         if ex.get("source") != "rewrite" and ex["session"] not in pinned:
             counts[ex["session"]] += 1
-    order = sorted(counts, key=lambda s: hashlib.sha1(f"{seed}:{s}".encode()).hexdigest())
-    total = sum(counts.values())
-    out, acc = dict(pinned), 0
-    for s in order:
-        frac = acc / total if total else 0.0
-        out[s] = "train" if frac < ratios[0] else "val" if frac < ratios[0] + ratios[1] else "test"
-        acc += counts[s]
+            stratum.setdefault(ex["session"], ex.get("lang", ""))
+    out = dict(pinned)
+    for lang in sorted(set(stratum.values())):
+        group = [s for s in counts if stratum[s] == lang]
+        order = sorted(group, key=lambda s: hashlib.sha1(f"{seed}:{s}".encode()).hexdigest())
+        total, acc = sum(counts[s] for s in group), 0
+        for s in order:
+            frac = acc / total if total else 0.0
+            out[s] = "train" if frac < ratios[0] else "val" if frac < ratios[0] + ratios[1] else "test"
+            acc += counts[s]
     for ex in examples:
         out.setdefault(ex["session"], "train")
     return out
