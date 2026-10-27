@@ -30,7 +30,8 @@ def test_tail_share_and_importance_weights():
     for p in MANY:
         for dim, side in p.sampling["tail"]:
             z = p.hexaco[dim]
-            assert (z > GEN.cut) if side == "high" else (z < -GEN.cut)
+            # hexaco values are stored to three decimals
+            assert (z > GEN.cut - 1e-3) if side == "high" else (z < -GEN.cut + 1e-3)
 
 
 def test_weighted_sample_recovers_the_population_correlations():

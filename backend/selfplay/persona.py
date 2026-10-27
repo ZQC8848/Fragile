@@ -167,16 +167,19 @@ class PersonaGenerator:
         return "low" if raw < edge else "high" if raw > high else "mid"
 
     def pick_goal(self, raw: dict[str, float], rng: random.Random) -> str:
-        """Goals follow the unscaled axes; a scaled-down axis (leave x 0.1) makes the goals that lean on it that
-        much rarer, without making the opposite goals more common."""
+        """Goals follow the unscaled axes. A scaled-down axis (leave x 0.1) counts with its scale in the
+        affinity, and the goals that lean on it are drawn that much less often; the opposite goals are not
+        made more common."""
+        strength = float(self.cfg["goal_affinity_strength"])
         scores = []
         for g in self.goals:
-            s = float(g.get("weight", 1.0)) * math.exp(float(self.cfg["goal_affinity_strength"]) * sum(a * (raw.get(k, 0.5) - 0.5) for k, a in g["affinity"].items()))
+            s, fit = float(g.get("weight", 1.0)), 0.0
             for k, a in g["affinity"].items():
                 scale = float(self.cfg["axes"].get(k, {}).get("scale", 1.0))
+                fit += a * scale * (raw.get(k, 0.5) - 0.5)
                 if a > 0 and scale < 1:
                     s *= scale
-            scores.append(s)
+            scores.append(s * math.exp(strength * fit))
         return rng.choices([g["id"] for g in self.goals], weights=scores)[0]
 
     def pick_stance(self, honesty: float, rng: random.Random) -> str:

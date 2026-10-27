@@ -1,20 +1,35 @@
 # Player persona generator: sampling parameters (selfplay.md §3). Edit here, then bump generator_version.
 
-generator_version: 1
+generator_version: 2
 
 # HEXACO domains, standardised (mean 0, sd 1): H Honesty-Humility, E Emotionality, X eXtraversion,
 # A Agreeableness, C Conscientiousness, O Openness to Experience.
 dims: [H, E, X, A, C, O]
 
-# Population intercorrelations of the six domains (self-report).
-# PROVISIONAL. What the sources agree on: the HEXACO domains correlate only weakly, except a moderate
-# Honesty-Humility / Agreeableness correlation (Lee & Ashton 2018, Assessment 25:543-556, HEXACO-100,
-# N = 100,318: only H-A exceeds |r| = .20; Moshagen, Thielmann, Hilbig & Zettler 2019, Zeitschrift fuer
-# Psychologie 227:186-194, 549 samples, N = 316,133). Reported H-A values: .28 (Czech HEXACO-100), mean .35
-# (review), rho .42 (corrected). Until the full matrix from Moshagen et al. 2019 is copied in, H-A = .30 and
-# every other pair is 0.
+# Population intercorrelations of the six domains: meta-analytic self-report estimates, disattenuated
+# (corrected for unreliability, because personas are latent traits, not questionnaire scores).
+# Source: Moshagen, M., Thielmann, I., Hilbig, B. E., & Zettler, I. (2019). Meta-analytic investigations of
+# the HEXACO Personality Inventory(-Revised): Reliability generalization, self-observer agreement,
+# intercorrelations, and relations to demographic variables. Zeitschrift fuer Psychologie, 227(3), 186-194.
+# https://doi.org/10.1027/2151-2604/a000377 . Table 1, left block, below the diagonal (self-ratings;
+# 309 <= k <= 321 samples, N about 245,000). Values in parentheses there (not significantly different from
+# zero) are kept as printed: H-X, E-C, A-C.
 correlations:
-  H-A: 0.30
+  H-E: 0.15
+  H-X: -0.01
+  H-A: 0.42
+  H-C: 0.21
+  H-O: 0.15
+  E-X: -0.19
+  E-A: -0.10
+  E-C: -0.03
+  E-O: -0.06
+  X-A: 0.20
+  X-C: 0.23
+  X-O: 0.17
+  A-C: 0.08
+  A-O: 0.13
+  C-O: 0.13
 
 # 30% of personas come from the tails: one or two domains forced into their top or bottom 15%.
 # The rest of the vector is still drawn from the population distribution (rejection sampling), so the
