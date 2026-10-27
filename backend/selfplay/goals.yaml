@@ -1,0 +1,104 @@
+# What this player wants out of the evening (selfplay.md §4). One goal per session, drawn with probability
+# proportional to exp(strength * affinity . (axis - 0.5)), strength in persona_config.yaml: a curious player is more likely to want answers, but any
+# player can draw any goal. Only things a guest could want walking in: no secrets, nothing the player
+# could not know, and nothing that assumes something is wrong. A suspicious goal is phrased as a habit
+# ("if anything doesn't add up, ..."), never as a fact ("something is wrong in this flat"); a guest has
+# seen nothing yet when the evening starts. `weight` (default 1) scales how often a goal is drawn.
+
+- id: why_leo_absent
+  text: "Find out why Leo hasn't turned up tonight."
+  affinity: { curiosity: 1.0 }
+- id: whose_car
+  text: "Work out whose yellow car is parked on the kerb downstairs."
+  affinity: { curiosity: 0.8 }
+- id: voicemail
+  text: "Leo called you twice today. Figure out what he wanted."
+  affinity: { curiosity: 0.8, verbosity: -0.2 }
+- id: why_emigrate
+  text: "Understand why Julian and Mia are suddenly leaving for Australia."
+  affinity: { curiosity: 0.7 }
+- id: studio_talk
+  text: "Get Julian alone and ask how the studio is really doing."
+  affinity: { curiosity: 0.5, confrontation: 0.4 }
+- id: mia_okay
+  text: "You haven't seen Mia in a long time. Find out how she's really doing."
+  affinity: { curiosity: 0.3, confrontation: -0.5, compliance: 0.3 }
+- id: julian_okay
+  text: "You and Julian haven't really talked in years. Find out how he's really doing."
+  affinity: { curiosity: 0.4, confrontation: -0.3 }
+- id: get_the_truth
+  text: "If anything tonight doesn't add up, don't let it go until someone gives you a straight answer."
+  affinity: { curiosity: 0.8, confrontation: 0.8 }
+- id: catch_a_lie
+  text: "You can always tell when people are performing. If anyone's story changes, call it out."
+  affinity: { confrontation: 1.0 }
+- id: pleasant_evening
+  text: "Make sure this goodbye dinner is a pleasant one. Nobody should leave upset."
+  affinity: { confrontation: -1.0, compliance: 0.5 }
+- id: good_guest
+  text: "Be a good guest: eat, toast the move, help clear up."
+  affinity: { compliance: 1.0, curiosity: -0.5 }
+- id: say_goodbye_properly
+  text: "Say a proper goodbye to two old friends you may not see for years."
+  affinity: { confrontation: -0.6, verbosity: 0.4 }
+- id: reminisce
+  text: "Bring back the old college days: the photo, the takeaway place, the stories."
+  affinity: { verbosity: 0.8, confrontation: -0.4 }
+- id: reconnect_mia
+  text: "You and Mia drifted apart. Reconnect with her tonight."
+  affinity: { compliance: 0.4, confrontation: -0.4 }
+- id: reconnect_julian
+  text: "You and Julian were close once. Find out if that's still true."
+  affinity: { compliance: 0.4, confrontation: -0.4 }
+- id: protect_mia
+  text: "Look out for Mia. If anyone gives her a hard time, step in."
+  affinity: { side_strength: 0.6, confrontation: 0.2 }
+- id: back_julian
+  text: "Julian has always had your back. Have his tonight."
+  affinity: { side_strength: 0.6, compliance: 0.3 }
+- id: keep_peace
+  text: "If Julian and Mia start bickering, keep the peace between them."
+  affinity: { confrontation: -0.8, side_strength: -0.4 }
+- id: test_the_couple
+  text: "Find out whether Julian and Mia are as united as they look."
+  affinity: { curiosity: 0.6, confrontation: 0.5 }
+- id: early_night
+  text: "You have work tomorrow. Get through dinner politely and go home at a reasonable hour."
+  affinity: { leave: 1.0, curiosity: -0.4 }
+- id: escape_awkward
+  text: "If the evening turns awkward, find a graceful way out."
+  affinity: { leave: 1.0, confrontation: -0.3 }
+- id: stay_till_end
+  text: "Stay to the very end. You owe them that much."
+  affinity: { leave: -1.0, compliance: 0.4 }
+- id: find_leo
+  text: "Leo should be here. Track him down: call him, ask around, check what you can."
+  affinity: { curiosity: 0.9, compliance: -0.3 }
+- id: what_happened_today
+  text: "Piece together what Julian and Mia did today before you arrived."
+  affinity: { curiosity: 0.9 }
+- id: watch_and_learn
+  text: "Say little, watch everyone, and work out what each of them is really like these days."
+  affinity: { curiosity: 0.7, verbosity: -0.8 }
+- id: be_honest
+  text: "No more polite fictions. Be completely honest with everyone tonight."
+  affinity: { honesty_to_nora: 0.8, confrontation: 0.4 }
+- id: avoid_trouble
+  text: "If any drama starts tonight, stay out of it. It's not your business."
+  affinity: { curiosity: -0.8, confrontation: -0.6 }
+  weight: 0.4
+- id: help_pack
+  text: "Help them with the last of the packing and the move tomorrow."
+  affinity: { compliance: 0.9, curiosity: -0.3 }
+- id: ask_for_advice
+  text: "You have a big decision of your own coming up. Ask your old friends for advice."
+  affinity: { verbosity: 0.7, curiosity: -0.4 }
+- id: press_for_straight_answers
+  text: "If people dodge your questions tonight, keep pressing until Julian gives you a straight answer."
+  affinity: { confrontation: 0.9, curiosity: 0.3 }
+- id: understand_mia
+  text: "Spend time with Mia tonight and hear what she really thinks about the move."
+  affinity: { curiosity: 0.6, confrontation: -0.2 }
+- id: tell_the_others
+  text: "Keep Leo and his sister Nora in the loop about tonight; they would want to know."
+  affinity: { honesty_to_nora: 0.7, compliance: -0.2 }

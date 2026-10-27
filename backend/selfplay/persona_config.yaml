@@ -1,0 +1,67 @@
+# Player persona generator: sampling parameters (selfplay.md §3). Edit here, then bump generator_version.
+
+generator_version: 1
+
+# HEXACO domains, standardised (mean 0, sd 1): H Honesty-Humility, E Emotionality, X eXtraversion,
+# A Agreeableness, C Conscientiousness, O Openness to Experience.
+dims: [H, E, X, A, C, O]
+
+# Population intercorrelations of the six domains (self-report).
+# PROVISIONAL. What the sources agree on: the HEXACO domains correlate only weakly, except a moderate
+# Honesty-Humility / Agreeableness correlation (Lee & Ashton 2018, Assessment 25:543-556, HEXACO-100,
+# N = 100,318: only H-A exceeds |r| = .20; Moshagen, Thielmann, Hilbig & Zettler 2019, Zeitschrift fuer
+# Psychologie 227:186-194, 549 samples, N = 316,133). Reported H-A values: .28 (Czech HEXACO-100), mean .35
+# (review), rho .42 (corrected). Until the full matrix from Moshagen et al. 2019 is copied in, H-A = .30 and
+# every other pair is 0.
+correlations:
+  H-A: 0.30
+
+# 30% of personas come from the tails: one or two domains forced into their top or bottom 15%.
+# The rest of the vector is still drawn from the population distribution (rejection sampling), so the
+# correlations survive; each persona carries an importance weight back to the population.
+tail:
+  fraction: 0.30
+  quantile: 0.15
+  two_dim_share: 0.5
+
+# Behaviour axes (selfplay.md §3.3): a weighted sum of domains plus noise, squashed to 0..1 by the normal CDF
+# after dividing by its own standard deviation; `scale` then lowers an axis's whole range. INITIAL GUESSES,
+# checked against play in selfplay.md §8.
+noise_sd: 0.5
+axes:
+  curiosity:        { weights: { O: 0.6, X: 0.3 } }
+  confrontation:    { weights: { A: -0.6, X: 0.3, E: 0.2 } }
+  side_strength:    { weights: { A: 0.4, C: 0.4 } }
+  honesty_to_nora:  { weights: { H: 0.7, C: 0.2 } }
+  leave:            { weights: { E: 0.5, X: -0.4 }, scale: 0.1 }
+  compliance:       { weights: { A: 0.5, X: 0.3 } }
+  verbosity:        { weights: { X: 0.7 } }
+  violation_rate:   { weights: { C: -0.7 }, scale: 0.15 }
+
+# Rendering: an axis is "low" below this, "high" above 1 - this; mid axes are not written on the card.
+bucket_edge: 0.33
+max_rules: 4
+# the adjectives come from the most extreme domains, at least this far from the mean
+adjective_min_z: 0.6
+max_adjectives: 3
+
+# how strongly a goal follows the player's axes: weight = exp(strength * affinity . (axis - 0.5))
+goal_affinity_strength: 6
+
+side: { julian: 0.3333, mia: 0.3333, none: 0.3334 }
+# after the truth comes out: probabilities proportional to [honesty^p, (1 - honesty)^p, hesitate]; the power
+# makes the stance follow honesty more closely (a smooth, dishonest player rarely calls the police)
+stance_power: 2
+stance_hesitate: 0.2
+
+# Lines held back from the opening card and added once their trigger fires (selfplay.md §3.4). The runner
+# checks the condition against the engine state after every turn.
+triggers:
+  truth_out: "has(revealed, 'leo_dead')"
+
+style:
+  input_mode_single: 0.7      # the rest fill the channels
+  temperature: [0.7, 1.0]
+  female: 0.5
+
+names: [Alex, Ali, Andy, Ari, Ash, Avery, Bailey, Blair, Blake, Bobbie, Brett, Brook, Cameron, Carey, Casey, Charlie, Chris, Cody, Corey, Dakota, Dale, Dana, Darcy, Devon, Drew, Eden, Elliot, Ellis, Emerson, Emery, Evan, Finley, Francis, Frankie, Gale, Glenn, Gray, Harley, Harper, Hayden, Hunter, Indy, Jaden, Jamie, Jesse, Jo, Jody, Jordan, Jules, Justice, Kai, Kelly, Kendall, Kerry, Kim, Kit, Lane, Lee, Lesley, Logan, Lou, Lynn, Marley, Max, Mel, Merritt, Micah, Morgan, Murphy, Nat, Nicky, Noel, Oakley, Pat, Perry, Parker, Peyton, Phoenix, Quinn, Ray, Reese, Remy, Riley, Robin, Rory, Rowan, Ryan, Sage, Sam, Sasha, Shay, Sidney, Skyler, Spencer, Stevie, Sutton, Tatum, Taylor, Terry, Toby]

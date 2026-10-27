@@ -16,6 +16,8 @@
 | `interaction-design.md` | 玩家怎么输入、系统怎么回应、界面怎么排 |
 | `backend-design.md` | 系统结构、四个模块、数据与训练 |
 | `beat-script.md` | 20 个 beat 的剧本 |
+| `annotation.md` | 人工标注方案：协议、250 条预算的分配、抽样、统计 |
+| `selfplay.md` | 自博弈方案：HEXACO 性格抽样、模型轮换、DM 策略混合、批量运行、监控 |
 | `plan.md` | 开发计划、里程碑进度和实现中定下的细化（R1–R26） |
 
 ## 准备
