@@ -11,7 +11,7 @@ from typing import Any
 from ..data import load_jsonl
 from ..metrics import headline, per_lang, score_system
 
-EVAL_SPLITS = ("val", "test", "seeds")
+EVAL_SPLITS = ("val", "test", "test_v1", "seeds")  # test_v1: the frozen first test set, when present
 
 
 def parse_args(name: str) -> argparse.Namespace:

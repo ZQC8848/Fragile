@@ -47,3 +47,16 @@ def test_example_count_cut_gives_close_to_80_10_10_with_few_sessions():
     n = sum(len(v) for v in buckets.values())
     assert 0.75 < len(buckets["train"]) / n < 0.85
     assert 0.05 < len(buckets["test"]) / n < 0.16
+
+
+def test_pinned_sessions_keep_their_split_and_new_ones_split_80_10_10():
+    old = [_ex(f"old{i}", f"old game {i} sentence about the parcel and Nora") for i in range(100)]
+    first, _ = split_examples(old)
+    pinned = {r["session"]: name for name, rows in first.items() for r in rows}
+    new = [_ex(f"new{i}", f"new game {i} sentence about the hall and Mia") for i in range(400)]
+    second, _ = split_examples(old + new, pinned=pinned)
+    where = {r["session"]: name for name, rows in second.items() for r in rows}
+    assert all(where[s] == split for s, split in pinned.items())
+    new_train = sum(where[f"new{i}"] == "train" for i in range(400))
+    assert 0.75 < new_train / 400 < 0.85
+    assert leaks(second) == 0

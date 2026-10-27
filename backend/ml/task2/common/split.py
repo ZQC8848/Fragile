@@ -8,6 +8,10 @@ teacher wrote) only go to train, and at most `rewrite_frac` of it.
     python -m task2.common.split --examples examples/all.jsonl --out examples/   (on CARC)
     uv run python -m ml.task2.common.split ...                                   (locally)
 
+When the data grows, --pin OLD_DIR keeps every session of an earlier split where it was and splits only
+the new sessions; OLD_DIR/test.jsonl is also copied verbatim to test_v1.jsonl, a frozen benchmark that
+results from before the growth can be compared on.
+
 Exits non-zero if any test or val example still nearly duplicates a train example.
 Standard library only.
 """
@@ -68,20 +72,23 @@ class NearDupIndex:
         return [i for i, c in counts.items() if c >= need * 0.5 and jaccard(sh, self.items[i]) >= self.threshold]
 
 
-def assign_sessions(examples: list[dict], ratios: tuple[float, float] = (0.8, 0.1), seed: str = "task2") -> dict[str, str]:
+def assign_sessions(examples: list[dict], ratios: tuple[float, float] = (0.8, 0.1), seed: str = "task2",
+                    pinned: dict[str, str] | None = None) -> dict[str, str]:
     """Sessions ordered by a seeded hash, then cut so train/val/test hold ~80/10/10% of the examples.
 
     With only tens of games, assigning each session independently at random gives very uneven splits;
     cutting the hash-ordered list by example count keeps the proportions while staying deterministic.
-    Rewrite examples are not counted, since they can only go to train.
+    Rewrite examples are not counted, since they can only go to train. Sessions in `pinned` keep their split
+    and the cut is made over the remaining sessions only.
     """
+    pinned = pinned or {}
     counts: dict[str, int] = defaultdict(int)
     for ex in examples:
-        if ex.get("source") != "rewrite":
+        if ex.get("source") != "rewrite" and ex["session"] not in pinned:
             counts[ex["session"]] += 1
     order = sorted(counts, key=lambda s: hashlib.sha1(f"{seed}:{s}".encode()).hexdigest())
     total = sum(counts.values())
-    out, acc = {}, 0
+    out, acc = dict(pinned), 0
     for s in order:
         frac = acc / total if total else 0.0
         out[s] = "train" if frac < ratios[0] else "val" if frac < ratios[0] + ratios[1] else "test"
@@ -91,9 +98,10 @@ def assign_sessions(examples: list[dict], ratios: tuple[float, float] = (0.8, 0.
     return out
 
 
-def split_examples(examples: list[dict], threshold: float = 0.9, cap: int = 3, rewrite_frac: float = 0.15) -> tuple[dict[str, list[dict]], dict]:
+def split_examples(examples: list[dict], threshold: float = 0.9, cap: int = 3, rewrite_frac: float = 0.15,
+                   pinned: dict[str, str] | None = None) -> tuple[dict[str, list[dict]], dict]:
     buckets: dict[str, list[dict]] = {"train": [], "val": [], "test": []}
-    assignment = assign_sessions(examples)
+    assignment = assign_sessions(examples, pinned=pinned)
     for ex in examples:
         split = assignment[ex["session"]]
         if ex.get("source") == "rewrite" and split != "train":
@@ -152,20 +160,44 @@ def leaks(buckets: dict[str, list[dict]], threshold: float = 0.9) -> int:
     return n
 
 
+def load_jsonl(path: Path) -> list[dict]:
+    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+
+
+def pinned_sessions(old_dir: Path) -> dict[str, str]:
+    """Session -> split of an earlier split directory."""
+    pinned: dict[str, str] = {}
+    for split in ("train", "val", "test"):
+        for ex in load_jsonl(old_dir / f"{split}.jsonl"):
+            pinned[ex["session"]] = split
+    return pinned
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--examples", required=True)
     ap.add_argument("--out", required=True)
     ap.add_argument("--threshold", type=float, default=0.9)
+    ap.add_argument("--pin", help="earlier split directory: its sessions keep their split, its test becomes test_v1")
     args = ap.parse_args()
-    examples = [json.loads(line) for line in Path(args.examples).read_text(encoding="utf-8").splitlines() if line.strip()]
-    buckets, stats = split_examples(examples, args.threshold)
+    examples = load_jsonl(Path(args.examples))
+    pinned = pinned_sessions(Path(args.pin)) if args.pin else None
+    old_test = load_jsonl(Path(args.pin) / "test.jsonl") if args.pin else None
+    buckets, stats = split_examples(examples, args.threshold, pinned=pinned)
     out = Path(args.out)
+    if args.pin and out.resolve() == Path(args.pin).resolve():
+        sys.exit("--out must differ from --pin")
     out.mkdir(parents=True, exist_ok=True)
     for name, rows in buckets.items():
         (out / f"{name}.jsonl").write_text("".join(json.dumps(r, ensure_ascii=False) + "\n" for r in rows), encoding="utf-8")
     n_leak = leaks(buckets, args.threshold)
     stats["leaks"] = n_leak
+    if old_test is not None:
+        (out / "test_v1.jsonl").write_text("".join(json.dumps(r, ensure_ascii=False) + "\n" for r in old_test), encoding="utf-8")
+        stats["pinned_sessions"] = len(pinned)
+        stats["n_test_v1"] = len(old_test)
+        # informational: test_v1 is frozen, so new train examples may come to nearly duplicate some of it
+        stats["test_v1_near_dup_of_train"] = leaks({"train": buckets["train"], "val": [], "test": old_test}, args.threshold)
     print(json.dumps(stats, indent=1))
     sys.exit(1 if n_leak else 0)
 
