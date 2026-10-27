@@ -11,7 +11,7 @@ logs do not record it yet.
     uv run python -m ml.task2.gen.run_selfplay --run b1 --games 50 --concurrency 8
 
 Output (outside the repo): $TASK2_DATA/raw/<run>/turns.jsonl (one line per review call) and sessions.jsonl
-(one line per game). Re-running the same --run skips games already marked done.
+(one line per game). Re-running the same --run skips games already kept (done or cut) and replays failed ones.
 """
 
 from __future__ import annotations
@@ -29,6 +29,7 @@ from pathlib import Path
 from typing import Any
 
 from engine.llm import load_env
+from engine.llm.client import LLMOutputError
 
 from ..common.labels import SCHEMA_VERSION, SILENCE_UNIT
 
@@ -59,6 +60,9 @@ def _turn_input(out: dict[str, Any]) -> dict[str, Any] | None:
     return {"mode": "single", "text": text} if text else None
 
 
+
+PLAYER_TURN_TRIES = 3  # whole Kimi/DeepSeek chain, per player turn
+
 class Generator:
     def __init__(self, args: argparse.Namespace):
         self.args = args
@@ -85,7 +89,7 @@ class Generator:
         path = self.out / "sessions.jsonl"
         if not path.exists():
             return set()
-        return {json.loads(line)["session"] for line in path.read_text(encoding="utf-8").splitlines() if line.strip() and json.loads(line)["status"] == "done"}
+        return {json.loads(line)["session"] for line in path.read_text(encoding="utf-8").splitlines() if line.strip() and json.loads(line)["status"] in ("done", "cut")}
 
     def budget_left(self) -> bool:
         return self.args.max_calls <= 0 or self.calls < self.args.max_calls
@@ -163,10 +167,20 @@ class Generator:
                 from .player import build_request
 
                 req = build_request(s, persona, "Sam", mode, violate, lang)
-                async with self.sem_player:
-                    if not a.mock_player:
-                        self.calls += 1
-                    out, pmeta, cin, cout = await player.turn(req)
+                # Kimi and DeepSeek both failing on one turn is an API hiccup, not a bad label: nothing has been
+                # submitted to the game yet, so the turn is simply asked for again rather than losing the game.
+                for attempt in range(PLAYER_TURN_TRIES):
+                    try:
+                        async with self.sem_player:
+                            if not a.mock_player:
+                                self.calls += 1
+                            out, pmeta, cin, cout = await player.turn(req)
+                        break
+                    except LLMOutputError:
+                        if attempt == PLAYER_TURN_TRIES - 1:
+                            raise
+                        stats["player_turn_retries"] = stats.get("player_turn_retries", 0) + 1
+                        await asyncio.sleep(10 * 2 ** attempt)
                 stats["player_calls"] += 1
                 stats["player_chars_in"] += cin
                 stats["player_chars_out"] += cout
@@ -257,6 +271,9 @@ def main() -> None:
     os.environ.setdefault("LLM_TIMEOUT_REVIEW", "30")
     os.environ.setdefault("LLM_TIMEOUT_SELFPLAY", "60")
     os.environ.setdefault("LLM_FALLBACK_SELFPLAY", "review")  # DeepSeek writes the turn when Kimi times out
+    # The fallback client would get the engine's 30 s default, which a slow DeepSeek misses in the games where
+    # it goes first (b2 lost 2 of its first 8 games that way). 60 + 60 s still fits the 150 s turn budget.
+    os.environ.setdefault("LLM_TIMEOUT_SELFPLAY_FALLBACK", "60")
     asyncio.run(Generator(args).run())
 
 
