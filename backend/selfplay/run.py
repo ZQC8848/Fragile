@@ -43,6 +43,9 @@ RAW_DIR = DATA_DIR / "selfplay_raw"
 SCHEMA = json.loads((REPO_ROOT / "schemas" / "llm" / "selfplay.json").read_text(encoding="utf-8"))
 VIOLATIONS = list(SCHEMA["properties"]["deliberate_violation"]["anyOf"][0]["enum"])
 FINAL = {"ended", "max_turns", "error"}
+#: a session whose player cannot write this many turns in a row is an error, not a game of silence (an
+#: expired login or an unpaid account would otherwise "play" a whole session of nothing)
+MAX_SILENT_STREAK = 3
 
 
 class BudgetExceeded(RuntimeError):
@@ -88,6 +91,9 @@ class Player:
         self.log_path = log_path
         self.own: list[str] = []
         self.last_review: dict[str, Any] | None = None
+        #: consecutive turns the player could not write at all (its model errored), and the last error
+        self.silent_streak = 0
+        self.last_error: str | None = None
         self.counts = {"calls": 0, "attempts": 0, "rejected": 0, "rewrites_accepted": 0, "llm_errors": 0, "silences": 0,
                        "violations_asked": 0}
 
@@ -134,6 +140,7 @@ class Player:
                                                   prompt_version=self.prompt.version)
             except LLMOutputError as e:
                 self.counts["llm_errors"] += 1
+                self.last_error = (e.result.errors or ["unusable output"])[-1][:300]
                 self._log({**log, "outcome": "llm_error", "llm": e.result.meta()})
                 continue
             out = res.data
@@ -151,6 +158,7 @@ class Player:
                         self.counts["rewrites_accepted"] += 1
             self._log({**log, "outcome": outcome})
             if record is not None:
+                self.silent_streak = 0
                 if line:
                     self.own.append(line)
                 return record
@@ -158,6 +166,7 @@ class Player:
             r = self.last_review or {}
             refused = {"category": r.get("category"), "message": r.get("message")}
         self.counts["silences"] += 1
+        self.silent_streak += 1
         self._log({"turn": turn_no, "attempt": 0, "outcome": "silence_fallback"})
         return await s.submit({}, "filled")
 
@@ -301,6 +310,8 @@ async def play_session(entry: dict[str, Any], header: dict[str, Any], root: Path
             u = usage_summary(usage, profiles)
             spend.live[sid] = (u["cost_usd"], u["tokens"])
             write(turns=s.state["turn_count"], player=player.counts)
+            if player.silent_streak >= MAX_SILENT_STREAK:
+                raise RuntimeError(f"the player model failed {player.silent_streak} turns in a row: {player.last_error}")
             if spend.over(1.25):
                 raise BudgetExceeded("budget exceeded by 25%: session aborted, it is replayed next run")
         status = "ended" if s.phase == "ended" else "max_turns"

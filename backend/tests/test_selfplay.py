@@ -289,3 +289,15 @@ async def test_command_line_calls_run_isolated(monkeypatch, provider):
         assert seen["cmd"][seen["cmd"].index("--system-prompt") + 1] == "SYSTEM"
     else:
         assert "read-only" in seen["cmd"] and "--output-schema" in seen["cmd"] and seen["stdin"].startswith("SYSTEM")
+
+
+async def test_a_player_that_cannot_write_makes_the_session_an_error_not_a_silent_game(tmp_path, clean_git):
+    def broken(system, user):
+        raise RuntimeError("429 account suspended")
+
+    prof = mock_profiles()
+    part = manifest.shard(manifest.build("rdown", 1, profiles=prof), 1)[0]
+    res = await run_shard(part, raw_dir=tmp_path / "raw", profiles=prof, mock_handler=broken, progress=lambda _: None)
+    assert res["statuses"] == {"error": 1}
+    info = json.loads((tmp_path / "raw" / "rdown" / "shard-01" / part["sessions"][0]["id"] / "selfplay.json").read_text())
+    assert info["turns"] == run_mod.MAX_SILENT_STREAK and "429 account suspended" in info["error"]
