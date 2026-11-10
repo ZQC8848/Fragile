@@ -40,6 +40,11 @@ profiles:
     model: sonnet
     concurrency: 1
     price: { input: 0, output: 0 }
+  claude-opus:
+    provider: claude_cli
+    model: claude-opus-5-5
+    concurrency: 1
+    price: { input: 0, output: 0 }
   gpt:
     provider: codex_cli
     model: ""  # empty: whatever `codex exec` uses by default
@@ -76,7 +81,7 @@ players:
   shares: { deepseek-flash: 0.35, deepseek-v4-pro: 0.25, third: 0.25, kimi-k2.6: 0.15 }
   third: null
   # sessions played by these models go to the test split only (the unseen-player test, selfplay.md §2)
-  test_only: [kimi-k2.6, claude, gpt]
+  test_only: [kimi-k2.6, claude, claude-opus, gpt]
   # subscription models are added on top of the API sessions, a fixed number per round (`manifest --subscription`)
   subscription: [claude, gpt]
 

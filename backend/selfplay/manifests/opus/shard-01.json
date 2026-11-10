@@ -1,0 +1,264 @@
+{
+ "schema_version": 1,
+ "round": "opus",
+ "tag": "selfplay-opus",
+ "created": "2026-11-09",
+ "persona_seed": 138706213,
+ "generator_version": 2,
+ "prompt_versions": {
+  "review": 1,
+  "narrator": 1,
+  "guard": 1,
+  "tension": 1,
+  "scorer": 1,
+  "proposer": 1,
+  "options": 1,
+  "selfplay": 2,
+  "judge": 1
+ },
+ "profiles_hash": "c90023273bd1",
+ "engine_roles": {
+  "review": "deepseek-flash",
+  "narrator": "deepseek-flash",
+  "guard": "deepseek-flash",
+  "tension": "deepseek-flash",
+  "scorer": "deepseek-flash",
+  "options": "deepseek-flash",
+  "proposer": "deepseek-v4-pro",
+  "judge": "kimi-k3"
+ },
+ "n": 3,
+ "shard": "shard-01",
+ "shards": 1,
+ "sessions": [
+  {
+   "id": "opus-0000",
+   "index": 0,
+   "split": "test",
+   "player_profile": "claude-opus",
+   "dm": {
+    "policy": "B",
+    "scorer": "llm",
+    "tau": 1.0
+   },
+   "seed": 3481350255,
+   "persona": {
+    "generator_version": 2,
+    "seed": 138706213,
+    "index": 4,
+    "sampling": {
+     "tail": [],
+     "weight": 1.0041
+    },
+    "hexaco": {
+     "H": -0.383,
+     "E": 1.091,
+     "X": -0.042,
+     "A": -0.806,
+     "C": -0.414,
+     "O": 1.26
+    },
+    "axes": {
+     "curiosity": 0.8916,
+     "confrontation": 0.763,
+     "side_strength": 0.482,
+     "honesty_to_nora": 0.1626,
+     "leave": 0.0823,
+     "compliance": 0.0708,
+     "verbosity": 0.4774,
+     "violation_rate": 0.094
+    },
+    "axes_raw": {
+     "curiosity": 0.8916,
+     "confrontation": 0.763,
+     "side_strength": 0.482,
+     "honesty_to_nora": 0.1626,
+     "leave": 0.8231,
+     "compliance": 0.0708,
+     "verbosity": 0.4774,
+     "violation_rate": 0.627
+    },
+    "side": "julian",
+    "goal": "be_honest",
+    "stance": "cover",
+    "style": {
+     "input_mode": "channels",
+     "temperature": 0.92
+    },
+    "identity": {
+     "name": "Hayden",
+     "gender": "female"
+    },
+    "card": [
+     "You are inquisitive, anxious and stubborn.",
+     "You don't like being steered. When someone tries to move you somewhere, you stay put.",
+     "You treat the evening like an interrogation. Ask pointed questions and press whenever an answer doesn't fit.",
+     "Your goal tonight: No more polite fictions. Be completely honest with everyone tonight.",
+     "You lean toward Julian; you tend to take his word over Mia's.",
+     "Fill the channels: what you say, what you do, your expression, and who you are talking to."
+    ],
+    "triggered": {
+     "truth_out": [
+      "Now that you know what happened, you will protect your friends, even if it means lying for them."
+     ]
+    }
+   }
+  },
+  {
+   "id": "opus-0001",
+   "index": 1,
+   "split": "test",
+   "player_profile": "claude-opus",
+   "dm": {
+    "policy": "B",
+    "scorer": "llm",
+    "tau": 1.0
+   },
+   "seed": 2262231604,
+   "persona": {
+    "generator_version": 2,
+    "seed": 138706213,
+    "index": 2,
+    "sampling": {
+     "tail": [
+      [
+       "E",
+       "high"
+      ]
+     ],
+     "weight": 1.2766
+    },
+    "hexaco": {
+     "H": -0.092,
+     "E": 1.811,
+     "X": 0.668,
+     "A": -0.362,
+     "C": -0.287,
+     "O": 0.7
+    },
+    "axes": {
+     "curiosity": 0.5914,
+     "confrontation": 0.9244,
+     "side_strength": 0.2066,
+     "honesty_to_nora": 0.3865,
+     "leave": 0.0838,
+     "compliance": 0.0822,
+     "verbosity": 0.5375,
+     "violation_rate": 0.0992
+    },
+    "axes_raw": {
+     "curiosity": 0.5914,
+     "confrontation": 0.9244,
+     "side_strength": 0.2066,
+     "honesty_to_nora": 0.3865,
+     "leave": 0.8383,
+     "compliance": 0.0822,
+     "verbosity": 0.5375,
+     "violation_rate": 0.6612
+    },
+    "side": "julian",
+    "goal": "studio_talk",
+    "stance": "report",
+    "style": {
+     "input_mode": "single",
+     "temperature": 0.88
+    },
+    "identity": {
+     "name": "Terry",
+     "gender": "female"
+    },
+    "card": [
+     "You are sentimental, inquisitive and lively.",
+     "You say what you think to people's faces. When an answer sounds rehearsed, you push back.",
+     "You don't like being steered. When someone tries to move you somewhere, you stay put.",
+     "Your goal tonight: Get Julian alone and ask how the studio is really doing.",
+     "You like Julian a little more than Mia, though it hardly shows.",
+     "Write each turn as one line: spoken words in double quotes, the rest is what you do."
+    ],
+    "triggered": {
+     "truth_out": [
+      "Now that you know what happened, you want the police called, whatever it costs your friends."
+     ]
+    }
+   }
+  },
+  {
+   "id": "opus-0002",
+   "index": 2,
+   "split": "test",
+   "player_profile": "claude-opus",
+   "dm": {
+    "policy": "B",
+    "scorer": "llm",
+    "tau": 1.0
+   },
+   "seed": 4131870533,
+   "persona": {
+    "generator_version": 2,
+    "seed": 138706213,
+    "index": 0,
+    "sampling": {
+     "tail": [
+      [
+       "E",
+       "high"
+      ]
+     ],
+     "weight": 0.7537
+    },
+    "hexaco": {
+     "H": -0.447,
+     "E": 1.334,
+     "X": 1.054,
+     "A": -0.734,
+     "C": 1.443,
+     "O": -0.9
+    },
+    "axes": {
+     "curiosity": 0.198,
+     "confrontation": 0.842,
+     "side_strength": 0.8641,
+     "honesty_to_nora": 0.6151,
+     "leave": 0.0748,
+     "compliance": 0.6962,
+     "verbosity": 0.3923,
+     "violation_rate": 0.0061
+    },
+    "axes_raw": {
+     "curiosity": 0.198,
+     "confrontation": 0.842,
+     "side_strength": 0.8641,
+     "honesty_to_nora": 0.6151,
+     "leave": 0.7484,
+     "compliance": 0.6962,
+     "verbosity": 0.3923,
+     "violation_rate": 0.0409
+    },
+    "side": "julian",
+    "goal": "protect_mia",
+    "stance": "cover",
+    "style": {
+     "input_mode": "channels",
+     "temperature": 0.98
+    },
+    "identity": {
+     "name": "Skyler",
+     "gender": "male"
+    },
+    "card": [
+     "You are deliberate, sentimental and lively.",
+     "You don't go looking for trouble, but you never let a dodge or a fib slide when it's right in front of you.",
+     "You are an easy guest. You accept invitations and do what you are asked.",
+     "Your goal tonight: Look out for Mia. If anyone gives her a hard time, step in.",
+     "You side with Julian. In any disagreement you back him, and you say so.",
+     "Fill the channels: what you say, what you do, your expression, and who you are talking to."
+    ],
+    "triggered": {
+     "truth_out": [
+      "Now that you know what happened, you will protect your friends, even if it means lying for them."
+     ]
+    }
+   }
+  }
+ ]
+}

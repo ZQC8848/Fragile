@@ -116,11 +116,18 @@ def _r(x: float | None, k: int = 3) -> float | None:
 
 # ----------------------------------------------------------------------------------------------- the report
 def build(sessions: list[dict[str, Any]]) -> dict[str, Any]:
+    all_infos = [s.get("selfplay.json") or {} for s in sessions]
+    # a session whose player wrote nothing for half its turns (dead login, unpaid account: sessions run before
+    # the runner stopped those) is not a game: it is left out of every statistic and listed under run.invalid
+    bad = {i.get("session") for i in all_infos if _mostly_silent(i)}
+    invalid = sorted(b for b in bad if b)
+    sessions = [s for s, i in zip(sessions, all_infos, strict=True) if i.get("session") not in bad]
     infos = [s.get("selfplay.json") or {} for s in sessions]
     played = [s for s, i in zip(sessions, infos, strict=True) if i.get("status") in ("ended", "max_turns")]
     statuses = Counter(i.get("status") for i in infos)
     run = {
         "sessions": len(sessions),
+        "invalid": invalid,
         "statuses": dict(statuses),
         "crash_rate": _r(statuses.get("error", 0) / len(sessions)) if sessions else None,
         "turns_median": median([i.get("turns", 0) for i in infos]) if infos else None,
@@ -173,6 +180,12 @@ def build(sessions: list[dict[str, Any]]) -> dict[str, Any]:
         "turn_latency_ms_median": median([(t.get("latency_ms") or {}).get("total", 0) for t in turns]) if turns else None,
     }
     return {"run": run, "axes_vs_behaviour": axes, "hexaco_vs_behaviour": hexaco, "collapse": collapse, "coverage": coverage}
+
+
+def _mostly_silent(info: dict[str, Any]) -> bool:
+    pl = info.get("player") or {}
+    turns = info.get("turns") or 0
+    return bool(turns and pl.get("silences", 0) * 2 >= turns)
 
 
 def _by_model(infos: list[dict[str, Any]]) -> dict[str, Any]:

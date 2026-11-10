@@ -301,3 +301,23 @@ async def test_a_player_that_cannot_write_makes_the_session_an_error_not_a_silen
     assert res["statuses"] == {"error": 1}
     info = json.loads((tmp_path / "raw" / "rdown" / "shard-01" / part["sessions"][0]["id"] / "selfplay.json").read_text())
     assert info["turns"] == run_mod.MAX_SILENT_STREAK and "429 account suspended" in info["error"]
+
+
+async def test_a_session_becomes_a_readable_transcript_in_english_and_chinese(tmp_path, clean_git, monkeypatch):
+    from tools import selfplay_transcript as tr
+
+    prof = mock_profiles()
+    part = manifest.shard(manifest.build("rtr", 1, profiles=prof), 1)[0]
+    raw = tmp_path / "raw"
+    await run_shard(part, raw_dir=raw, profiles=prof, max_turns=4, progress=lambda _: None)
+    sid = part["sessions"][0]["id"]
+    monkeypatch.setattr(tr, "RAW_DIR", raw)
+    s = tr.load_session(sid, "rtr")
+    blocks = tr.build(s)
+    en = tr.to_markdown(blocks)
+    assert f"# {sid}" in en and "## Persona card" in en and "## Opening" in en and "## Turn 4" in en and "**Player:**" in en
+    strings = tr.strings_to_translate(blocks)
+    assert strings and all(not x.startswith("Player:") for x in strings)
+    zh = tr.to_markdown(blocks, {x: f"【{x[:6]}】" for x in strings})
+    assert "## 开场" in zh and "## 回合 4" in zh and "**玩家：**" in zh and "玩家：" in zh.split("\n", 3)[2]
+    assert [p.name for p in tr.write(sid, "rtr", out_dir=tmp_path / "out")] == ["transcript.md"]

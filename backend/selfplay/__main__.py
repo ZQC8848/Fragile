@@ -75,6 +75,11 @@ def main(argv: list[str] | None = None) -> int:
     rep.add_argument("round")
     rep.add_argument("--raw", action="store_true", help="read data/selfplay_raw/ instead of the packs")
     rep.add_argument("--json", action="store_true")
+    tp = sub.add_parser("transcript", help="one session as readable text (transcript.md, and transcript.zh.md with --zh)")
+    tp.add_argument("session")
+    tp.add_argument("--round", required=True)
+    tp.add_argument("--zh", action="store_true", help="also write a Chinese translation (deepseek-flash, cached)")
+    tp.add_argument("--packed", action="store_true", help="read the pack in data/selfplay/ instead of data/selfplay_raw/")
     args = ap.parse_args(argv)
 
     if args.command != "persona":
@@ -150,6 +155,12 @@ def _command(args: argparse.Namespace) -> int:
 
         sessions = load_round(args.round, raw=args.raw)
         print(main_report(sessions, as_json=args.json))
+        return 0
+    if args.command == "transcript":
+        from tools.selfplay_transcript import write
+
+        for path in write(args.session, args.round, zh=args.zh, packed=args.packed):
+            print(path)
         return 0
     return 1
 
