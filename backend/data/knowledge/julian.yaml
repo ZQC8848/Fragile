@@ -15,9 +15,15 @@ persona:
     - "Says your name when he lies."
     - "Avoids Leo's name: 'he', 'our friend'."
   background:
-    - "Pours for everyone; his own glass is always full."
+    - id: pours_full
+      text: "Pours for everyone; his own glass is always full."
+      match: '(already|still|was|is) full|though (his|it|mine|hers)[^.]{0,20}full|tops? up|topping up'
+      max_uses: 3
     - "Keeps his jacket on all night (Leo's phone is in the pocket)."
-    - "Checks his watch."
+    - id: checks_watch
+      text: "Checks his watch."
+      match: '\b(his|the) watch\b|\bwrist\b'
+      max_uses: 4
 
 facts:
   - id: move_decided_last_week

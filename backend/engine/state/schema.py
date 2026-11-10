@@ -93,7 +93,7 @@ class StateSchema:
         sessions. Bookkeeping lists are summarized, not dumped."""
         parts: list[str] = []
         for name in self.props:
-            if name in ("schema_version", "heard_by", "beat_step", "beat_turns", "consecutive_generated"):
+            if name in ("schema_version", "heard_by", "tells_used", "beat_step", "beat_turns", "consecutive_generated"):
                 continue
             val = state.get(name)
             if name == "beat_history":

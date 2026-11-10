@@ -25,7 +25,10 @@
       do: "Mia hugs you a beat too long: 'You came. You actually came.' Her hands are cold and damp, as if she has just washed something."
       tableau: door_mia
     - id: julian_with_wine
-      do: "Julian appears with two glasses: 'There they are. Keep your shoes on, we've got nothing left to scratch.' He leads you into the living room: one photo left on the wall, boxes everywhere. Mia suddenly asks: 'Did you drive? Where did you park?' Julian cuts in and puts a glass in your hand."
+      do: "Julian appears with two glasses: 'There they are. Keep your shoes on, we've got nothing left to scratch.' He leads you into the living room: one photo left on the wall, boxes everywhere. He puts a glass in your hand."
+      lines:
+        - when: "not has(tells_used, 'car_question')"
+          do: "Mia suddenly asks: 'Did you drive? Where did you park?' Julian cuts across her."
   mix_in:
     - when: "has(turn.acts, 'ask_about_leo')"
       do: "Julian answers first: 'Not yet. He'll turn up. He always turns up late and apologizes beautifully.' Mia looks at her shoes."

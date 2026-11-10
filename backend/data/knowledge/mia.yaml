@@ -7,13 +7,27 @@ persona:
   fears: "Being left behind by Julian; prison; Leo's sister."
   voice: "Long sentences that interrupt themselves; apologizes a lot."
   never_says: ["the exact time of the afternoon"]
+  # A habit with an id is counted (engine/narrator/knowledge.py): once the narration has used it `max_uses`
+  # times (default 1) the narrator is no longer handed it. `match` is a regex over a finished passage.
   tells:
-    - "Asks oddly specific questions: 'Did you come by car? Where did you park?'"
-    - "Talks about Leo in the past tense, then corrects herself."
+    - id: car_question
+      text: "Asks oddly specific questions: 'Did you come by car? Where did you park?' (once; the arrival beat plays it)"
+      match: 'by car|did you drive|drive yourself|you (didn.t|don.t) drive|where did you (park|leave the car)|which way did you come'
+      max_uses: 1
+    - id: leo_past_tense
+      text: "Talks about Leo in the past tense, then corrects herself."
+      match: 'Is\. He is|no\. Is\b|was always\.\.\.|keep doing that|keep saying it as though'
+      max_uses: 2
   background:
-    - "Wipes the same corner of the kitchen island."
+    - id: wipes_corner
+      text: "Wipes the same corner of the kitchen island."
+      match: '\b(clean|same|dry)\b[^.]{0,25}\bcorner\b|\bcorner\b[^.]{0,40}\b(clean|already|wiped|dry)\b|wip\w* (the |that )?(counter|island|corner|glass)'
+      max_uses: 3
     - "Will not sit at the crate's far end."
-    - "Checks that the windows are shut."
+    - id: checks_windows
+      text: "Checks that the windows are shut."
+      match: 'windows? (are |is )?(shut|closed|catch)|window catch'
+      max_uses: 1
 
 facts:
   - id: doesnt_want_to_leave

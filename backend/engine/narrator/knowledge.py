@@ -2,10 +2,18 @@
 
 Each turn the narrator only gets what may be said now: for every character in the scene, their persona and
 the facts whose `may_say_when` holds. Secrets it never receives it cannot leak; the guard is the second line.
+
+Habits. A persona's `tells` and `background` entries are plain strings, or objects {id, text, match, max_uses}.
+An object habit is counted: when a finished passage matches its regex (`used_in`), its id goes into the state's
+`tells_used`, and once it has been used `max_uses` times (default 1) the narrator is no longer handed it, so a
+tic such as Mia's "Did you come by car?" or the wiped corner cannot be improvised again and again. The opening
+passage (turn 0) gets no `tells` at all: it has no beat step to follow, and a tell used there is delivered a
+second time when the first beat's own step plays it.
 """
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import Any
 
@@ -15,6 +23,8 @@ from engine.dsl import compile_expr, truthy
 from engine.paths import DATA_DIR
 
 CHARACTERS = ("julian", "mia", "nora", "player")
+HABIT_KEYS = ("tells", "background")
+DEFAULT_MAX_USES = 1
 
 
 class Knowledge:
@@ -25,6 +35,13 @@ class Knowledge:
             for who, card in cards.items()
             for f in card["facts"]
         }
+        #: habit id -> (compiled match, max uses), over every character's tells and background
+        self.habits: dict[str, tuple[re.Pattern[str], int]] = {}
+        for card in cards.values():
+            for key in HABIT_KEYS:
+                for h in (card.get("persona") or {}).get(key) or []:
+                    if isinstance(h, dict):
+                        self.habits[h["id"]] = (re.compile(h["match"], re.IGNORECASE), int(h.get("max_uses", DEFAULT_MAX_USES)))
 
     @classmethod
     def from_dir(cls, directory: Path | None = None) -> Knowledge:
@@ -62,16 +79,33 @@ class Knowledge:
             "knows": [f["text"] for f in self.sayable("player", state)],
         }
 
-    def slice(self, state: dict[str, Any], speakers: list[str], perceivable: list[str]) -> dict[str, Any]:
-        """What the narrator may use this turn."""
+    def used_in(self, segments: list[dict[str, Any]]) -> list[str]:
+        """Ids of the habits a finished passage used (the player's own echoed lines do not count)."""
+        text = " ".join(s["text"] for s in segments if not s["kind"].startswith("me"))
+        return [hid for hid, (pattern, _) in self.habits.items() if pattern.search(text)]
+
+    def _habits_left(self, entries: list[Any], state: dict[str, Any]) -> list[str]:
+        used = state.get("tells_used") or []
+        out = []
+        for h in entries:
+            if not isinstance(h, dict):
+                out.append(h)
+            elif used.count(h["id"]) < int(h.get("max_uses", DEFAULT_MAX_USES)):
+                out.append(h["text"])
+        return out
+
+    def slice(self, state: dict[str, Any], speakers: list[str], perceivable: list[str], opening: bool = False) -> dict[str, Any]:
+        """What the narrator may use this turn. `opening`: the very first passage, which gets no tells."""
         out: dict[str, Any] = {}
         for who in speakers:
             card = self.cards.get(who)
             if not card:
                 continue
             persona = card.get("persona") or {}
+            keys = ("surface", "wants", "voice", "never_says", *(() if opening else ("tells",)), "background")
+            shown = {k: (self._habits_left(persona[k], state) if k in HABIT_KEYS else persona[k]) for k in keys if persona.get(k)}
             out[who] = {
-                "persona": {k: persona.get(k) for k in ("surface", "wants", "voice", "never_says", "tells", "background") if persona.get(k)},
+                "persona": {k: v for k, v in shown.items() if v},
                 "may_say": [f["text"] for f in self.sayable(who, state)],
             }
         player = self.cards.get("player") or {}

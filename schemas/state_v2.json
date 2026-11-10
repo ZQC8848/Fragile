@@ -36,6 +36,7 @@
     "threatened_julian",
     "claims",
     "heard_by",
+    "tells_used",
     "current_beat",
     "beat_step",
     "beat_turns",
@@ -323,6 +324,15 @@
           "$ref": "#/$defs/Npc"
         }
       }
+    },
+    "tells_used": {
+      "type": "array",
+      "default": [],
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9_]*$"
+      },
+      "description": "Character habits (a `tells` or `background` entry in data/knowledge with an id and a `match`) that the narration has used: one entry per passage that used one. A habit stops being handed to the narrator once it has been used `max_uses` times, and beat step lines can read it, e.g. not has(tells_used, 'car_question')."
     },
     "current_beat": {
       "type": [

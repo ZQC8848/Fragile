@@ -157,6 +157,7 @@ class Session:
             opening = self._start_beat(decision, 0)
             req = self._request(state, 0, prologue=self.prologue, opening=opening)
             out, guard_log = await self._narrate(req, state, None, [], [])
+            self._count_habits(out["segments"])
             await self._emit_passage(0, None, out["segments"], None, False)
             record = {
                 "turn": 0, "session": self.id, "name_len": len(self.name), "gender": self.gender,
@@ -454,6 +455,7 @@ class Session:
             extra_allowed |= beat_for_guard.reveals()
         out, guard_log = await self._narrate(req, state, channels, extra_allowed, [s["id"] for s in plan], ending=ending is not None, world=world)
         lat["narrator_guard"] = _ms(t)
+        state = self._count_habits(out["segments"])
 
         # -- 7. emit, log --------------------------------------------------------------------------------
         final = self.state.get("ending") is not None
@@ -614,7 +616,7 @@ class Session:
             ending = {"steps": ending["steps"], "epilogue": ending.get("epilogue")}
         return NarrationRequest(
             name=self.name, gender=self.gender, turn=turn_no, room=state["player_room"], present=present,
-            knowledge=self.knowledge.slice(state, speakers, self.world.perceivable(state)),
+            knowledge=self.knowledge.slice(state, speakers, self.world.perceivable(state), opening=turn_no == 0),
             words=self.clock.passage_words(state["story_min"]), recent=[p["text"] for p in self.passages[-2:]],
             positions=story_ledger.positions(state), ledger=story_ledger.history(state), said=story_ledger.said(self.passages),
             opening=opening, ending=ending, **kw,
@@ -668,6 +670,13 @@ class Session:
             repaired = True
         req.hints = []
         return {**out.public(), "segments": segments, "rewrites": rewrites, "repaired": repaired}, log
+
+    def _count_habits(self, segments: list[dict[str, Any]]) -> dict[str, Any]:
+        """Book the character habits this passage used into the state (`tells_used`, engine/narrator/knowledge.py)."""
+        used = self.knowledge.used_in(segments)
+        if used:
+            self.state = {**self.state, "tells_used": [*(self.state.get("tells_used") or []), *used]}
+        return self.state
 
     async def _emit_passage(self, turn_no: int, player: dict[str, Any] | None, segments: list[dict[str, Any]], tableau: str | None, final: bool) -> None:
         segments = [{**s, "text": fill(s["text"], self.name)} for s in segments]
