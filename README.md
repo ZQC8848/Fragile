@@ -18,6 +18,7 @@
 | `beat-script.md` | 20 个 beat 的剧本 |
 | `annotation.md` | 人工标注方案：协议、250 条预算的分配、抽样、统计 |
 | `selfplay.md` | 自博弈方案：HEXACO 性格抽样、模型轮换、DM 策略混合、批量运行、监控 |
+| `selfplay-quickstart.md` | **队友上手指南**：配置、领分片、运行、打包推送、出问题怎么办、时间和费用 |
 | `plan.md` | 开发计划、里程碑进度和实现中定下的细化（R1–R26） |
 
 ## 准备
@@ -100,7 +101,7 @@ uv run python tools/play_cli.py --live all                       # 全部角色�
 
 ## 自博弈
 
-LLM 扮演玩家、整局在进程里跑，详见 [selfplay.md](selfplay.md) §7 和 §7.1。模型配置全部写在 `backend/selfplay/profiles.yaml`，`.env` 里只需要 key（模板见 `backend/.env.selfplay.example`）。
+LLM 扮演玩家、整局在进程里跑。**队友第一次跑，请先读 [selfplay-quickstart.md](selfplay-quickstart.md)**；设计和原理见 [selfplay.md](selfplay.md) §7 和 §7.1。模型配置全部写在 `backend/selfplay/profiles.yaml`，`.env` 里只需要 key（模板见 `backend/.env.selfplay.example`）。
 
 ```bash
 cd backend
