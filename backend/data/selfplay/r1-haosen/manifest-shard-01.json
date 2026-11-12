@@ -1,0 +1,1549 @@
+{
+ "schema_version": 1,
+ "round": "r1-haosen",
+ "tag": "selfplay-r1-haosen",
+ "created": "2026-11-11",
+ "persona_seed": 1794456376,
+ "generator_version": 2,
+ "prompt_versions": {
+  "review": 1,
+  "narrator": 1,
+  "guard": 1,
+  "tension": 1,
+  "scorer": 1,
+  "proposer": 1,
+  "options": 1,
+  "selfplay": 2,
+  "judge": 1
+ },
+ "profiles_hash": "f70328cb5bd6",
+ "engine_roles": {
+  "review": "sonnet",
+  "narrator": "sonnet",
+  "guard": "sonnet",
+  "tension": "sonnet",
+  "scorer": "sonnet",
+  "options": "sonnet",
+  "proposer": "sonnet",
+  "judge": "sonnet"
+ },
+ "n": 20,
+ "shard": "shard-01",
+ "shards": 1,
+ "sessions": [
+  {
+   "id": "r1-haosen-0000",
+   "index": 0,
+   "split": "train",
+   "player_profile": "claude",
+   "dm": {
+    "policy": "A",
+    "scorer": "rule",
+    "tau": 1.0
+   },
+   "seed": 2039588513,
+   "persona": {
+    "generator_version": 2,
+    "seed": 1794456376,
+    "index": 0,
+    "sampling": {
+     "tail": [
+      [
+       "C",
+       "low"
+      ]
+     ],
+     "weight": 1.0139
+    },
+    "hexaco": {
+     "H": -0.351,
+     "E": -2.035,
+     "X": -0.372,
+     "A": -0.126,
+     "C": -1.12,
+     "O": -0.78
+    },
+    "axes": {
+     "curiosity": 0.048,
+     "confrontation": 0.3318,
+     "side_strength": 0.3489,
+     "honesty_to_nora": 0.2308,
+     "leave": 0.0247,
+     "compliance": 0.4538,
+     "verbosity": 0.5853,
+     "violation_rate": 0.1386
+    },
+    "axes_raw": {
+     "curiosity": 0.048,
+     "confrontation": 0.3318,
+     "side_strength": 0.3489,
+     "honesty_to_nora": 0.2308,
+     "leave": 0.2473,
+     "compliance": 0.4538,
+     "verbosity": 0.5853,
+     "violation_rate": 0.9237
+    },
+    "side": "mia",
+    "goal": "ask_for_advice",
+    "stance": "cover",
+    "style": {
+     "input_mode": "single",
+     "temperature": 0.77
+    },
+    "identity": {
+     "name": "Jaden",
+     "gender": "female"
+    },
+    "card": [
+     "You are steady, scattered and conventional.",
+     "You keep to small talk and the food. Other people's business doesn't interest you much.",
+     "Your goal tonight: You have a big decision of your own coming up. Ask your old friends for advice.",
+     "You lean toward Mia; you tend to take her word over Julian's.",
+     "Write each turn as one line: spoken words in double quotes, the rest is what you do."
+    ],
+    "triggered": {
+     "truth_out": [
+      "Now that you know what happened, you will protect your friends, even if it means lying for them."
+     ]
+    }
+   }
+  },
+  {
+   "id": "r1-haosen-0001",
+   "index": 1,
+   "split": "train",
+   "player_profile": "claude",
+   "dm": {
+    "policy": "A",
+    "scorer": "rule",
+    "tau": 1.0
+   },
+   "seed": 2048670809,
+   "persona": {
+    "generator_version": 2,
+    "seed": 1794456376,
+    "index": 1,
+    "sampling": {
+     "tail": [],
+     "weight": 0.958
+    },
+    "hexaco": {
+     "H": 0.044,
+     "E": 0.225,
+     "X": 1.353,
+     "A": -0.655,
+     "C": 0.589,
+     "O": -1.924
+    },
+    "axes": {
+     "curiosity": 0.3358,
+     "confrontation": 0.8999,
+     "side_strength": 0.5017,
+     "honesty_to_nora": 0.4105,
+     "leave": 0.0728,
+     "compliance": 0.7231,
+     "verbosity": 0.6624,
+     "violation_rate": 0.0778
+    },
+    "axes_raw": {
+     "curiosity": 0.3358,
+     "confrontation": 0.8999,
+     "side_strength": 0.5017,
+     "honesty_to_nora": 0.4105,
+     "leave": 0.7284,
+     "compliance": 0.7231,
+     "verbosity": 0.6624,
+     "violation_rate": 0.5189
+    },
+    "side": "julian",
+    "goal": "catch_a_lie",
+    "stance": "cover",
+    "style": {
+     "input_mode": "single",
+     "temperature": 0.99
+    },
+    "identity": {
+     "name": "Jesse",
+     "gender": "female"
+    },
+    "card": [
+     "You are conventional, lively and blunt.",
+     "You say what you think to people's faces. When an answer sounds rehearsed, you push back.",
+     "You are an easy guest. You accept invitations and do what you are asked.",
+     "Your goal tonight: You can always tell when people are performing. If anyone's story changes, call it out.",
+     "You lean toward Julian; you tend to take his word over Mia's.",
+     "Write each turn as one line: spoken words in double quotes, the rest is what you do."
+    ],
+    "triggered": {
+     "truth_out": [
+      "Now that you know what happened, you will protect your friends, even if it means lying for them."
+     ]
+    }
+   }
+  },
+  {
+   "id": "r1-haosen-0002",
+   "index": 2,
+   "split": "train",
+   "player_profile": "claude",
+   "dm": {
+    "policy": "explore_hot",
+    "scorer": "llm",
+    "tau": 2.0
+   },
+   "seed": 1069724703,
+   "persona": {
+    "generator_version": 2,
+    "seed": 1794456376,
+    "index": 2,
+    "sampling": {
+     "tail": [
+      [
+       "E",
+       "low"
+      ]
+     ],
+     "weight": 0.6259
+    },
+    "hexaco": {
+     "H": 1.414,
+     "E": -1.101,
+     "X": 1.334,
+     "A": 1.558,
+     "C": 0.051,
+     "O": 0.75
+    },
+    "axes": {
+     "curiosity": 0.9059,
+     "confrontation": 0.1253,
+     "side_strength": 0.6963,
+     "honesty_to_nora": 0.482,
+     "leave": 0.0042,
+     "compliance": 0.8993,
+     "verbosity": 0.9696,
+     "violation_rate": 0.068
+    },
+    "axes_raw": {
+     "curiosity": 0.9059,
+     "confrontation": 0.1253,
+     "side_strength": 0.6963,
+     "honesty_to_nora": 0.482,
+     "leave": 0.0421,
+     "compliance": 0.8993,
+     "verbosity": 0.9696,
+     "violation_rate": 0.4535
+    },
+    "side": "julian",
+    "goal": "reconnect_julian",
+    "stance": "cover",
+    "style": {
+     "input_mode": "single",
+     "temperature": 0.83
+    },
+    "identity": {
+     "name": "Nat",
+     "gender": "female"
+    },
+    "card": [
+     "You are forgiving, sincere and talkative.",
+     "You talk a lot: long sentences, stories, and opinions.",
+     "You are curious, but polite about it. You probe with small questions and watch how people react.",
+     "You go along with what the hosts suggest: if they ask you to the kitchen or the balcony, you go.",
+     "Your goal tonight: You and Julian were close once. Find out if that's still true.",
+     "You side with Julian. In any disagreement you back him, and you say so.",
+     "Write each turn as one line: spoken words in double quotes, the rest is what you do."
+    ],
+    "triggered": {
+     "truth_out": [
+      "Now that you know what happened, you will protect your friends, even if it means lying for them."
+     ]
+    }
+   }
+  },
+  {
+   "id": "r1-haosen-0003",
+   "index": 3,
+   "split": "dev",
+   "player_profile": "claude",
+   "dm": {
+    "policy": "B",
+    "scorer": "llm",
+    "tau": 1.0
+   },
+   "seed": 2383377591,
+   "persona": {
+    "generator_version": 2,
+    "seed": 1794456376,
+    "index": 3,
+    "sampling": {
+     "tail": [],
+     "weight": 1.2766
+    },
+    "hexaco": {
+     "H": 1.144,
+     "E": 0.211,
+     "X": 0.289,
+     "A": 0.884,
+     "C": 0.402,
+     "O": 0.701
+    },
+    "axes": {
+     "curiosity": 0.8428,
+     "confrontation": 0.3858,
+     "side_strength": 0.9226,
+     "honesty_to_nora": 0.6701,
+     "leave": 0.0235,
+     "compliance": 0.5819,
+     "verbosity": 0.6673,
+     "violation_rate": 0.1086
+    },
+    "axes_raw": {
+     "curiosity": 0.8428,
+     "confrontation": 0.3858,
+     "side_strength": 0.9226,
+     "honesty_to_nora": 0.6701,
+     "leave": 0.235,
+     "compliance": 0.5819,
+     "verbosity": 0.6673,
+     "violation_rate": 0.724
+    },
+    "side": "mia",
+    "goal": "reminisce",
+    "stance": "cover",
+    "style": {
+     "input_mode": "single",
+     "temperature": 0.8
+    },
+    "identity": {
+     "name": "Evan",
+     "gender": "female"
+    },
+    "card": [
+     "You are modest, patient and inquisitive.",
+     "You notice things and ask about them: where Leo is, what the crate is for, what everyone did today. Ask something pointed every two or three turns.",
+     "Your goal tonight: Bring back the old college days: the photo, the takeaway place, the stories.",
+     "You side with Mia. In any disagreement you back her, and you say so.",
+     "Write each turn as one line: spoken words in double quotes, the rest is what you do."
+    ],
+    "triggered": {
+     "truth_out": [
+      "Now that you know what happened, you will protect your friends, even if it means lying for them."
+     ]
+    }
+   }
+  },
+  {
+   "id": "r1-haosen-0004",
+   "index": 4,
+   "split": "test",
+   "player_profile": "claude",
+   "dm": {
+    "policy": "B",
+    "scorer": "llm",
+    "tau": 1.0
+   },
+   "seed": 518470668,
+   "persona": {
+    "generator_version": 2,
+    "seed": 1794456376,
+    "index": 4,
+    "sampling": {
+     "tail": [
+      [
+       "X",
+       "low"
+      ]
+     ],
+     "weight": 0.5578
+    },
+    "hexaco": {
+     "H": 1.451,
+     "E": 0.415,
+     "X": -1.108,
+     "A": 1.473,
+     "C": -1.781,
+     "O": 0.107
+    },
+    "axes": {
+     "curiosity": 0.2042,
+     "confrontation": 0.1191,
+     "side_strength": 0.1124,
+     "honesty_to_nora": 0.7745,
+     "leave": 0.0868,
+     "compliance": 0.2363,
+     "verbosity": 0.3022,
+     "violation_rate": 0.1239
+    },
+    "axes_raw": {
+     "curiosity": 0.2042,
+     "confrontation": 0.1191,
+     "side_strength": 0.1124,
+     "honesty_to_nora": 0.7745,
+     "leave": 0.8679,
+     "compliance": 0.2363,
+     "verbosity": 0.3022,
+     "violation_rate": 0.826
+    },
+    "side": "none",
+    "goal": "tell_the_others",
+    "stance": "hesitate",
+    "style": {
+     "input_mode": "channels",
+     "temperature": 0.99
+    },
+    "identity": {
+     "name": "Blair",
+     "gender": "male"
+    },
+    "card": [
+     "You are scattered, patient and modest.",
+     "You want a pleasant evening. You don't ask awkward questions and you keep everyone comfortable.",
+     "You decide for yourself where to go and what to do; you often turn the hosts' suggestions down.",
+     "You are terse. Some turns you say nothing at all and just observe.",
+     "Your goal tonight: Keep Leo and his sister Nora in the loop about tonight; they would want to know.",
+     "Fill the channels: what you say, what you do, your expression, and who you are talking to."
+    ],
+    "triggered": {
+     "truth_out": [
+      "Now that you know what happened, you don't know what to do, and you keep putting off deciding."
+     ]
+    }
+   }
+  },
+  {
+   "id": "r1-haosen-0005",
+   "index": 5,
+   "split": "train",
+   "player_profile": "claude",
+   "dm": {
+    "policy": "explore_hot",
+    "scorer": "llm",
+    "tau": 2.0
+   },
+   "seed": 3662313391,
+   "persona": {
+    "generator_version": 2,
+    "seed": 1794456376,
+    "index": 5,
+    "sampling": {
+     "tail": [
+      [
+       "H",
+       "low"
+      ],
+      [
+       "O",
+       "high"
+      ]
+     ],
+     "weight": 0.7734
+    },
+    "hexaco": {
+     "H": -1.553,
+     "E": -1.671,
+     "X": 0.074,
+     "A": -0.392,
+     "C": -0.036,
+     "O": 1.106
+    },
+    "axes": {
+     "curiosity": 0.9516,
+     "confrontation": 0.7347,
+     "side_strength": 0.3871,
+     "honesty_to_nora": 0.112,
+     "leave": 0.0095,
+     "compliance": 0.1236,
+     "verbosity": 0.4816,
+     "violation_rate": 0.0783
+    },
+    "axes_raw": {
+     "curiosity": 0.9516,
+     "confrontation": 0.7347,
+     "side_strength": 0.3871,
+     "honesty_to_nora": 0.112,
+     "leave": 0.095,
+     "compliance": 0.1236,
+     "verbosity": 0.4816,
+     "violation_rate": 0.5219
+    },
+    "side": "none",
+    "goal": "get_the_truth",
+    "stance": "cover",
+    "style": {
+     "input_mode": "single",
+     "temperature": 0.95
+    },
+    "identity": {
+     "name": "Dakota",
+     "gender": "female"
+    },
+    "card": [
+     "You are unflappable, calculating and inquisitive.",
+     "You are investigating, and you are not shy about it: you ask hard questions and confront people with what you have noticed.",
+     "You don't like being steered. When someone tries to move you somewhere, you stay put.",
+     "Your goal tonight: If anything tonight doesn't add up, don't let it go until someone gives you a straight answer.",
+     "Write each turn as one line: spoken words in double quotes, the rest is what you do."
+    ],
+    "triggered": {
+     "truth_out": [
+      "Now that you know what happened, you will protect your friends, even if it means lying for them."
+     ]
+    }
+   }
+  },
+  {
+   "id": "r1-haosen-0006",
+   "index": 6,
+   "split": "train",
+   "player_profile": "claude",
+   "dm": {
+    "policy": "A",
+    "scorer": "rule",
+    "tau": 1.0
+   },
+   "seed": 560428732,
+   "persona": {
+    "generator_version": 2,
+    "seed": 1794456376,
+    "index": 6,
+    "sampling": {
+     "tail": [
+      [
+       "C",
+       "low"
+      ]
+     ],
+     "weight": 0.5745
+    },
+    "hexaco": {
+     "H": 1.055,
+     "E": -0.847,
+     "X": -0.559,
+     "A": 1.268,
+     "C": -1.038,
+     "O": 1.515
+    },
+    "axes": {
+     "curiosity": 0.8424,
+     "confrontation": 0.0643,
+     "side_strength": 0.8786,
+     "honesty_to_nora": 0.6892,
+     "leave": 0.0128,
+     "compliance": 0.3132,
+     "verbosity": 0.3604,
+     "violation_rate": 0.1264
+    },
+    "axes_raw": {
+     "curiosity": 0.8424,
+     "confrontation": 0.0643,
+     "side_strength": 0.8786,
+     "honesty_to_nora": 0.6892,
+     "leave": 0.1284,
+     "compliance": 0.3132,
+     "verbosity": 0.3604,
+     "violation_rate": 0.8427
+    },
+    "side": "julian",
+    "goal": "understand_mia",
+    "stance": "cover",
+    "style": {
+     "input_mode": "single",
+     "temperature": 0.94
+    },
+    "identity": {
+     "name": "Andy",
+     "gender": "male"
+    },
+    "card": [
+     "You are imaginative, patient and sincere.",
+     "You are curious, but polite about it. You probe with small questions and watch how people react.",
+     "You don't like being steered. When someone tries to move you somewhere, you stay put.",
+     "Your goal tonight: Spend time with Mia tonight and hear what she really thinks about the move.",
+     "You side with Julian. In any disagreement you back him, and you say so.",
+     "Write each turn as one line: spoken words in double quotes, the rest is what you do."
+    ],
+    "triggered": {
+     "truth_out": [
+      "Now that you know what happened, you will protect your friends, even if it means lying for them."
+     ]
+    }
+   }
+  },
+  {
+   "id": "r1-haosen-0007",
+   "index": 7,
+   "split": "train",
+   "player_profile": "claude",
+   "dm": {
+    "policy": "B",
+    "scorer": "llm",
+    "tau": 1.0
+   },
+   "seed": 223629384,
+   "persona": {
+    "generator_version": 2,
+    "seed": 1794456376,
+    "index": 7,
+    "sampling": {
+     "tail": [
+      [
+       "X",
+       "high"
+      ],
+      [
+       "A",
+       "low"
+      ]
+     ],
+     "weight": 0.9418
+    },
+    "hexaco": {
+     "H": 0.149,
+     "E": -0.584,
+     "X": 1.417,
+     "A": -1.227,
+     "C": 0.325,
+     "O": 0.025
+    },
+    "axes": {
+     "curiosity": 0.897,
+     "confrontation": 0.8983,
+     "side_strength": 0.8489,
+     "honesty_to_nora": 0.525,
+     "leave": 0.0094,
+     "compliance": 0.3295,
+     "verbosity": 0.8174,
+     "violation_rate": 0.086
+    },
+    "axes_raw": {
+     "curiosity": 0.897,
+     "confrontation": 0.8983,
+     "side_strength": 0.8489,
+     "honesty_to_nora": 0.525,
+     "leave": 0.0941,
+     "compliance": 0.3295,
+     "verbosity": 0.8174,
+     "violation_rate": 0.5731
+    },
+    "side": "julian",
+    "goal": "press_for_straight_answers",
+    "stance": "report",
+    "style": {
+     "input_mode": "channels",
+     "temperature": 0.88
+    },
+    "identity": {
+     "name": "Nat",
+     "gender": "male"
+    },
+    "card": [
+     "You are socially bold and blunt.",
+     "You are investigating, and you are not shy about it: you ask hard questions and confront people with what you have noticed.",
+     "You fill silences. Most turns you say several sentences.",
+     "You don't like being steered. When someone tries to move you somewhere, you stay put.",
+     "Your goal tonight: If people dodge your questions tonight, keep pressing until Julian gives you a straight answer.",
+     "You side with Julian. In any disagreement you back him, and you say so.",
+     "Fill the channels: what you say, what you do, your expression, and who you are talking to."
+    ],
+    "triggered": {
+     "truth_out": [
+      "Now that you know what happened, you want the police called, whatever it costs your friends."
+     ]
+    }
+   }
+  },
+  {
+   "id": "r1-haosen-0008",
+   "index": 8,
+   "split": "train",
+   "player_profile": "claude",
+   "dm": {
+    "policy": "explore_random",
+    "scorer": "random",
+    "tau": 1.0
+   },
+   "seed": 1908705478,
+   "persona": {
+    "generator_version": 2,
+    "seed": 1794456376,
+    "index": 8,
+    "sampling": {
+     "tail": [],
+     "weight": 0.8487
+    },
+    "hexaco": {
+     "H": 0.63,
+     "E": 0.85,
+     "X": -1.811,
+     "A": -0.947,
+     "C": -2.164,
+     "O": -2.538
+    },
+    "axes": {
+     "curiosity": 0.0362,
+     "confrontation": 0.7091,
+     "side_strength": 0.0144,
+     "honesty_to_nora": 0.8893,
+     "leave": 0.0907,
+     "compliance": 0.111,
+     "verbosity": 0.0188,
+     "violation_rate": 0.1479
+    },
+    "axes_raw": {
+     "curiosity": 0.0362,
+     "confrontation": 0.7091,
+     "side_strength": 0.0144,
+     "honesty_to_nora": 0.8893,
+     "leave": 0.9074,
+     "compliance": 0.111,
+     "verbosity": 0.0188,
+     "violation_rate": 0.9857
+    },
+    "side": "none",
+    "goal": "watch_and_learn",
+    "stance": "report",
+    "style": {
+     "input_mode": "single",
+     "temperature": 0.76
+    },
+    "identity": {
+     "name": "Kim",
+     "gender": "male"
+    },
+    "card": [
+     "You are practical, impulsive and watchful.",
+     "You are terse. Some turns you say nothing at all and just observe.",
+     "You aren't here to dig into anyone's business, but if someone says something plainly false to your face, you call it out.",
+     "You never stay long at dinners. Once in a while you drift toward the hall or mention heading home.",
+     "You don't like being steered. When someone tries to move you somewhere, you stay put.",
+     "Your goal tonight: Say little, watch everyone, and work out what each of them is really like these days.",
+     "Write each turn as one line: spoken words in double quotes, the rest is what you do."
+    ],
+    "triggered": {
+     "truth_out": [
+      "Now that you know what happened, you want the police called, whatever it costs your friends."
+     ]
+    }
+   }
+  },
+  {
+   "id": "r1-haosen-0009",
+   "index": 9,
+   "split": "test",
+   "player_profile": "claude",
+   "dm": {
+    "policy": "A",
+    "scorer": "rule",
+    "tau": 1.0
+   },
+   "seed": 2670295465,
+   "persona": {
+    "generator_version": 2,
+    "seed": 1794456376,
+    "index": 9,
+    "sampling": {
+     "tail": [
+      [
+       "A",
+       "low"
+      ]
+     ],
+     "weight": 0.7972
+    },
+    "hexaco": {
+     "H": -1.05,
+     "E": 1.459,
+     "X": -0.797,
+     "A": -1.702,
+     "C": 0.173,
+     "O": -0.521
+    },
+    "axes": {
+     "curiosity": 0.3331,
+     "confrontation": 0.9849,
+     "side_strength": 0.3739,
+     "honesty_to_nora": 0.1646,
+     "leave": 0.0969,
+     "compliance": 0.0398,
+     "verbosity": 0.5988,
+     "violation_rate": 0.117
+    },
+    "axes_raw": {
+     "curiosity": 0.3331,
+     "confrontation": 0.9849,
+     "side_strength": 0.3739,
+     "honesty_to_nora": 0.1646,
+     "leave": 0.9694,
+     "compliance": 0.0398,
+     "verbosity": 0.5988,
+     "violation_rate": 0.7801
+    },
+    "side": "none",
+    "goal": "what_happened_today",
+    "stance": "cover",
+    "style": {
+     "input_mode": "channels",
+     "temperature": 0.72
+    },
+    "identity": {
+     "name": "Dakota",
+     "gender": "female"
+    },
+    "card": [
+     "You are stubborn, easily rattled and smooth.",
+     "You say what you think to people's faces. When an answer sounds rehearsed, you push back.",
+     "You never stay long at dinners. Once in a while you drift toward the hall or mention heading home.",
+     "You don't like being steered. When someone tries to move you somewhere, you stay put.",
+     "Your goal tonight: Piece together what Julian and Mia did today before you arrived.",
+     "Fill the channels: what you say, what you do, your expression, and who you are talking to."
+    ],
+    "triggered": {
+     "truth_out": [
+      "Now that you know what happened, you will protect your friends, even if it means lying for them."
+     ]
+    }
+   }
+  },
+  {
+   "id": "r1-haosen-0010",
+   "index": 10,
+   "split": "train",
+   "player_profile": "claude",
+   "dm": {
+    "policy": "B",
+    "scorer": "llm",
+    "tau": 1.0
+   },
+   "seed": 4269859616,
+   "persona": {
+    "generator_version": 2,
+    "seed": 1794456376,
+    "index": 10,
+    "sampling": {
+     "tail": [],
+     "weight": 0.8072
+    },
+    "hexaco": {
+     "H": 1.124,
+     "E": 1.611,
+     "X": -0.313,
+     "A": -0.475,
+     "C": -0.146,
+     "O": 1.894
+    },
+    "axes": {
+     "curiosity": 0.8406,
+     "confrontation": 0.3516,
+     "side_strength": 0.6848,
+     "honesty_to_nora": 0.9082,
+     "leave": 0.0773,
+     "compliance": 0.3352,
+     "verbosity": 0.6594,
+     "violation_rate": 0.0974
+    },
+    "axes_raw": {
+     "curiosity": 0.8406,
+     "confrontation": 0.3516,
+     "side_strength": 0.6848,
+     "honesty_to_nora": 0.9082,
+     "leave": 0.7726,
+     "compliance": 0.3352,
+     "verbosity": 0.6594,
+     "violation_rate": 0.6491
+    },
+    "side": "mia",
+    "goal": "why_leo_absent",
+    "stance": "report",
+    "style": {
+     "input_mode": "single",
+     "temperature": 1.0
+    },
+    "identity": {
+     "name": "Robin",
+     "gender": "female"
+    },
+    "card": [
+     "You are imaginative, sentimental and sincere.",
+     "You cannot leave a loose end alone. Look at objects, check your phone, and keep coming back to Leo.",
+     "Your goal tonight: Find out why Leo hasn't turned up tonight.",
+     "You side with Mia. In any disagreement you back her, and you say so.",
+     "Write each turn as one line: spoken words in double quotes, the rest is what you do."
+    ],
+    "triggered": {
+     "truth_out": [
+      "Now that you know what happened, you want the police called, whatever it costs your friends."
+     ]
+    }
+   }
+  },
+  {
+   "id": "r1-haosen-0011",
+   "index": 11,
+   "split": "test",
+   "player_profile": "claude",
+   "dm": {
+    "policy": "B",
+    "scorer": "llm",
+    "tau": 1.0
+   },
+   "seed": 2603020416,
+   "persona": {
+    "generator_version": 2,
+    "seed": 1794456376,
+    "index": 11,
+    "sampling": {
+     "tail": [],
+     "weight": 1.0634
+    },
+    "hexaco": {
+     "H": 0.318,
+     "E": -1.049,
+     "X": 1.895,
+     "A": 0.567,
+     "C": 0.478,
+     "O": -0.354
+    },
+    "axes": {
+     "curiosity": 0.4809,
+     "confrontation": 0.5851,
+     "side_strength": 0.4559,
+     "honesty_to_nora": 0.2904,
+     "leave": 0.0047,
+     "compliance": 0.5051,
+     "verbosity": 0.9794,
+     "violation_rate": 0.0871
+    },
+    "axes_raw": {
+     "curiosity": 0.4809,
+     "confrontation": 0.5851,
+     "side_strength": 0.4559,
+     "honesty_to_nora": 0.2904,
+     "leave": 0.0468,
+     "compliance": 0.5051,
+     "verbosity": 0.9794,
+     "violation_rate": 0.5807
+    },
+    "side": "none",
+    "goal": "press_for_straight_answers",
+    "stance": "report",
+    "style": {
+     "input_mode": "channels",
+     "temperature": 0.89
+    },
+    "identity": {
+     "name": "Merritt",
+     "gender": "female"
+    },
+    "card": [
+     "You are lively and steady.",
+     "You fill silences. Most turns you say several sentences.",
+     "Your goal tonight: If people dodge your questions tonight, keep pressing until Julian gives you a straight answer.",
+     "Fill the channels: what you say, what you do, your expression, and who you are talking to."
+    ],
+    "triggered": {
+     "truth_out": [
+      "Now that you know what happened, you want the police called, whatever it costs your friends."
+     ]
+    }
+   }
+  },
+  {
+   "id": "r1-haosen-0012",
+   "index": 12,
+   "split": "test",
+   "player_profile": "claude",
+   "dm": {
+    "policy": "B",
+    "scorer": "llm",
+    "tau": 1.0
+   },
+   "seed": 1704904177,
+   "persona": {
+    "generator_version": 2,
+    "seed": 1794456376,
+    "index": 12,
+    "sampling": {
+     "tail": [
+      [
+       "O",
+       "low"
+      ]
+     ],
+     "weight": 1.2766
+    },
+    "hexaco": {
+     "H": 0.702,
+     "E": -0.377,
+     "X": -0.192,
+     "A": -0.421,
+     "C": -0.175,
+     "O": -1.493
+    },
+    "axes": {
+     "curiosity": 0.0324,
+     "confrontation": 0.7595,
+     "side_strength": 0.0692,
+     "honesty_to_nora": 0.6682,
+     "leave": 0.0677,
+     "compliance": 0.3672,
+     "verbosity": 0.5051,
+     "violation_rate": 0.1003
+    },
+    "axes_raw": {
+     "curiosity": 0.0324,
+     "confrontation": 0.7595,
+     "side_strength": 0.0692,
+     "honesty_to_nora": 0.6682,
+     "leave": 0.6766,
+     "compliance": 0.3672,
+     "verbosity": 0.5051,
+     "violation_rate": 0.6689
+    },
+    "side": "none",
+    "goal": "get_the_truth",
+    "stance": "report",
+    "style": {
+     "input_mode": "single",
+     "temperature": 0.86
+    },
+    "identity": {
+     "name": "Micah",
+     "gender": "female"
+    },
+    "card": [
+     "You are practical and modest.",
+     "You don't go looking for trouble, but you never let a dodge or a fib slide when it's right in front of you.",
+     "Your goal tonight: If anything tonight doesn't add up, don't let it go until someone gives you a straight answer.",
+     "Write each turn as one line: spoken words in double quotes, the rest is what you do."
+    ],
+    "triggered": {
+     "truth_out": [
+      "Now that you know what happened, you want the police called, whatever it costs your friends."
+     ]
+    }
+   }
+  },
+  {
+   "id": "r1-haosen-0013",
+   "index": 13,
+   "split": "train",
+   "player_profile": "claude",
+   "dm": {
+    "policy": "A",
+    "scorer": "rule",
+    "tau": 1.0
+   },
+   "seed": 4180936636,
+   "persona": {
+    "generator_version": 2,
+    "seed": 1794456376,
+    "index": 13,
+    "sampling": {
+     "tail": [],
+     "weight": 1.2766
+    },
+    "hexaco": {
+     "H": 0.962,
+     "E": 0.656,
+     "X": 0.144,
+     "A": 0.367,
+     "C": 2.733,
+     "O": 0.455
+    },
+    "axes": {
+     "curiosity": 0.3947,
+     "confrontation": 0.4729,
+     "side_strength": 0.9073,
+     "honesty_to_nora": 0.7339,
+     "leave": 0.0571,
+     "compliance": 0.4232,
+     "verbosity": 0.6054,
+     "violation_rate": 0.0056
+    },
+    "axes_raw": {
+     "curiosity": 0.3947,
+     "confrontation": 0.4729,
+     "side_strength": 0.9073,
+     "honesty_to_nora": 0.7339,
+     "leave": 0.5705,
+     "compliance": 0.4232,
+     "verbosity": 0.6054,
+     "violation_rate": 0.0372
+    },
+    "side": "none",
+    "goal": "press_for_straight_answers",
+    "stance": "report",
+    "style": {
+     "input_mode": "channels",
+     "temperature": 0.96
+    },
+    "identity": {
+     "name": "Ali",
+     "gender": "female"
+    },
+    "card": [
+     "You are careful, sincere and easily rattled.",
+     "Your goal tonight: If people dodge your questions tonight, keep pressing until Julian gives you a straight answer.",
+     "You refuse to take sides between Julian and Mia, and you say so if asked.",
+     "Fill the channels: what you say, what you do, your expression, and who you are talking to."
+    ],
+    "triggered": {
+     "truth_out": [
+      "Now that you know what happened, you want the police called, whatever it costs your friends."
+     ]
+    }
+   }
+  },
+  {
+   "id": "r1-haosen-0014",
+   "index": 14,
+   "split": "train",
+   "player_profile": "claude",
+   "dm": {
+    "policy": "B",
+    "scorer": "llm",
+    "tau": 1.0
+   },
+   "seed": 2476529543,
+   "persona": {
+    "generator_version": 2,
+    "seed": 1794456376,
+    "index": 14,
+    "sampling": {
+     "tail": [],
+     "weight": 1.0199
+    },
+    "hexaco": {
+     "H": -1.948,
+     "E": 0.011,
+     "X": -2.651,
+     "A": -0.949,
+     "C": -0.328,
+     "O": -0.686
+    },
+    "axes": {
+     "curiosity": 0.0665,
+     "confrontation": 0.3768,
+     "side_strength": 0.0683,
+     "honesty_to_nora": 0.0259,
+     "leave": 0.0415,
+     "compliance": 0.016,
+     "verbosity": 0.0405,
+     "violation_rate": 0.1347
+    },
+    "axes_raw": {
+     "curiosity": 0.0665,
+     "confrontation": 0.3768,
+     "side_strength": 0.0683,
+     "honesty_to_nora": 0.0259,
+     "leave": 0.4151,
+     "compliance": 0.016,
+     "verbosity": 0.0405,
+     "violation_rate": 0.8978
+    },
+    "side": "mia",
+    "goal": "say_goodbye_properly",
+    "stance": "hesitate",
+    "style": {
+     "input_mode": "single",
+     "temperature": 0.97
+    },
+    "identity": {
+     "name": "Lou",
+     "gender": "female"
+    },
+    "card": [
+     "You are quiet, calculating and quick-tempered.",
+     "You don't like being steered. When someone tries to move you somewhere, you stay put.",
+     "You speak little and in short sentences; often you only act or watch.",
+     "You keep to small talk and the food. Other people's business doesn't interest you much.",
+     "Your goal tonight: Say a proper goodbye to two old friends you may not see for years.",
+     "You feel a little closer to Mia than to Julian, though it hardly shows.",
+     "Write each turn as one line: spoken words in double quotes, the rest is what you do."
+    ],
+    "triggered": {
+     "truth_out": [
+      "Now that you know what happened, you don't know what to do, and you keep putting off deciding."
+     ]
+    }
+   }
+  },
+  {
+   "id": "r1-haosen-0015",
+   "index": 15,
+   "split": "train",
+   "player_profile": "claude",
+   "dm": {
+    "policy": "B",
+    "scorer": "llm",
+    "tau": 1.0
+   },
+   "seed": 1068070648,
+   "persona": {
+    "generator_version": 2,
+    "seed": 1794456376,
+    "index": 15,
+    "sampling": {
+     "tail": [
+      [
+       "A",
+       "high"
+      ]
+     ],
+     "weight": 0.4417
+    },
+    "hexaco": {
+     "H": 2.057,
+     "E": 1.321,
+     "X": -1.44,
+     "A": 1.376,
+     "C": -0.564,
+     "O": -2.034
+    },
+    "axes": {
+     "curiosity": 0.1076,
+     "confrontation": 0.0873,
+     "side_strength": 0.5966,
+     "honesty_to_nora": 0.9565,
+     "leave": 0.0711,
+     "compliance": 0.9014,
+     "verbosity": 0.0548,
+     "violation_rate": 0.1298
+    },
+    "axes_raw": {
+     "curiosity": 0.1076,
+     "confrontation": 0.0873,
+     "side_strength": 0.5966,
+     "honesty_to_nora": 0.9565,
+     "leave": 0.7112,
+     "compliance": 0.9014,
+     "verbosity": 0.0548,
+     "violation_rate": 0.8653
+    },
+    "side": "julian",
+    "goal": "help_pack",
+    "stance": "report",
+    "style": {
+     "input_mode": "channels",
+     "temperature": 0.91
+    },
+    "identity": {
+     "name": "Jody",
+     "gender": "male"
+    },
+    "card": [
+     "You are modest, incurious and watchful.",
+     "You speak little and in short sentences; often you only act or watch.",
+     "You want a pleasant evening. You don't ask awkward questions and you keep everyone comfortable.",
+     "You go along with what the hosts suggest: if they ask you to the kitchen or the balcony, you go.",
+     "Your goal tonight: Help them with the last of the packing and the move tomorrow.",
+     "You lean toward Julian; you tend to take his word over Mia's.",
+     "Fill the channels: what you say, what you do, your expression, and who you are talking to."
+    ],
+    "triggered": {
+     "truth_out": [
+      "Now that you know what happened, you want the police called, whatever it costs your friends."
+     ]
+    }
+   }
+  },
+  {
+   "id": "r1-haosen-0016",
+   "index": 16,
+   "split": "train",
+   "player_profile": "claude",
+   "dm": {
+    "policy": "explore_random",
+    "scorer": "random",
+    "tau": 1.0
+   },
+   "seed": 3124517067,
+   "persona": {
+    "generator_version": 2,
+    "seed": 1794456376,
+    "index": 16,
+    "sampling": {
+     "tail": [
+      [
+       "C",
+       "high"
+      ]
+     ],
+     "weight": 0.7497
+    },
+    "hexaco": {
+     "H": -0.354,
+     "E": -1.087,
+     "X": -0.292,
+     "A": -1.218,
+     "C": 1.61,
+     "O": 0.068
+    },
+    "axes": {
+     "curiosity": 0.5755,
+     "confrontation": 0.8286,
+     "side_strength": 0.7813,
+     "honesty_to_nora": 0.6367,
+     "leave": 0.0064,
+     "compliance": 0.6735,
+     "verbosity": 0.2395,
+     "violation_rate": 0.0187
+    },
+    "axes_raw": {
+     "curiosity": 0.5755,
+     "confrontation": 0.8286,
+     "side_strength": 0.7813,
+     "honesty_to_nora": 0.6367,
+     "leave": 0.0638,
+     "compliance": 0.6735,
+     "verbosity": 0.2395,
+     "violation_rate": 0.1248
+    },
+    "side": "mia",
+    "goal": "tell_the_others",
+    "stance": "hesitate",
+    "style": {
+     "input_mode": "single",
+     "temperature": 0.87
+    },
+    "identity": {
+     "name": "Ray",
+     "gender": "female"
+    },
+    "card": [
+     "You are careful, quick-tempered and unflappable.",
+     "You challenge people. If someone dodges, you call it out, and you are not afraid to accuse.",
+     "You speak little and in short sentences; often you only act or watch.",
+     "You are an easy guest. You accept invitations and do what you are asked.",
+     "Your goal tonight: Keep Leo and his sister Nora in the loop about tonight; they would want to know.",
+     "You side with Mia. In any disagreement you back her, and you say so.",
+     "Write each turn as one line: spoken words in double quotes, the rest is what you do."
+    ],
+    "triggered": {
+     "truth_out": [
+      "Now that you know what happened, you don't know what to do, and you keep putting off deciding."
+     ]
+    }
+   }
+  },
+  {
+   "id": "r1-haosen-0017",
+   "index": 17,
+   "split": "train",
+   "player_profile": "claude",
+   "dm": {
+    "policy": "B",
+    "scorer": "llm",
+    "tau": 1.0
+   },
+   "seed": 1576571882,
+   "persona": {
+    "generator_version": 2,
+    "seed": 1794456376,
+    "index": 17,
+    "sampling": {
+     "tail": [],
+     "weight": 1.2766
+    },
+    "hexaco": {
+     "H": -0.651,
+     "E": -0.655,
+     "X": -0.218,
+     "A": -1.406,
+     "C": -0.101,
+     "O": -0.593
+    },
+    "axes": {
+     "curiosity": 0.7361,
+     "confrontation": 0.9293,
+     "side_strength": 0.5964,
+     "honesty_to_nora": 0.4227,
+     "leave": 0.0806,
+     "compliance": 0.2403,
+     "verbosity": 0.4408,
+     "violation_rate": 0.0471
+    },
+    "axes_raw": {
+     "curiosity": 0.7361,
+     "confrontation": 0.9293,
+     "side_strength": 0.5964,
+     "honesty_to_nora": 0.4227,
+     "leave": 0.8056,
+     "compliance": 0.2403,
+     "verbosity": 0.4408,
+     "violation_rate": 0.3142
+    },
+    "side": "julian",
+    "goal": "test_the_couple",
+    "stance": "report",
+    "style": {
+     "input_mode": "channels",
+     "temperature": 0.86
+    },
+    "identity": {
+     "name": "Quinn",
+     "gender": "female"
+    },
+    "card": [
+     "You are blunt, unflappable and smooth.",
+     "You are investigating, and you are not shy about it: you ask hard questions and confront people with what you have noticed.",
+     "You decide for yourself where to go and what to do; you often turn the hosts' suggestions down.",
+     "Your goal tonight: Find out whether Julian and Mia are as united as they look.",
+     "You lean toward Julian; you tend to take his word over Mia's.",
+     "Fill the channels: what you say, what you do, your expression, and who you are talking to."
+    ],
+    "triggered": {
+     "truth_out": [
+      "Now that you know what happened, you want the police called, whatever it costs your friends."
+     ]
+    }
+   }
+  },
+  {
+   "id": "r1-haosen-0018",
+   "index": 18,
+   "split": "dev",
+   "player_profile": "claude",
+   "dm": {
+    "policy": "A",
+    "scorer": "rule",
+    "tau": 1.0
+   },
+   "seed": 1186168505,
+   "persona": {
+    "generator_version": 2,
+    "seed": 1794456376,
+    "index": 18,
+    "sampling": {
+     "tail": [],
+     "weight": 1.2766
+    },
+    "hexaco": {
+     "H": -0.418,
+     "E": -0.123,
+     "X": 0.75,
+     "A": 0.141,
+     "C": -0.199,
+     "O": 1.611
+    },
+    "axes": {
+     "curiosity": 0.9305,
+     "confrontation": 0.4492,
+     "side_strength": 0.4045,
+     "honesty_to_nora": 0.4037,
+     "leave": 0.0126,
+     "compliance": 0.7076,
+     "verbosity": 0.8904,
+     "violation_rate": 0.1213
+    },
+    "axes_raw": {
+     "curiosity": 0.9305,
+     "confrontation": 0.4492,
+     "side_strength": 0.4045,
+     "honesty_to_nora": 0.4037,
+     "leave": 0.1258,
+     "compliance": 0.7076,
+     "verbosity": 0.8904,
+     "violation_rate": 0.8087
+    },
+    "side": "mia",
+    "goal": "what_happened_today",
+    "stance": "hesitate",
+    "style": {
+     "input_mode": "channels",
+     "temperature": 0.97
+    },
+    "identity": {
+     "name": "Brook",
+     "gender": "male"
+    },
+    "card": [
+     "You are inquisitive and talkative.",
+     "When something doesn't add up, you ask about it straight away, and you remember the answers.",
+     "You fill silences. Most turns you say several sentences.",
+     "You are an easy guest. You accept invitations and do what you are asked.",
+     "Your goal tonight: Piece together what Julian and Mia did today before you arrived.",
+     "You lean toward Mia; you tend to take her word over Julian's.",
+     "Fill the channels: what you say, what you do, your expression, and who you are talking to."
+    ],
+    "triggered": {
+     "truth_out": [
+      "Now that you know what happened, you don't know what to do, and you keep putting off deciding."
+     ]
+    }
+   }
+  },
+  {
+   "id": "r1-haosen-0019",
+   "index": 19,
+   "split": "dev",
+   "player_profile": "claude",
+   "dm": {
+    "policy": "B",
+    "scorer": "llm",
+    "tau": 1.0
+   },
+   "seed": 1114022299,
+   "persona": {
+    "generator_version": 2,
+    "seed": 1794456376,
+    "index": 19,
+    "sampling": {
+     "tail": [],
+     "weight": 1.0565
+    },
+    "hexaco": {
+     "H": -1.72,
+     "E": -1.286,
+     "X": -0.361,
+     "A": 0.216,
+     "C": -0.739,
+     "O": 0.773
+    },
+    "axes": {
+     "curiosity": 0.8365,
+     "confrontation": 0.443,
+     "side_strength": 0.2341,
+     "honesty_to_nora": 0.0798,
+     "leave": 0.0254,
+     "compliance": 0.4637,
+     "verbosity": 0.4082,
+     "violation_rate": 0.1125
+    },
+    "axes_raw": {
+     "curiosity": 0.8365,
+     "confrontation": 0.443,
+     "side_strength": 0.2341,
+     "honesty_to_nora": 0.0798,
+     "leave": 0.2541,
+     "compliance": 0.4637,
+     "verbosity": 0.4082,
+     "violation_rate": 0.7502
+    },
+    "side": "mia",
+    "goal": "whose_car",
+    "stance": "cover",
+    "style": {
+     "input_mode": "single",
+     "temperature": 0.86
+    },
+    "identity": {
+     "name": "Kai",
+     "gender": "female"
+    },
+    "card": [
+     "You are calculating, unflappable and imaginative.",
+     "When something doesn't add up, you ask about it straight away, and you remember the answers.",
+     "Your goal tonight: Work out whose yellow car is parked on the kerb downstairs.",
+     "You feel a little closer to Mia than to Julian, though it hardly shows.",
+     "Write each turn as one line: spoken words in double quotes, the rest is what you do."
+    ],
+    "triggered": {
+     "truth_out": [
+      "Now that you know what happened, you will protect your friends, even if it means lying for them."
+     ]
+    }
+   }
+  }
+ ]
+}

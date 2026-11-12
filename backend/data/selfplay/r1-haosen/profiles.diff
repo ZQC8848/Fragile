@@ -1,0 +1,43 @@
+diff --git a/backend/selfplay/profiles.yaml b/backend/selfplay/profiles.yaml
+index ff74824..5a6a3ba 100644
+--- a/backend/selfplay/profiles.yaml
++++ b/backend/selfplay/profiles.yaml
+@@ -38,7 +38,7 @@ profiles:
+   claude:
+     provider: claude_cli
+     model: sonnet
+-    concurrency: 1
++    concurrency: 3
+     price: { input: 0, output: 0 }
+   claude-opus:
+     provider: claude_cli
+@@ -60,20 +60,20 @@ profiles:
+ 
+ # Which profile each engine role uses during self-play (fixed, selfplay.md §2).
+ engine_roles:
+-  review: deepseek-flash
+-  narrator: deepseek-flash
+-  guard: deepseek-flash
+-  tension: deepseek-flash
+-  scorer: deepseek-flash
+-  options: deepseek-flash
+-  proposer: deepseek-v4-pro
+-  judge: kimi-k3
++  review: claude
++  narrator: claude
++  guard: claude
++  tension: claude
++  scorer: claude
++  options: claude
++  proposer: claude
++  judge: claude
+ 
+ # The narrator's fallback chain, in order (LLM_FALLBACK_NARRATOR): a fresh call to the same model, twice. The
+ # live check showed what fails is a cut-off reply or a dropped connection, which a new call fixes, while the
+ # slower models (v4-pro, kimi-k2.6) never finish inside the 30 s fallback timeout; and a passage by another
+ # model would break "the narrator is fixed" (selfplay.md §2).
+-narrator_fallback: [deepseek-flash, deepseek-flash]
++narrator_fallback: [claude, claude]
+ 
+ players:
+   # shares of the API sessions in a round; `third` takes its share once it names a profile, until then its
