@@ -16,3 +16,6 @@ dist/
 .ruff_cache/
 .pytest_cache/
 .idea/
+
+# Overleaf upload bundle built from report/midterm (not versioned)
+report/midterm/*.zip

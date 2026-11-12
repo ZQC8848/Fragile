@@ -1,0 +1,215 @@
+{
+ "old": {
+  "sessions": 11,
+  "models": {
+   "deepseek-flash": 4,
+   "gpt": 1,
+   "deepseek-v4-pro": 3,
+   "claude-opus": 3
+  },
+  "policies": {
+   "B": 8,
+   "explore_random": 1,
+   "A": 2
+  },
+  "endings": {
+   "the_witness": 3,
+   "open_it": 3,
+   "confession": 3,
+   "bon_voyage": 2
+  },
+  "turns": {
+   "total": 297,
+   "mean": 27,
+   "median": 26,
+   "min": 12,
+   "max": 36
+  },
+  "wall_min": {
+   "mean": 22.0,
+   "min": 13.3,
+   "max": 31.1
+  },
+  "cost": {
+   "mean": 0.216,
+   "min": 0.122,
+   "max": 0.307,
+   "total": 2.37
+  },
+  "tokens_mean": 668206,
+  "turn_latency_s": {
+   "mean": 27.8,
+   "median": 17.1,
+   "p90": 68.2,
+   "narr_guard_share": 0.915,
+   "review_median": 10.3
+  },
+  "calls_per_turn": {
+   "review": 1.0,
+   "narrator": 1.23,
+   "guard": 1.2,
+   "scorer": 0.16,
+   "proposer": 0.03
+  },
+  "rejection": {
+   "attempts": 310,
+   "rejected": 13,
+   "rate": 0.042
+  },
+  "guard": {
+   "turns": 297,
+   "rewritten": 49,
+   "repaired": 11,
+   "fallback": 1
+  },
+  "decisions": {
+   "kinds": {
+    "scored": 59,
+    "generate": 9,
+    "must_follow": 50,
+    "ending": 9
+   },
+   "all": {
+    "n": 59,
+    "cands": 2.44,
+    "real_cands": 1.46,
+    "pmax_median": 0.984,
+    "pmax_gt09": 40,
+    "chose_top": 55,
+    "entropy": 0.37,
+    "two_real": 25
+   },
+   "B": {
+    "n": 48,
+    "cands": 2.42,
+    "real_cands": 1.42,
+    "pmax_median": 0.988,
+    "pmax_gt09": 37,
+    "chose_top": 46,
+    "entropy": 0.26,
+    "two_real": 19
+   },
+   "A": {
+    "n": 10,
+    "cands": 2.5,
+    "real_cands": 1.6,
+    "pmax_median": 0.826,
+    "pmax_gt09": 3,
+    "chose_top": 8,
+    "entropy": 0.82,
+    "two_real": 5
+   }
+  },
+  "violations": {
+   "asked": 21,
+   "stopped": 17,
+   "passed": 4
+  },
+  "generation_events": 9,
+  "arc_distance": {
+   "mean": 1.05,
+   "min": 0.38,
+   "max": 1.72
+  },
+  "tension_measured_minus_declared": 0.8,
+  "beats_distinct": 29
+ },
+ "new": {
+  "sessions": 2,
+  "models": {
+   "deepseek-flash": 2
+  },
+  "policies": {
+   "B": 2
+  },
+  "endings": {
+   "the_witness": 1,
+   "open_it": 1
+  },
+  "turns": {
+   "total": 71,
+   "mean": 35.5,
+   "median": 35.5,
+   "min": 35,
+   "max": 36
+  },
+  "wall_min": {
+   "mean": 37.8,
+   "min": 31.6,
+   "max": 43.9
+  },
+  "cost": {
+   "mean": 0.32,
+   "min": 0.281,
+   "max": 0.359,
+   "total": 0.64
+  },
+  "tokens_mean": 947310,
+  "turn_latency_s": {
+   "mean": 40.7,
+   "median": 20.9,
+   "p90": 86.1,
+   "narr_guard_share": 0.926,
+   "review_median": 14.2
+  },
+  "calls_per_turn": {
+   "review": 1.0,
+   "narrator": 1.41,
+   "guard": 1.25,
+   "scorer": 0.23,
+   "proposer": 0.04
+  },
+  "rejection": {
+   "attempts": 73,
+   "rejected": 2,
+   "rate": 0.027
+  },
+  "guard": {
+   "turns": 71,
+   "rewritten": 16,
+   "repaired": 7,
+   "fallback": 0
+  },
+  "decisions": {
+   "kinds": {
+    "scored": 13,
+    "generate": 3,
+    "must_follow": 10,
+    "ending": 2
+   },
+   "all": {
+    "n": 13,
+    "cands": 2.69,
+    "real_cands": 1.69,
+    "pmax_median": 0.988,
+    "pmax_gt09": 9,
+    "chose_top": 11,
+    "entropy": 0.34,
+    "two_real": 7
+   },
+   "B": {
+    "n": 13,
+    "cands": 2.69,
+    "real_cands": 1.69,
+    "pmax_median": 0.988,
+    "pmax_gt09": 9,
+    "chose_top": 11,
+    "entropy": 0.34,
+    "two_real": 7
+   },
+   "A": null
+  },
+  "violations": {
+   "asked": 1,
+   "stopped": 1
+  },
+  "generation_events": 3,
+  "arc_distance": {
+   "mean": 1.04,
+   "min": 0.95,
+   "max": 1.13
+  },
+  "tension_measured_minus_declared": 0.47,
+  "beats_distinct": 17
+ }
+}
