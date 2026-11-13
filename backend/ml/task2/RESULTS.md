@@ -1,11 +1,35 @@
-# Task 2 results (status 2026-11-12)
+# Task 2 results (status 2026-11-12, batch 5 in)
 
 Numbers behind the M2 part of the midterm report. All scores are against the teacher's labels (review v1,
-deepseek-flash) on the frozen test split `test_v1`: **129 turns from 5 held-out games**. The training data
-for every row below is the first data set (1136 train / 111 val turns from 40 + 5 games). The raw run
-outputs (`metrics.json`, `train_log.jsonl`) and the per-batch reports live in the handoff repo, not here.
+deepseek-flash). `test_v1` is the frozen first test split (129 turns from 5 held-out sessions) and is the
+only split comparable across all batches. The raw run outputs (`metrics.json`, `train_log.jsonl`) and the
+per-batch reports live in the handoff repo, not here.
 
-## Midterm report table (`tab:m2`)
+## Scaled data (batch 5): the table the midterm report uses
+
+Second data set `examples_v2`: 250 self-play sessions (83 % English, 10 % Chinese, 8 % mixed), split by
+session and stratified by language into train 5957 / val 699 / test 609 turns (204 / 25 / 21 sessions).
+`test` contains `test_v1` unchanged. Every system below is trained on this set; test = 609 turns.
+
+| System | Acts µF1 | Topics µF1 | Claims µF1 | Addr. acc | Susp. QWK | Nora acc | Seg. char-F1 |
+|---|---|---|---|---|---|---|---|
+| Rung 0, majority class | 0.446 | 0.569 | 0.000 | 0.325 | 0.000 | 0.301 | 0.619 |
+| Rung 0, keyword rules | 0.586 | 0.584 | 0.576 | 0.628 | 0.126 | 0.452 | 0.708 |
+| Rung 1, TF-IDF + LR | 0.720 | 0.815 | 0.757 | 0.779 | 0.653 | 0.581 | 0.804 |
+| Rung 2, frozen e5 + LR | 0.646 | 0.766 | 0.710 | 0.781 | 0.697 | 0.634 | — |
+| Rung 4, mDeBERTa `both` e20 (3 seeds) | **0.778** | **0.818** | **0.809** | **0.882** | **0.804** | **0.713** | **0.948** |
+| Teacher self-agreement | 0.856 | 0.891 | — | 0.94 | — | 0.98 | — |
+
+On `test_v1` (129 turns), more data moved the main configuration from batch 4 to batch 5 as follows: acts
+0.727 → 0.736, claims 0.748 → 0.814, addressee 0.667 → 0.890 (TF-IDF 0.774), suspicion QWK 0.702 → 0.779,
+Nora 0.654 → 0.593 (27 turns carry a Nora label, so 0.06 is under 2 turns).
+
+Data-size curve (seed 0, test 609; acts / addressee / claims): 20 % 0.725 / 0.708 / 0.724, 50 % 0.760 /
+0.824 / 0.795, 100 % 0.782 / 0.881 / 0.808. On `test_v1` the 20 % model (about the old training size) is
+close to the batch 4 model, so the gain is from more data, not different data. Two of three seeds peaked at
+epoch 18 or 19; batch 6 runs 30 epochs.
+
+## First data set (batches 1 to 4): results on `test_v1`
 
 | System | Acts µF1 | Topics µF1 | Addr. acc | Nora acc | Seg. char-F1 |
 |---|---|---|---|---|---|
@@ -54,9 +78,7 @@ Pooling the player-text subwords fixed claims and most of addressee; acts and se
 
 ## Open
 
-- **Scaled data (batch 5) not run yet.** `examples_v2`: 7374 turns from 250 games (train 5957 / val 699 /
-  test 609 from 204 / 25 / 21 games), split stratified by language, `test_v1` kept frozen inside it. Queued:
-  rungs 0 to 2 again, the main configuration over 3 seeds, data-size points at 20 % and 50 %.
+- Batch 6 (30 epochs, 3 seeds) is queued.
 - Round `r1-haosen` (20 all-Claude sessions, `backend/data/selfplay/r1-haosen/`) is not in any training
   set yet.
 - `TrainedEncoderPath` (wiring the model back into the engine) is not started.
