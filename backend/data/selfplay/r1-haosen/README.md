@@ -6,14 +6,15 @@ Haosen's share of the "20 sessions each" self-play round (agreed at the 11/4 mee
 **This round is not the standard configuration.** Every engine role (review, narrator, guard, tension,
 scorer, options, proposer, judge) and the player ran on Claude Sonnet through the `claude_cli` provider
 (a Claude Max subscription, so the API cost is 0), not on DeepSeek/Kimi as in `selfplay/profiles.yaml`.
-The exact change is in `profiles.diff` (also: `claude` concurrency 3). The runs used `--allow-dirty`, so
-`python -m selfplay check` will flag these sessions as played on an uncommitted tree; keep the round
-separate from the standard rounds when pooling data.
+The exact change is in `profiles.diff` (also: `claude` concurrency 3). The runs used `--allow-dirty`. The
+round's manifest (`backend/selfplay/manifests/r1-haosen/`) therefore carries a `nonstandard` note, with
+which `python -m selfplay check r1-haosen` reports the uncommitted tree as a warning instead of rejecting
+the sessions; keep the round separate from the standard rounds when pooling data.
 
 | | |
 |---|---|
 | Played | 2026-11-11 20:05 to 2026-11-12 03:09 PT (paused from about 20:35 to 02:20 by the subscription's 5-hour limit; the three sessions it interrupted were replayed with `--retry-errors`) |
-| Manifest | `manifest-shard-01.json`: 20 sessions, 1 shard, persona seed 1794456376 (HEXACO generator, random personas) |
+| Manifest | `backend/selfplay/manifests/r1-haosen/shard-01.json`: 20 sessions, 1 shard, persona seed 1794456376 (HEXACO generator, random personas) |
 | Splits | train 13, dev 3, test 4 |
 | DM policies | B 10, A 6, explore_hot 2, explore_random 2 |
 | Result | 20/20 ended, 0 errors; 510 turns (10 to 42 per session); about 26.5M tokens |

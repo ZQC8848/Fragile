@@ -30,6 +30,7 @@
  "n": 20,
  "shard": "shard-01",
  "shards": 1,
+ "nonstandard": "every engine role and the player on Claude Sonnet (claude_cli); played with --allow-dirty on main at 0afb2a9 plus data/selfplay/r1-haosen/profiles.diff",
  "sessions": [
   {
    "id": "r1-haosen-0000",

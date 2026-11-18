@@ -97,6 +97,12 @@ def check_round(round_name: str, *, manifests_dir: Path = MANIFESTS_DIR, packs_d
     warnings: list[str] = []
     if expected is None:
         warnings.append(f"no git tag {manifest['tag']}: commits not checked")
+    # a round the manifest declares non-standard (another model setup, run with --allow-dirty) is kept apart
+    # from the standard rounds by its name; its uncommitted tree is then a warning, not a rejection
+    nonstandard = manifest.get("nonstandard")
+    dirty: list[str] = []
+    if nonstandard:
+        warnings.append(f"non-standard round, do not pool with the standard rounds: {nonstandard}")
     seen: dict[str, Path] = {}
     statuses: dict[str, int] = {}
     for path in sorted((Path(packs_dir) / round_name).glob("*/*.tar.gz")):
@@ -122,11 +128,16 @@ def check_round(round_name: str, *, manifests_dir: Path = MANIFESTS_DIR, packs_d
         if expected is not None and git.get("commit") != expected:
             problems.append(f"{sid}: played at {str(git.get('commit'))[:10]}, the round's tag is {expected[:10]}")
         if git.get("dirty"):
-            problems.append(f"{sid}: played on a working tree with uncommitted changes")
+            if nonstandard:
+                dirty.append(sid)
+            else:
+                problems.append(f"{sid}: played on a working tree with uncommitted changes")
         if info.get("prompt_versions") != manifest["prompt_versions"]:
             problems.append(f"{sid}: prompt versions {info.get('prompt_versions')} differ from the manifest's")
         if info.get("generator_version") != manifest["generator_version"]:
             problems.append(f"{sid}: persona generator v{info.get('generator_version')}, manifest v{manifest['generator_version']}")
+    if dirty:
+        warnings.append(f"{len(dirty)} sessions played on a working tree with uncommitted changes")
     missing = sorted(set(shard_of) - set(seen))
     if complete and missing:
         problems.append(f"{len(missing)} sessions missing")

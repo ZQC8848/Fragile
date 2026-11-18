@@ -159,6 +159,25 @@ def test_check_finds_missing_misplaced_and_unexpected_sessions(tmp_path):
     assert r["missing"] == [s2[1]["id"]] and "1 sessions missing" in text
 
 
+def test_check_only_warns_about_a_dirty_tree_in_a_round_declared_nonstandard(tmp_path):
+    from selfplay.pack import pack_session
+
+    mdir, packs = tmp_path / "manifests", tmp_path / "packs"
+    manifest.write(manifest.build("rns", 2, profiles=mock_profiles()), 1, mdir)
+    m = manifest.load(mdir / "rns" / "manifest.json")
+    sid = m["sessions"][0]["id"]
+    src = tmp_path / "src" / sid
+    src.mkdir(parents=True)
+    (src / "selfplay.json").write_text(json.dumps({"status": "ended", "git": {**GIT, "dirty": True},
+                                                   "prompt_versions": m["prompt_versions"], "generator_version": m["generator_version"]}))
+    pack_session(src, packs / "rns" / "shard-01" / f"{sid}.tar.gz")
+    r = check_round("rns", manifests_dir=mdir, packs_dir=packs, commit=GIT["commit"])
+    assert not r["ok"] and "uncommitted" in r["problems"][0]
+    (mdir / "rns" / "manifest.json").write_text(json.dumps({**m, "nonstandard": "all roles on another model"}))
+    r = check_round("rns", manifests_dir=mdir, packs_dir=packs, commit=GIT["commit"])
+    assert r["ok"] and any("non-standard" in w for w in r["warnings"]) and any("uncommitted" in w for w in r["warnings"])
+
+
 async def test_the_budget_stops_new_sessions(tmp_path, clean_git):
     prof = mock_profiles()
     part = manifest.shard(manifest.build("rbud", 2, profiles=prof), 1)[0]
