@@ -25,21 +25,23 @@
 
 | 角色 | 模型 | 方式 | 理由 |
 |---|---|---|---|
-| **自博弈玩家** | deepseek-flash、deepseek-v4-pro、kimi-k2.6、第三家（千问或 GLM，待定） | **按局轮换**，同一局内不换 | 防止玩家同质化；同一局内换模型会让人格断裂 |
+| **自博弈玩家** | deepseek-flash、deepseek-v4-pro、第三家（千问或 GLM，待定） | **按局轮换**，同一局内不换 | 防止玩家同质化；同一局内换模型会让人格断裂 |
 | 叙述者 | deepseek-flash | 固定 | 标注包里有叙述者原文，叙述者一变，人看的局和训练的局就不同分布 |
-| judge（打合成标签） | kimi-k3 | 固定，离线 | 和叙述者不同家，避开自我偏好；最强的模型只用来打标签 |
+| judge（打合成标签） | deepseek-v4-pro | 固定，离线 | 和叙述者同一家（原定的 kimi-k3 已停用），自我偏好靠 Claude、GPT 的交叉检查来量（annotation.md） |
 | review、guard、tension、scorer、options | deepseek-flash | 固定 | 输出是分类或打分，不是多样性的来源 |
 | proposer（GENERATE_NEW） | deepseek-v4-pro | 固定 | 和现在一致 |
 
-**玩家模型的比例**：deepseek-flash 35%、deepseek-v4-pro 25%、第三家 25%、kimi-k2.6 15%（单次调用 75 到 150 秒，太慢，比例压低）。第三家的 key 拿到之前，它的份额平分给前两个。
+**玩家模型的比例**：deepseek-flash 35%、deepseek-v4-pro 25%、第三家 25%，按总和归一。第三家的 key 拿到之前，它的份额平分给前两个，实际是 flash 约 56%、v4-pro 约 44%。
 
-**留一个玩家模型只给测试**：kimi-k2.6 当玩家的局只进 test，不进 train 和 dev。用来测 M1 在"没见过的玩家模型"上会不会掉准确率：掉得多，说明它学到的是某个模型的说话习惯，不是戏剧判断。kimi-k2.6 和 judge（kimi-k3）同属 Moonshot，judge 只给 train 局打合成标签，所以不会遇到它。
+> 2026-11-17：Moonshot 账户不再充值，kimi-k2.6（玩家，原占 15%）和 kimi-k3（judge）从 `profiles.yaml` 里去掉。此前各轮（pilot、base20、carc-test20）的 Kimi 局也都没有跑成，所以已有数据里没有 Kimi。
+
+**留出玩家模型只给测试**：Claude 和 GPT 当玩家的局只进 test，不进 train 和 dev（原先还有 kimi-k2.6）。用来测 M1 在"没见过的玩家模型"上会不会掉准确率：掉得多，说明它学到的是某个模型的说话习惯，不是戏剧判断。kimi-k2.6 和 judge（kimi-k3）同属 Moonshot，judge 只给 train 局打合成标签，所以不会遇到它。
 
 **订阅模型（Claude、GPT）**：没有 API key，但本地有订阅，通过官方命令行调用（Claude Code 的 `claude -p`、Codex 的 `codex exec`），条款已核实。它们慢（每次调用十几秒到几十秒）、按时间窗口限额、不能调温度，所以只承担两件少量的事：
 
 | 用途 | 规模 | 说明 |
 |---|---|---|
-| 只进测试集的玩家 | Claude、GPT 各 5 到 10 局，并发 1 | 和 kimi-k2.6 一起组成"没见过的玩家模型"测试；它们和 DeepSeek、Kimi 的训练来源完全不同，检验更严格 |
+| 只进测试集的玩家 | Claude、GPT 各 5 到 10 局，并发 1 | 组成"没见过的玩家模型"测试；它们和 DeepSeek 的训练来源完全不同，检验更严格 |
 | judge 交叉检查 | dev 40 条加测试集的一部分 | 见 [annotation.md](annotation.md) §7；只做评估，不产生训练标签 |
 
 调用时必须在**空的临时目录**里运行，并关掉工具和项目记忆，不能在仓库目录里跑：这两个命令行本身是会读文件的代理，在仓库里能读到 `backend/.env`。
@@ -142,7 +144,7 @@ M1 不能只学当前 DM 会走到的局面，所以 DM 也要混合：
 |---|---|
 | 入口 | `backend/selfplay/run.py`：直接在进程里驱动 `Session`，不经过前端和 WebSocket |
 | 局的配置 | 开跑前先生成一份清单：每局的 id、split、玩家模型、六维向量、行为轴、目标、DM 策略、随机种子。**按清单做分层分配**，让玩家模型 × DM 策略 × 尾部 / 正常 × 性别大致均衡 |
-| split | 生成清单时就定好 train / dev / test（按局），test 局里放 kimi-k2.6 当玩家的局（§2） |
+| split | 生成清单时就定好 train / dev / test（按局），test 局里放 Claude、GPT 当玩家的局（§2） |
 | 并发 | 默认 6 局同时跑，可调 |
 | 上限 | 每局最多 60 回合；每批设局数上限、token 上限、费用上限，任何一个到了就停 |
 | 断点续跑 | 已完成的局跳过；中断的局整局重跑，不从中间接 |
@@ -161,7 +163,7 @@ M1 不能只学当前 DM 会走到的局面，所以 DM 也要混合：
 ```bash
 git pull
 cd backend && uv sync
-cp .env.selfplay.example .env      # 只填两个 key：DeepSeek 和 Moonshot（以及第三家，拿到之后）
+cp .env.selfplay.example .env      # 只填一个 key：DeepSeek（以及第三家，拿到之后）
 uv run python -m selfplay doctor   # 检查依赖、key、端点连通，claude 和 codex 是否已登录
 ```
 

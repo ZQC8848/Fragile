@@ -1,4 +1,4 @@
-# Self-play models (selfplay.md §2, §7.1). Committed; keys are not. A teammate fills two keys in backend/.env
+# Self-play models (selfplay.md §2, §7.1). Committed; keys are not. A teammate fills one key in backend/.env
 # (see backend/.env.selfplay.example) and every engine role and player is configured from this file: during a
 # self-play run it overrides the LLM_*_<ROLE> settings of backend/.env, so every machine runs the same setup.
 #
@@ -22,18 +22,8 @@ profiles:
     model: deepseek-v4-pro
     key_env: [DEEPSEEK_API_KEY, LLM_API_KEY_PROPOSER, LLM_API_KEY_REVIEW]
     price: { input: 0.55, output: 2.20 }
-  kimi-k2.6:
-    provider: openai
-    base_url: https://api.moonshot.ai/v1
-    model: kimi-k2.6
-    key_env: [MOONSHOT_API_KEY, LLM_API_KEY_SELFPLAY, LLM_API_KEY_JUDGE]
-    price: { input: 0.60, output: 2.50 }
-  kimi-k3:
-    provider: openai
-    base_url: https://api.moonshot.ai/v1
-    model: kimi-k3
-    key_env: [MOONSHOT_API_KEY, LLM_API_KEY_JUDGE, LLM_API_KEY_NARRATOR]
-    price: { input: 1.00, output: 4.00 }
+  # Moonshot (kimi-k2.6 player, kimi-k3 judge) was dropped on 2026-11-17: the account is not funded. The
+  # rounds played before that have no Kimi sessions either (pilot, base20, carc-test20).
   # Subscription models through the local command lines; one session at a time, test split only.
   claude:
     provider: claude_cli
@@ -67,21 +57,22 @@ engine_roles:
   scorer: deepseek-flash
   options: deepseek-flash
   proposer: deepseek-v4-pro
-  judge: kimi-k3
+  # offline labelling only, never called while a session is played; cross-checked by Claude and GPT (annotation.md)
+  judge: deepseek-v4-pro
 
 # The narrator's fallback chain, in order (LLM_FALLBACK_NARRATOR): a fresh call to the same model, twice. The
 # live check showed what fails is a cut-off reply or a dropped connection, which a new call fixes, while the
-# slower models (v4-pro, kimi-k2.6) never finish inside the 30 s fallback timeout; and a passage by another
+# slower models (v4-pro) never finish inside the 30 s fallback timeout; and a passage by another
 # model would break "the narrator is fixed" (selfplay.md §2).
 narrator_fallback: [deepseek-flash, deepseek-flash]
 
 players:
   # shares of the API sessions in a round; `third` takes its share once it names a profile, until then its
   # share is split evenly between the first two
-  shares: { deepseek-flash: 0.35, deepseek-v4-pro: 0.25, third: 0.25, kimi-k2.6: 0.15 }
+  shares: { deepseek-flash: 0.35, deepseek-v4-pro: 0.25, third: 0.25 }
   third: null
   # sessions played by these models go to the test split only (the unseen-player test, selfplay.md §2)
-  test_only: [kimi-k2.6, claude, claude-opus, gpt]
+  test_only: [claude, claude-opus, gpt]
   # subscription models are added on top of the API sessions, a fixed number per round (`manifest --subscription`)
   subscription: [claude, gpt]
 

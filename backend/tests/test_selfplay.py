@@ -83,13 +83,13 @@ def test_shards_partition_the_round_evenly(tmp_path):
 def test_profiles_resolve_the_third_share_and_the_narrator_fallback(monkeypatch):
     prof = Profiles()
     shares = prof.player_shares()
-    assert shares["deepseek-flash"] == pytest.approx(0.475) and shares["deepseek-v4-pro"] == pytest.approx(0.375)
+    assert shares["deepseek-flash"] == pytest.approx(0.475 / 0.85) and shares["deepseek-v4-pro"] == pytest.approx(0.375 / 0.85)
     monkeypatch.setenv("DEEPSEEK_API_KEY", "k-deepseek")
     prof.apply_engine_roles()
     assert os.environ["LLM_MODEL_NARRATOR"] == "deepseek-flash" and os.environ["LLM_API_KEY_NARRATOR"] == "k-deepseek"
     assert os.environ["LLM_FALLBACK_NARRATOR"] == "review:deepseek-flash,review:deepseek-flash"
-    data = {**prof.data, "narrator_fallback": ["deepseek-v4-pro", "kimi-k2.6"]}
-    assert Profiles(data)._fallback_items() == ["proposer:deepseek-v4-pro", "judge:kimi-k2.6"]
+    data = {**prof.data, "narrator_fallback": ["deepseek-v4-pro", "deepseek-flash"]}
+    assert Profiles(data)._fallback_items() == ["proposer:deepseek-v4-pro", "review:deepseek-flash"]
     assert "narrator" in os.environ["LLM_LIVE_ROLES"] and os.environ["LLM_CACHE"] == "1"
 
 

@@ -16,10 +16,10 @@
 |---|---|
 | 电脑 | Mac 或 Linux，能联网；跑的时候**不能休眠**（一片通常要跑几个小时，见第 8 节） |
 | 软件 | git、[uv](https://docs.astral.sh/uv/)、Python 3.13（uv 会装）。不需要 Node，也不需要 git-lfs |
-| API key（必需） | **DeepSeek** 和 **Moonshot（Kimi）** 各一个，用你自己的，不要借别人的 |
+| API key（必需） | **DeepSeek** 一个，用你自己的，不要借别人的（2026-11-17 起不再用 Moonshot/Kimi） |
 | 订阅（可选，但有就开） | Claude（`claude` 命令行）和 GPT（`codex` 命令行）。清单里每片都会分到少量只能由这两个模型当玩家的局；你的电脑没有，这些局会被跳过并列出来，见第 5 节 |
 | 磁盘 | 一片 100 局大约 60 MB（压缩后约 5 MB） |
-| 费用 | 每局约 $0.2 到 0.3（API 花费，全部在 DeepSeek 和 Moonshot 上），见第 8 节 |
+| 费用 | 每局约 $0.2 到 0.3（API 花费，全部在 DeepSeek 上），见第 8 节 |
 
 ## 2. 一次性配置（约 10 分钟）
 
@@ -27,14 +27,13 @@
 git pull
 cd backend
 uv sync
-cp .env.selfplay.example .env       # 已经有 .env 的话，把里面两个 key 的行加进去即可
+cp .env.selfplay.example .env       # 已经有 .env 的话，把里面那一行 key 加进去即可
 ```
 
 打开 `backend/.env`，填两行：
 
 ```
 DEEPSEEK_API_KEY=你的 key
-MOONSHOT_API_KEY=你的 key
 ```
 
 `.env` 已被 gitignore，**不要提交，也不要发到群里**。模型的名字、端点、价格都在 `backend/selfplay/profiles.yaml`（提交进仓库的，全组一致），你不用也不要改它。
@@ -56,13 +55,12 @@ uv run python -m selfplay doctor --probe
 
 ```
   ok  profile: deepseek-flash    reachable, key accepted
-  ok  profile: kimi-k2.6         reachable, key accepted
   ok  profile: claude            2.1.x (Claude Code) answered in 3s
   NO  profile: gpt               codex did not answer: ...
-This machine can play sessions whose player is: claude, deepseek-flash, deepseek-v4-pro, kimi-k2.6.
+This machine can play sessions whose player is: claude, deepseek-flash, deepseek-v4-pro.
 ```
 
-最后一行说的是**这台电脑能跑哪些局**。NO 的项不影响其他局，但要么修好它，要么跑完后把被跳过的局告诉负责人（第 5 节）。引擎本身用到的几个模型（DeepSeek、Kimi）只要有一个是 NO，就一局都跑不了，必须先修。
+最后一行说的是**这台电脑能跑哪些局**。NO 的项不影响其他局，但要么修好它，要么跑完后把被跳过的局告诉负责人（第 5 节）。引擎本身用到的几个模型（都在 DeepSeek 上）只要有一个是 NO，就一局都跑不了，必须先修。
 
 ## 3. 负责人做的事（你不用做）
 
@@ -151,7 +149,7 @@ git push
 | 你看到的 | 原因 | 怎么办 |
 |---|---|---|
 | `Failed to authenticate: OAuth session expired and could not be refreshed` | claude 或 codex 的登录过期了 | 重新登录（第 2 节），用 `doctor --probe` 确认后，用 `--retry-errors` 重跑 |
-| `429 ... account ... is suspended due to insufficient balance` | DeepSeek 或 Moonshot 账户没钱了 | 充值；这条不会被 doctor 发现（key 是有效的，只是没余额）。充值后 `--retry-errors` |
+| `429 ... account ... is suspended due to insufficient balance` | DeepSeek 账户没钱了 | 充值；这条不会被 doctor 发现（key 是有效的，只是没余额）。充值后 `--retry-errors` |
 | 某一局几秒钟就 `error`，`error` 字段写着 "the player model failed 3 turns in a row" | 玩家那个模型一直调不通（登录、余额、网络） | 看 `selfplay.json` 里的 `error`，修好原因后 `--retry-errors`。系统故意让它早停，不让它白跑一整局 |
 | 汇总里有 `unavailable` | 清单里分给你的某些局，要用你电脑上没有的模型（比如没装 Claude） | 把这些局号发给负责人，换一台能跑的电脑用 `--session` 补跑；你不用管 |
 | 汇总里有 `not_started_budget` | 预算到了，还有局没开始 | 想继续就调高 `--budget-usd`，用同一条命令重跑 |
