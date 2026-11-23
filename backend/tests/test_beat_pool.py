@@ -35,6 +35,7 @@ REACTIONS = load_yaml(DATA / "reactions.yaml")
 CLOCK = load_yaml(DATA / "clock.yaml")
 
 EXPECTED_MUST_FOLLOW = {
+    "the_door": 0,
     "bon_voyage": 1, "second_crate": 2, "open_it": 3, "the_admission": 4, "noras_call": 5,
     "the_buzz": 6, "dont_go_yet": 7, "downstairs": 8, "the_knock": 9, "testimony": 10,
 }

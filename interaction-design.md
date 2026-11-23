@@ -222,6 +222,12 @@
 | 3 | 社交行为 | 安慰、赞美、指责等，针对某个人 | 你安慰 Mia → 她道谢，又道歉 |
 | 1 | 岔开 | 以上都没命中 | Julian 给你倒酒，把话题拉回"新生活" |
 
+**真相揭露之后**（`revealed` 里有 `leo_dead`）：表演到此为止。上表里属于"装没事"的那些反应不再触发：Julian 倒酒开玩笑的岔开、Mia 劝菜的岔开、"You're very interested in my furniture."、箱子和 Leo 和下午三个话题的层级台词、把你的杯子从箱子那头挪开。取而代之的是四条：问起下午或 Leo → "It was fast. It was so fast."（`truth_how`，在 `the_versions` 演过之前）；提到或碰箱子 → "Don't. Please don't touch it."（`truth_crate`）；其余情况两人各有一条"照你说的话回答，尽量少说"的反应。这四条不说出任何尚未揭露的事实，经过由 `the_versions` 负责。依据：自博弈 54 局里，揭露之后的 310 个回合有 53 个仍然是"Julian 倒酒、开玩笑、把话题拉回新生活"。
+
+**嘴上说要报警**（只说不拨号；拨号走世界规则里的 `police`，§6.6）：按"逼过头"处理，一局各用一次。揭露之前 Julian 慢半拍地笑："The police. Over a man who is late for dinner?"；揭露之后他放下杯子，站到你和过道之间："Nobody is calling anyone, {name}. Not yet."。两条都把 `threatened_julian` 置为 true。
+
+**Nora 在场时**：你已经对她说了真话（`nora_told == truth`），她就不再问 "Where is he?"，只盯着箱子。
+
 ### 5.3 谁来回应，怎么用
 
 - **谁来回应**：
@@ -319,6 +325,7 @@ mix_in:
 - 反应层根据回答选出结尾版本（`outcomes`），并按 §5.4 改 `side`。
 - 在问题抛出之前，玩家的输入一律当作 mix-in 处理；问题抛出之后，玩家的输入当作回答。
 - 回答是沉默时，按 `on_silence` 处理：可以算中立、算默认提问者的说法，或者算反对。由作者逐步决定。
+- 提前回答：下一步要问的是一个自由回答（`kind: answer`），而玩家这回合已经对提问者给出了答案（M2 判成 truth 或 lie），这一步就不再问，直接按这个答案选结尾版本。例子：Nora 进门就问 "Where is he?"，玩家当场回答，`testimony` 不会再问一遍 "Did he come?"（自博弈 43 次证词里有 34 次是这种情况，原来只算第二次回答）。站队和选择类的提问不适用。
 
 ### 6.4 拍与拍之间
 

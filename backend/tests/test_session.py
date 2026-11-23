@@ -282,3 +282,60 @@ async def test_news_shakes_composure_repetition_does_not_and_calm_turns_recover(
     assert j1 == pytest.approx(j0 - 0.1)
     await s.control("inject_turn", {"channels": {"speech": "Leo called me twice.", "addressee": "both"}, "encoder": claim})
     assert s.state["julian_composure"] == pytest.approx(j1 + 0.05)  # old news: no shake, and he gets a little back
+
+
+# --------------------------------------------------------------------------- fixes from the self-play rounds
+def _said(text: str, to: str, **enc) -> dict:
+    return {"channels": {"speech": text, "addressee": to},
+            "encoder": {"units": [{"channel": "speech", "text": text, "act": "explain", "addressee": to, "topics": ["leo"],
+                                   "action": None, "implausible": False}], "channels": {"addressee": to}, **enc}}
+
+
+async def test_a_running_must_follow_beat_is_not_aborted_by_a_lower_ranked_one():
+    """noras_call (rank 5) and the_buzz (rank 6) both triggered: the_buzz aborted the call, the DM picked the call
+    again, and so on every turn, a story minute each time (base20-0011: six turns, 9:00 to 15:00)."""
+    s, _ = await new_session()
+    await s.control("set_state", {"patch": {"story_min": 9.0, "player_room": "living", "mia_room": "living", "julian_room": "living",
+                                            "nora_pressure": 2, "nora_call": "answered", "leo_phone": "buzzed"}})
+    await s.control("force_beat", {"beat_id": "noras_call"})
+    seen = []
+    for _ in range(6):
+        r = await s.submit({"speech": "Mm.", "addressee": "nora"}, "filled")
+        seen.append((r["beat"]["run"] or {}).get("beat_id"))
+        ended = r["beat"]["ended"]
+        assert not (ended and ended["beat_id"] == "noras_call" and ended["status"] == "aborted"), ended
+        if any(h["beat_id"] == "the_buzz" for h in s.state["beat_history"]) or s.state["current_beat"] == "the_buzz":
+            break
+    history = [(h["beat_id"], h["completed"]) for h in s.state["beat_history"]]
+    assert ("noras_call", True) in history and history.count(("noras_call", True)) == 1
+    assert s.state["current_beat"] == "the_buzz" or ("the_buzz", True) in history
+
+
+async def test_telling_nora_as_she_walks_in_is_the_testimony():
+    s, _ = await new_session()
+    await s.control("set_state", {"patch": {
+        "story_min": 17.0, "player_room": "living", "mia_room": "living", "julian_room": "living", "nora_room": "living",
+        "nora_pressure": 4, "revealed": ["leo_was_here", "leo_dead", "body_in_crate"],
+        "beat_history": [{"beat_id": b, "origin": "authored", "completed": True} for b in
+                         ("the_door", "dinner_on_the_crate", "the_fourth_setting", "noras_call", "the_buzz", "the_admission",
+                          "downstairs", "the_knock")]}})
+    await s.control("force_beat", {"beat_id": "testimony"})
+    await s.submit({}, "filled")  # the forced beat starts when the current one has ended
+    while s.state["current_beat"] != "testimony" and s.phase == "playing":
+        await s.submit({}, "filled")
+    r = await s.submit(**{"channels": _said("He's in the crate, Nora.", "nora")["channels"], "source": "filled",
+                          "injected": {**_said("He's in the crate, Nora.", "nora")["encoder"], "nora_answer": "truth",
+                                       "claims": ["body_in_crate"]}})
+    assert r["beat"]["early_answer"] == "did_he_come" and r["beat"]["outcome"] == "truth"
+    assert r["beat"]["planned"] == ["close"] and r["state"]["nora_told"] == "truth"
+    assert s.phase == "ended" and s.state["ending"] in ("open_it", "confession")
+
+
+async def test_walking_out_during_the_welcome_still_ends_the_evening():
+    s, _ = await new_session(scorer="random")
+    assert s.state["current_beat"] == "the_door" and s.traces[0]["decision"]["kind"] == "must_follow"
+    await s.control("set_state", {"patch": {"player_room": "hall"}})
+    r = await s.submit({"action": "I turn round and walk out of the front door."}, "filled",
+                       injected={"units": [{"channel": "action", "text": "I walk out.", "act": "leave", "addressee": None, "topics": [],
+                                            "action": {"verb": "leave", "target": "front_door", "arg": None}, "implausible": False}]})
+    assert r["beat"]["ended"]["by"] == "bon_voyage" and s.state["ending"] == "bon_voyage"

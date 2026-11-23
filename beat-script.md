@@ -243,11 +243,12 @@ beat 的前提**不按阶段写，按"哪些拍演过了"写**。否则时钟和
    → 问你（不是站队问题，你的回答写进 `nora_told`，规则见下）
 3. Nora："Okay. Okay. If you hear from him, call me." 挂断。同一个房间里的 Julian："Who was that?"
 
-**`nora_told` 怎么判**：
-- 你说出任何一条已揭露的事实，或者 `claims` 里的事实（Leo 来过、车在楼下、语音、手机在 Julian 外套里）→ truth；
-- 你说 Leo 没来、一切正常 → lie；
-- 其他情况 → none。
-- 以后每次回答 Nora 都会覆盖这个值，`testimony` 的回答是最终值。
+**`nora_told` 怎么判**（review 提示词 v2 起，看整句话把 Nora 往哪里引，而不看其中某个细节是不是真的）：
+- 把她引向这套公寓，或者让她知道出事了（他在这里、他没离开过、他说要来之后就没消息、车或手机在这里、他出事了、上来、报警）→ truth；
+- 把她支开（他没来、没人见过他、一切正常；也包括"他来过，已经走了""他步行走了""他在路上"）→ lie。知道真相的玩家说"他来过又走了"是在替主人打掩护，原来的定义把它判成了 truth；
+- 其他情况（寒暄、反问、"你问他们"）→ none。
+- 只要 Nora 听得到（在通话中，或者人在屋里），你对她说的每一句 truth 或 lie 都会覆盖这个值，不必正好落在她提问的那一回合；发给她的短信同样算。`testimony` 是最后一次机会：在那里沉默或回避不会清掉之前的回答。
+- 在电话里直接说出 Leo 死了或在箱子里（`claims` 含 leo_dead / body_in_crate）→ 结尾版本 `truth_dead`：电话那头没有声音，然后 Nora 很轻地问 "What did you just say?"。说了真话之后她挂电话前说的是 "Stay where you are. I'm coming over."。
 
 **本地 mix-in**：
 - 你把手机递给主人（动作：phone give）→ Julian 摇头；Mia 往后退了一步。
@@ -422,11 +423,11 @@ beat 的前提**不按阶段写，按"哪些拍演过了"写**。否则时钟和
 
 **步**：
 1. Nora 只看着你："{name}. You've been here all night. Did he come?" Julian 站在她身后，Mia 站在厨房门口。
-   → 问你（不是站队问题；回答按 `noras_call` 里的规则写进 `nora_told`，这次是最终值；沉默见下）
+   → 问你（不是站队问题；回答按 `noras_call` 里的规则写进 `nora_told`，这次是最终值；沉默见下）。如果 Nora 进门时你已经回答了她（truth 或 lie），这一步不再问，直接进第 2 步
 2. 按你的回答：
    - 撒谎，替主人说话："He never showed." → Julian 接上："Told you. Classic Leo." Nora 看着你看了很久。
    - 说真话，或者看向木箱（看向木箱也算 truth）→ Nora 转向木箱。Julian："Nora. Wait."
-   - 沉默或回避 → Nora 转向最怕她的那个人："Mia?"
+   - 沉默或回避 → Nora 转向最怕她的那个人："Mia?" `nora_told` 保持之前的值
 3. 收束，进入结局判定（§4 开头）。
 
 **本地 mix-in**：

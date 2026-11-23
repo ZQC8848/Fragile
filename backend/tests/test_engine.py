@@ -321,6 +321,9 @@ def test_claims_and_nora_answers():
     out = ENCODER.encode({"mode": "channels", "channels": {"speech": "No, I haven't seen him.", "addressee": "nora"}}, CTX)
     assert out["nora_answer"] == "lie"
     assert enc(speech="Hi.", addressee="mia")["nora_answer"] is None
+    # judged by where the answer sends Nora (review_v2): "he came and left" is a cover story
+    assert enc(speech="He came by earlier, Nora. He left a while ago.", addressee="nora")["nora_answer"] == "lie"
+    assert enc(speech="He was here this afternoon and he never left.", addressee="nora")["nora_answer"] == "truth"
 
 
 def test_silence():
@@ -465,3 +468,108 @@ def test_m2_side_verdict_overrides_the_act_rules():
     t = turn(acts=["agree", "mention_voicemail"], addressee="julian")  # turn 17 of the Sonnet playthrough
     assert run.choose_outcome(rule_ctx(default_state(), t))["id"] == "julian"
     assert run.choose_outcome(rule_ctx(default_state(), {**t, "side_answer": "mia"}))["id"] == "mia"
+
+
+# --------------------------------------------------------------------------- fixes from the self-play rounds (54 sessions)
+async def test_the_evening_always_opens_at_the_door():
+    """10 of 54 sessions opened on dont_go_yet or a generated beat: at the first decision the player and Mia are
+    both in the hall, so the satellite was eligible and a random or hot scorer drew it."""
+    for scorer in ("random", "rule"):
+        dm = DramaManager(POOL, TensionArc.from_file(), CLOCK, scorer=scorer, tau=2.0, seed=3)
+        d = await dm.decide(default_state(), {}, decision_idx=0, state_text="", tension=1)
+        assert (d.kind, d.chosen_id) == ("must_follow", "the_door")
+    after = default_state(beat_history=played("the_door"), player_room="living", julian_room="living", mia_room="living")
+    assert POOL.must_follow(after, turn()) is None
+
+
+def test_an_answer_given_before_the_question_is_the_answer():
+    beat = POOL.by_id["testimony"]
+    run = BeatRun.start(beat, beat.entries[0], 30)
+    assert run.early_answer(turn(nora_answer="none", addressee="nora")) is None
+    assert run.early_answer(turn(nora_answer="truth", addressee="mia")) is None
+    step = run.early_answer(turn(nora_answer="truth", addressee="nora"))
+    assert step["id"] == "did_he_come"
+    run.take_early_answer(step)
+    outcome = run.choose_outcome(rule_ctx(default_state(), turn(nora_answer="truth", addressee="nora")))
+    run.answer(outcome)
+    run.turns += 1
+    plan = run.plan()
+    assert outcome["id"] == "truth" and [s["id"] for s in plan] == ["close"]
+    run.deliver(plan)
+    assert run.finished
+    # a step that asks for a side, or one that is not next, is never skipped
+    side = BeatRun.start(POOL.by_id["the_fourth_setting"], POOL.by_id["the_fourth_setting"].entries[0], 5)
+    assert side.early_answer(turn(nora_answer="truth", addressee="nora")) is None
+    call = BeatRun.start(POOL.by_id["noras_call"], POOL.by_id["noras_call"].entries[0], 9)
+    assert call.early_answer(turn(nora_answer="lie", addressee="nora")) is None  # "Is he with you?" comes first
+
+
+def effects_of(state, t, run=None):
+    s = dict(state)
+    for e in REACTIONS.select(state, t, run, set()).effects:
+        s = apply_effects(s, e["effects"], SCHEMA.props)
+    return s
+
+
+def test_what_the_player_tells_nora_is_booked_whenever_she_can_hear_it():
+    in_room = mid(story_min=17, story_phase="late", nora_room="living", nora_pressure=4)
+    assert effects_of(in_room, turn(nora_answer="truth", addressee="nora"))["nora_told"] == "truth"
+    assert effects_of({**in_room, "nora_told": "truth"}, turn(nora_answer="lie", addressee="nora"))["nora_told"] == "lie"
+    # said to a host, or to Nora when she is neither in the room nor on the line: nothing
+    assert effects_of(in_room, turn(nora_answer="truth", addressee="mia"))["nora_told"] == "none"
+    assert effects_of(mid(), turn(nora_answer="truth", addressee="nora"))["nora_told"] == "none"
+    on_call = mid(nora_call="answered", current_beat="noras_call", nora_pressure=2)
+    assert effects_of(on_call, turn(nora_answer="lie", addressee="nora"))["nora_told"] == "lie"
+    picking_up = mid(nora_call="answered", nora_pressure=2)
+    t = turn(nora_answer="truth", addressee="nora", action={"verb": "answer_call", "target": "nora", "arg": None})
+    assert effects_of(picking_up, t)["nora_told"] == "truth"
+
+
+def test_silence_at_the_testimony_leaves_the_earlier_answer_standing():
+    beat = POOL.by_id["testimony"]
+    silence = next(o for o in beat.outcomes if o["id"] == "silence")
+    assert "nora_told" not in (silence.get("effects") or {})
+
+
+def test_the_hosts_stop_pretending_once_the_death_is_out():
+    """53 of the 310 self-play turns after the admission still got 'refills a glass, makes a joke'."""
+    out = mid(story_min=13, story_phase="late", revealed=["leo_dead", "body_in_crate"],
+              topic_tier={**default_state()["topic_tier"], "crate": 1, "leo": 2})
+    res = REACTIONS.select(out, turn(acts=["explain"], addressee="julian"), None, set())
+    assert res.primary.id == "julian_after_truth"
+    res = REACTIONS.select(out, turn(acts=["ask_about_afternoon"], topics=["afternoon"], addressee="mia"), None, set())
+    assert res.primary.id == "truth_how" and res.primary.responder == "mia"
+    res = REACTIONS.select(out, turn(acts=["ask"], topics=["crate"], streak_topic="crate"), None, set())
+    assert res.primary.id == "truth_crate"
+    stale = {"deflect_julian", "deflect_mia", "keeps_on_the_crate", "crate_t2", "leo_t3", "afternoon_t1", "obj_crate"}
+    for t in (turn(topics=["crate", "leo", "afternoon"], streak_topic="crate", action={"verb": "touch", "target": "crate", "arg": None}), turn()):
+        assert not stale & {c.id for c in REACTIONS.select(out, t, None, set()).candidates}
+    # before it is out, nothing changes
+    assert REACTIONS.select(mid(), turn(), None, set()).primary.id == "deflect_julian"
+
+
+def test_announcing_the_police_gets_an_answer():
+    t = turn(acts=["explain"], addressee="julian", declared_police=True)
+    before = REACTIONS.select(mid(), t, None, set())
+    assert before.primary.id == "police_declared_before_truth"
+    after = REACTIONS.select(mid(revealed=["leo_dead"]), t, None, set())
+    assert after.primary.id == "police_declared_after_truth"
+    assert effects_of(mid(revealed=["leo_dead"]), t)["threatened_julian"]
+    # dialling is the world's business (its watch), and a promise not to call is not a threat
+    dial = turn(declared_police=True, action={"verb": "call", "target": "police", "arg": None})
+    assert not REACTIONS.select(mid(), dial, None, set()).primary.id.startswith("police_declared")
+    promise = turn(acts=["promise_silence"], addressee="julian", declared_police=True)
+    assert not REACTIONS.select(mid(), promise, None, set()).primary.id.startswith("police_declared")
+
+
+def test_authored_text_may_move_the_player_in_the_opening_and_in_an_ending():
+    from engine.models.guard import Guard
+
+    segs = [{"kind": "narration", "text": "I ring the bell."}, {"kind": "me_speech", "text": "Goodbye."},
+            {"kind": "narration", "text": "He is in the crate."}]
+    verdicts = [{"index": 0, "label": "player_overreach"}, {"index": 1, "label": "player_overreach"},
+                {"index": 2, "label": "premature_leak"}]
+    assert len(Guard.failures(verdicts)) == 3
+    assert [v["index"] for v in Guard.failures(verdicts, GuardContext(opening=True), segs)] == [2]
+    assert [v["index"] for v in Guard.failures(verdicts, GuardContext(ending=True), segs)] == [1, 2]
+    assert len(Guard.failures(verdicts, GuardContext(), segs)) == 3

@@ -353,6 +353,9 @@ class Session:
         for e in reaction.effects:
             state = self._apply(state, e["effects"])
         outcome = None
+        early = run.early_answer(turn) if run is not None and not refused else None
+        if early is not None:
+            run.take_early_answer(early)
         if run is not None and run.awaiting and not refused:
             outcome = run.choose_outcome(rule_ctx(state, turn))
             run.answer(outcome)
@@ -384,8 +387,11 @@ class Session:
             elif run.finished:
                 status = "completed"
             else:
-                must = self.pool.must_follow(state, turn, exclude=run.beat.id)
-                if must is not None:
+                # the must-follow beat that would be taken next. A running beat whose own trigger still holds and
+                # outranks the others plays on: aborting it would only pick it again (noras_call and the_buzz
+                # used to abort each other every turn, a story minute each time)
+                must = self.pool.must_follow(state, turn)
+                if must is not None and must.id != run.beat.id:
                     status, by = "aborted", must.id
                 elif self.pool.should_abort(run.beat, rule_ctx(state, turn)):
                     status, by = "aborted", "abort_if"
@@ -482,6 +488,7 @@ class Session:
             "reactions": {**reaction.public(), "effects": reaction.effects, "clipped": clipped},
             "beat": {
                 "run": run.public() if run else None, "planned": [s["id"] for s in plan], "outcome": outcome["id"] if outcome else None,
+                "early_answer": early["id"] if early else None,
                 "ended": {k: v for k, v in ended.items() if k != "beat"} if ended else None, "resume": resume,
             },
             "clock": {"story_min": state["story_min"], "before": before["story_min"], "events": [e.id for e in events], "fast_forward": fast_forward, "hold": hold},
@@ -630,7 +637,7 @@ class Session:
             allowed=set(state.get("revealed", [])) | set(extra_allowed),
             speaker_allowed={n: self.knowledge.allowed_facts(n, state) for n in NPCS},
             player={**(player or {}), "world_note": bool(world and (world.note or world.follow_notes))},
-            ending=ending, knowledge=req.knowledge,
+            ending=ending, opening=player is None, knowledge=req.knowledge,
             scene={
                 "room": state["player_room"], "present": self.world.present(state),
                 **{f"{n}_room": state[f"{n}_room"] for n in NPCS},
@@ -645,7 +652,7 @@ class Session:
         rewrites = 0
         while True:
             verdict = await self.guard.check(out.segments, gctx)
-            fails = Guard.failures(verdict.result["verdicts"])
+            fails = Guard.failures(verdict.result["verdicts"], gctx, out.segments)
             steps_ok = sorted(out.steps_delivered) == sorted(planned)
             log.append({"attempt": rewrites, "verdicts": verdict.log(), "steps_delivered": out.steps_delivered, "steps_ok": steps_ok})
             if (not fails and steps_ok) or rewrites >= MAX_GUARD_REWRITES or time.monotonic() >= deadline:

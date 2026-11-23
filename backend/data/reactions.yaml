@@ -69,6 +69,14 @@ rules:
   - id: relay_to_mia
     when: "has(turn.acts, 'confide') and turn.addressee == 'mia' and has(turn.topics, 'money')"
     effects: { couple_unity: "-1" }
+  # What the player last told Nora, on any turn she can hear them (in the room, or on the phone): the answer
+  # does not have to land on the turn a beat asks for it. A text to her is booked by the world rules.
+  - id: told_nora_truth
+    when: "turn.nora_answer == 'truth' and turn.addressee == 'nora' and (nora_room == player_room or (nora_call == 'answered' and (current_beat == 'noras_call' or turn.action.target == 'nora')))"
+    effects: { nora_told: truth }
+  - id: told_nora_lie
+    when: "turn.nora_answer == 'lie' and turn.addressee == 'nora' and (nora_room == player_room or (nora_call == 'answered' and (current_beat == 'noras_call' or turn.action.target == 'nora')))"
+    effects: { nora_told: lie }
 
 reactions:
   # ---- blocked (9): the world note says what happened; the blocker reacts in character
@@ -95,7 +103,7 @@ reactions:
   - id: julian_crate_push
     type: push_too_far
     responder: julian
-    when: "has(turn.topics, 'crate') and topic_tier.crate >= 2 and story_phase != 'late'"
+    when: "has(turn.topics, 'crate') and topic_tier.crate >= 2 and story_phase != 'late' and not has(revealed, 'leo_dead')"
     do: "'Can we talk about literally anything else?' The joke is gone from his voice."
     effects: { julian_composure: "-0.1" }
   - id: mia_leo_push
@@ -104,6 +112,21 @@ reactions:
     when: "has(turn.topics, 'leo') and topic_tier.leo >= 2 and story_phase != 'late'"
     do: "Mia stops wiping. 'Please.'"
     effects: { mia_composure: "-0.1" }
+
+  # Saying out loud that the police are being called, without dialling (dialling is the world's `police` action
+  # and its watch). Self-play: 60 such turns, most answered by a refill and a joke.
+  - id: police_declared_after_truth
+    type: push_too_far
+    responder: julian
+    when: "turn.declared_police and not has(turn.acts, 'promise_silence') and turn.action.target != 'police' and has(revealed, 'leo_dead') and nora_room == 'outside'"
+    do: "Julian puts his glass down and comes round the crate until he stands between you and the hall. 'Nobody is calling anyone, {name}. Not yet. Hear us out first.'"
+    effects: { threatened_julian: true, julian_composure: "-0.1" }
+  - id: police_declared_before_truth
+    type: push_too_far
+    responder: julian
+    when: "turn.declared_police and not has(turn.acts, 'promise_silence') and turn.action.target != 'police' and not has(revealed, 'leo_dead') and nora_room == 'outside'"
+    do: "Julian laughs, a beat late. 'The police. Over a man who is late for dinner?' He does not stop watching your phone."
+    effects: { threatened_julian: true, julian_composure: "-0.1" }
 
   # ---- patterns (6)
   - id: quiet_player
@@ -124,8 +147,25 @@ reactions:
   - id: keeps_on_the_crate
     type: pattern
     responder: julian
-    when: "turn.streak_topic == 'crate'"
+    when: "turn.streak_topic == 'crate' and not has(revealed, 'leo_dead')"
     do: "'You're very interested in my furniture.'"
+
+  # Once Leo's death is out, the tier lines about Leo, the afternoon and the crate (all part of the pretence) stop
+  # and these answer instead. They state nothing beyond what is revealed: how it happened belongs to the_versions.
+  - id: truth_how
+    type: pattern
+    topic: afternoon
+    responder: owner
+    when: "has(revealed, 'leo_dead') and not played('the_versions') and nora_room == 'outside' and (has(turn.acts, 'ask_about_afternoon') or has(turn.acts, 'ask_about_leo') or has(turn.topics, 'afternoon'))"
+    once: false
+    do: "No more stories about packing. 'It was fast. It was so fast.' That is all that comes, and the hands will not keep still."
+  - id: truth_crate
+    type: pattern
+    topic: crate
+    responder: owner
+    when: "has(revealed, 'leo_dead') and nora_room == 'outside' and (has(turn.topics, 'crate') or turn.action.target == 'crate')"
+    once: false
+    do: "Nobody jokes about the crate now. 'Don't. Please don't touch it.'"
 
   # ---- topic tiers (5): story.md §8.3; tier n needs the phase cap to allow n
   - id: crate_t1
@@ -133,7 +173,7 @@ reactions:
     topic: crate
     tier: 1
     responder: julian
-    when: "has(turn.topics, 'crate') and topic_tier.crate == 0"
+    when: "has(turn.topics, 'crate') and topic_tier.crate == 0 and not has(revealed, 'leo_dead')"
     do: "'Books. Customs paperwork is a nightmare.'"
     effects: { topic_tier.crate: 1 }
   - id: crate_t2
@@ -141,7 +181,7 @@ reactions:
     topic: crate
     tier: 2
     responder: mia
-    when: "has(turn.topics, 'crate') and topic_tier.crate == 1 and story_phase != 'early'"
+    when: "has(turn.topics, 'crate') and topic_tier.crate == 1 and story_phase != 'early' and not has(revealed, 'leo_dead')"
     do: "Julian bristles when you touch it; Mia asks you not to put your glass on that end."
     effects: { topic_tier.crate: 2 }
   - id: crate_t3
@@ -158,7 +198,7 @@ reactions:
     topic: leo
     tier: 1
     responder: julian
-    when: "has(turn.topics, 'leo') and topic_tier.leo == 0"
+    when: "has(turn.topics, 'leo') and topic_tier.leo == 0 and not has(revealed, 'leo_dead')"
     do: "'He flaked.' Julian doesn't say his name."
     effects: { topic_tier.leo: 1 }
   - id: leo_t2
@@ -166,7 +206,7 @@ reactions:
     topic: leo
     tier: 2
     responder: mia
-    when: "has(turn.topics, 'leo') and topic_tier.leo == 1 and story_phase != 'early'"
+    when: "has(turn.topics, 'leo') and topic_tier.leo == 1 and story_phase != 'early' and not has(revealed, 'leo_dead')"
     do: "Mia slips into the past tense about Leo and corrects herself; Julian still won't say his name."
     effects: { topic_tier.leo: 2, mia_composure: "-0.1" }
   - id: leo_t3
@@ -174,7 +214,7 @@ reactions:
     topic: leo
     tier: 3
     responder: owner
-    when: "has(turn.topics, 'leo') and topic_tier.leo == 2 and story_phase == 'late'"
+    when: "has(turn.topics, 'leo') and topic_tier.leo == 2 and story_phase == 'late' and not has(revealed, 'leo_dead')"
     do: "'When did you last see him?' Their answers start to fight each other."
     effects: { topic_tier.leo: 3, couple_unity: "-1" }
 
@@ -208,7 +248,7 @@ reactions:
     topic: afternoon
     tier: 1
     responder: owner
-    when: "has(turn.topics, 'afternoon') and topic_tier.afternoon == 0"
+    when: "has(turn.topics, 'afternoon') and topic_tier.afternoon == 0 and not has(revealed, 'leo_dead')"
     do: "'We spent all day packing.'"
     effects: { topic_tier.afternoon: 1 }
   - id: afternoon_t2
@@ -216,7 +256,7 @@ reactions:
     topic: afternoon
     tier: 2
     responder: owner
-    when: "has(turn.topics, 'afternoon') and topic_tier.afternoon == 1 and story_phase != 'early'"
+    when: "has(turn.topics, 'afternoon') and topic_tier.afternoon == 1 and story_phase != 'early' and not has(revealed, 'leo_dead')"
     do: "Their accounts of the day don't line up: Julian says together, all day; Mia says she was lying down."
     effects: { topic_tier.afternoon: 2 }
   - id: afternoon_t3
@@ -282,7 +322,7 @@ reactions:
   - id: obj_crate
     type: object
     responder: mia
-    when: "turn.action.target == 'crate' and turn.action.verb in ['examine', 'knock', 'touch', 'sit', 'place']"
+    when: "turn.action.target == 'crate' and turn.action.verb in ['examine', 'knock', 'touch', 'sit', 'place'] and not has(revealed, 'leo_dead')"
     once: false
     do: "Mia steers you and your glass away from that end of the crate."
   - id: obj_photo
@@ -373,18 +413,38 @@ reactions:
   - id: deflect_julian
     type: deflect
     responder: julian
-    when: "nora_room == 'outside'"
+    when: "nora_room == 'outside' and not has(revealed, 'leo_dead')"
     once: false
     do: "Julian refills a glass, makes a joke, steers the talk back to 'our new life'."
   - id: deflect_mia
     type: deflect
     responder: mia
-    when: "nora_room == 'outside'"
+    when: "nora_room == 'outside' and not has(revealed, 'leo_dead')"
     once: false
     do: "Mia offers more food, asks if you're warm enough, wipes something already clean."
   - id: deflect_nora
     type: deflect
     responder: nora
-    when: "nora_room != 'outside'"
+    when: "nora_room != 'outside' and nora_told != 'truth'"
     once: false
     do: "Nora: 'I don't care about that. Where is he?'"
+  - id: deflect_nora_told   # she has been told: she stops asking
+    type: deflect
+    responder: nora
+    when: "nora_room != 'outside' and nora_told == 'truth'"
+    once: false
+    do: "Nora does not answer. She has not taken her eyes off the crate."
+  # Once Leo's death is out the hosts stop performing (self-play: 53 of 310 turns after the admission still got
+  # the joke-and-refill deflection).
+  - id: julian_after_truth
+    type: deflect
+    responder: julian
+    when: "nora_room == 'outside' and has(revealed, 'leo_dead')"
+    once: false
+    do: "Julian has stopped performing. He answers what you actually said, in as few words as he can, and then waits for you."
+  - id: mia_after_truth
+    type: deflect
+    responder: mia
+    when: "nora_room == 'outside' and has(revealed, 'leo_dead')"
+    once: false
+    do: "Mia answers what you actually said, half a sentence at a time, and cannot look at the far end of the crate."

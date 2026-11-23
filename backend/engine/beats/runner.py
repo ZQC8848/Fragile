@@ -102,6 +102,26 @@ class BeatRun:
             self.awaiting = steps[-1]["id"]
 
     # -- answers -------------------------------------------------------------------
+    def early_answer(self, turn: dict[str, Any]) -> dict[str, Any] | None:
+        """The next step, when it would ask for an answer this turn's input already gives.
+
+        Nora walks in asking where Leo is and the player tells her; testimony's "Did he come?" would then ask
+        the same thing again and only count the second answer. A free answer (`asks.kind == "answer"`) to the
+        asker that M2 already classified (`turn.<asker>_answer`) is taken as the answer to that step."""
+        if self.awaiting or self.invite_pending or not self.remaining:
+            return None
+        step = self.remaining[0]
+        asks = step.get("asks") or {}
+        asker = asks.get("asker")
+        if asks.get("kind") != "answer" or turn.get("addressee") != asker:
+            return None
+        return step if turn.get(f"{asker}_answer") in ("truth", "lie") else None
+
+    def take_early_answer(self, step: dict[str, Any]) -> None:
+        """The asking step is passed over unspoken; its outcome is chosen from this turn's input."""
+        self.step += 1
+        self.awaiting = step["id"]
+
     def choose_outcome(self, ctx: dict[str, Any]) -> dict[str, Any] | None:
         """The outcome the player's answer leads to (interaction-design.md §6.3). ctx carries `turn`."""
         step = self.asking_step()

@@ -198,6 +198,13 @@ _NORA_LIE = re.compile(
     r"\b(haven'?t|have not|didn'?t|did not|never) (seen|heard|come|came|show(ed)?|turn(ed)? up)\b|\bhe'?s not here\b|"
     r"\bnot here\b|\bno idea\b|\bhe flaked\b|\bhe never (came|showed)\b|\bdon'?t know where\b|\bno\b", re.I)
 
+#: review_v2: the answer is judged by where it sends Nora. "He came and left" sends her away (lie) even though
+#: "he came" is true; "he never left" keeps her here (truth). Both are checked before the patterns above.
+_NORA_AWAY = re.compile(
+    r"\b(he|leo) (left|went (off|out|home)|walked off|took off|is gone)\b|\b(but|then|and) (he )?(left|went)\b|"
+    r"\bleft (a while|hours|ages|early|on foot|in a hurry|before)\b|\bon his way\b|\b(he'?ll|he will) turn up\b", re.I)
+_NORA_STAYED = re.compile(r"\bnever left\b|\b(didn'?t|did not|hasn'?t|has not) (leave|left)\b|\bstill (here|in)\b", re.I)
+
 _EXPRESSION_ONLY = re.compile(
     r"^\s*(i\s+)?(smile|smiles|frown|frowns|stare|stares|glare|sigh|sighs|nod|nods|shrug|shrugs|grin|laugh|wince|blush|"
     r"raise an eyebrow|narrow my eyes|swallow|bite my lip|look away|go quiet)\b", re.I)
@@ -571,6 +578,10 @@ class RuleEncoder:
         if not to_nora:
             return None
         text = " ".join(texts)
+        if _NORA_STAYED.search(text):
+            return "truth"
+        if _NORA_AWAY.search(text):
+            return "lie"
         if _NORA_TRUTH.search(text):
             return "truth"
         if _NORA_LIE.search(text):

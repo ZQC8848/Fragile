@@ -1,6 +1,6 @@
 # Phase 2 · Cracks (beat-script.md §2), plus the must-follow beats that can fire from phase 2 on.
 # Must-follow ranks follow story.md §9.4 with the two early endings in front:
-#   1 bon_voyage (left)  2 second_crate  3 open_it (police)  4 the_admission (crate opened)
+#   0 the_door (the opening)  1 bon_voyage (left)  2 second_crate  3 open_it (police)  4 the_admission (crate opened)
 #   5 noras_call  6 the_buzz  7 dont_go_yet  8 downstairs  9 the_knock  10 testimony
 
 - id: mia_in_the_kitchen
@@ -177,8 +177,9 @@
   max_turns: 3
   dramatic_intent: |
     Nora is only a voice. Urgent, direct. She asks whether Leo is with you. Whoever shares your room
-    hears your side of it. What you tell her is your first answer to Nora. When she hangs up she starts
-    calling Leo, which is why his phone buzzes next.
+    hears your side of it. What you tell her is your first answer to Nora, on whichever turn of the call
+    you say it (reactions.yaml `told_nora_*`; an answer given before she asks "anything weird?" is taken as
+    the answer). When she hangs up she starts calling Leo, which is why his phone buzzes next.
   steps:
     - id: is_he_with_you
       do: "Nora: 'Is Leo with you? He said he'd be at Julian's with you tonight. He's not picking up.' Anyone in the room with you goes quiet."
@@ -186,11 +187,19 @@
       do: "Nora presses: 'Did he say anything to you today? Anything weird?'"
       asks: { asker: nora, kind: answer, on_silence: none }
     - id: hang_up
-      do: "Nora: 'Okay. Okay. If you hear from him, call me.' She hangs up."
+      do: "Nora hangs up."
       lines:
+        - when: "nora_told != 'truth'"
+          do: "Before she does: 'Okay. Okay. If you hear from him, call me.'"
+        - when: "nora_told == 'truth'"
+          do: "Before she does: 'Stay where you are. I'm coming over.'"
         - when: "julian_room == player_room"
           do: "Julian: 'Who was that?'"
   outcomes:
+    - id: truth_dead   # the player said it outright (true or guessed): she does not ask where he is
+      when: "turn.nora_answer == 'truth' and (has(turn.claims, 'leo_dead') or has(turn.claims, 'body_in_crate'))"
+      text: "Nothing on the line. Then Nora, very quietly: 'What did you just say?'"
+      effects: { nora_told: truth }
     - id: truth
       when: "turn.nora_answer == 'truth'"
       text: "Nora: 'What? Then where is he?'"

@@ -243,8 +243,10 @@
   minutes: 1
   max_turns: 4
   dramatic_intent: |
-    Every word you say is testimony. Nora asks you; the hosts stand behind her. Your answer here is
-    the final value of nora_told and leads into the ending table.
+    Every word you say is testimony. Nora asks you; the hosts stand behind her. What you tell her here
+    is the final value of nora_told and leads into the ending table. If you already answered her when she
+    walked in, that is your testimony and she does not ask again; saying nothing leaves what you told her
+    before (on the phone, by text) standing.
   steps:
     - id: did_he_come
       do: "'{name}. You've been here all night. Did he come?' Julian behind her, Mia in the kitchen doorway."
@@ -262,7 +264,6 @@
       effects: { nora_told: lie }
     - id: silence
       text: "Nora turns to the one who fears her most: 'Mia?'"
-      effects: { nora_told: none }
   mix_in:
     - when: "has(turn.claims, 'leo_was_here') and turn.nora_answer != 'truth'"
       do: "Nora: 'When? Where is he now?'"

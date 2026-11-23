@@ -9,6 +9,9 @@
   schema_version: 2
   phase_hint: early
   preconditions: "count(beat_history) == 0"
+  # the evening always opens here: no scoring, no generated beat (rank 0 comes before every other must-follow).
+  # Only while nothing is playing: once it runs, a player who walks straight out still gets bon_voyage at once.
+  must_follow: { when: "count(beat_history) == 0 and current_beat == null", rank: 0 }
   entries:
     - id: default
       opening: "The door opens almost before the bell has finished ringing."

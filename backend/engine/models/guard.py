@@ -50,6 +50,8 @@ class GuardContext:
     player: dict[str, Any] = field(default_factory=dict)
     #: the scene is an ending: everything may come out
     ending: bool = False
+    #: the very first passage: there is no player input yet and the prologue walks the player to the door
+    opening: bool = False
     #: knowledge slice and recent context for the llm path
     knowledge: dict[str, Any] = field(default_factory=dict)
     #: the physical scene for contradiction checks: room, who is present, rooms of the others, crate, phones,
@@ -168,5 +170,21 @@ class Guard:
         )
 
     @staticmethod
-    def failures(verdicts: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        return [v for v in verdicts if v["label"] != "consistent"]
+    def failures(verdicts: list[dict[str, Any]], ctx: GuardContext | None = None,
+                 segments: list[dict[str, Any]] | None = None) -> list[dict[str, Any]]:
+        """The verdicts that send the passage back.
+
+        Authored text may move the player: the prologue rings the bell for them, an ending walks them down the
+        stairs or leaves Nora's message unopened. The guard reads those as the narrator acting for the player
+        (it flagged "I ring the bell." in 25 of 54 self-play openings), so `player_overreach` does not count in
+        the opening passage, nor in an ending outside the player's own quoted speech."""
+        out = []
+        for v in verdicts:
+            if v["label"] == "consistent":
+                continue
+            if v["label"] == "player_overreach" and ctx is not None:
+                kind = segments[v["index"]].get("kind") if segments and 0 <= v["index"] < len(segments) else None
+                if ctx.opening or (ctx.ending and kind != "me_speech"):
+                    continue
+            out.append(v)
+        return out
