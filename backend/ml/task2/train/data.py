@@ -12,6 +12,8 @@ in one table:
   nora       truth / lie / none, only when the turn was addressed to Nora
   side       julian / mia / none, only when the scene asked the player to take a side
   seg        segmentation, scored per character (whitespace skipped), single-box inputs only
+  validity   ok or one of nine violations (the compliance check, task 3); also scored as ok-vs-violation:
+             false-reject rate (ok turns sent back) and miss rate (violations let through)
 
 Standard library only (the baselines add scikit-learn / transformers on top).
 """
@@ -25,7 +27,7 @@ from typing import Any
 from ..common.labels import ACTS, CLAIMS, TOPICS
 
 HEADS_MULTI = {"act_set": ACTS, "topics": TOPICS, "claims": CLAIMS}
-HEADS_SINGLE = ("addressee", "action", "nora", "side")
+HEADS_SINGLE = ("addressee", "action", "nora", "side", "validity")
 
 
 def load_jsonl(path: str | Path) -> list[dict[str, Any]]:
@@ -45,6 +47,7 @@ def targets_from_review(data: dict[str, Any]) -> dict[str, Any]:
         "suspicion": float(data.get("suspicion") or 0.0),
         "nora": data.get("nora_answer") or "none",
         "side": data.get("side_answer") or "none",
+        "validity": (data.get("validity") or {}).get("label") or "ok",
     }
 
 
@@ -62,7 +65,23 @@ def targets(ex: dict[str, Any]) -> dict[str, Any]:
         "suspicion": float(t.get("suspicion") or 0.0),
         "nora": t.get("nora_answer") or "none",
         "side": t.get("side_answer") or "none",
+        "validity": (ex.get("validity") or {}).get("label") or "ok",
     }
+
+
+def violation_span(ex: dict[str, Any]) -> tuple[int, int] | None:
+    """Character span of the teacher's violation span in the player text (None for ok turns or when it is not found)."""
+    v = ex.get("validity") or {}
+    span = (v.get("span") or "").strip()
+    if v.get("label", "ok") == "ok" or not span:
+        return None
+    text = ex["text"]
+    i = text.find(span)
+    if i < 0:
+        core = span.strip(" \t\"'“”‘’「」")
+        i = text.find(core) if core else -1
+        span = core
+    return (i, i + len(span)) if i >= 0 else None
 
 
 def head_mask(ex: dict[str, Any], head: str) -> bool:

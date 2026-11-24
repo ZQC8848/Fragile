@@ -7,6 +7,8 @@
   turn level    on the first token ([CLS]), the mean of the player-text tokens, or both concatenated (--turn-pool):
                   addressee (5 + none), suspicion (0-3), claims (10, multi-label),
                   nora answer (3), side answer (julian / mia / none)          CE / BCE / MSE
+                  validity (ok + 9 violations, the compliance check)           CE
+  token level   violation span on the player text (in span or not)            BCE, masked when the span is unknown
 
 Every head's loss is masked where its label is absent (e.g. nora_answer outside a call with Nora).
 The losses are summed with equal weight (optionally scaled per head with loss_weights), or with learned
@@ -22,14 +24,17 @@ import torch.nn as nn
 import torch.nn.functional as F
 from transformers import AutoModel
 
-from ..common.labels import ACTION_TABLE, ACTS, ADDRESSEES, CLAIMS, NORA_ANSWERS, SEG_TAGS, SIDE_ANSWERS, TOPICS, VERBS
+from ..common.labels import ACTION_TABLE, ACTS, ADDRESSEES, CLAIMS, NORA_ANSWERS, SEG_TAGS, SIDE_ANSWERS, TOPICS, VALIDITY, VERBS
 
 NONE = "none"
 VERB_LABELS = [NONE, *VERBS]
 TARGET_LABELS = [NONE, *sorted(ACTION_TABLE["target_rooms"])]
 ADDRESSEE_LABELS = [NONE, *ADDRESSEES]
 SIDE_LABELS = [NONE, *SIDE_ANSWERS]
-HEADS = ("seg", "act", "topics", "verb", "target", "implausible", "addressee", "suspicion", "claims", "nora", "side")
+HEADS = ("seg", "act", "topics", "verb", "target", "implausible", "addressee", "suspicion", "claims", "nora", "side",
+         "validity", "vspan")
+#: the heads of batches 1-6 (understanding only), for runs that should match them
+UNDERSTANDING_HEADS = HEADS[:11]
 
 
 @dataclass
@@ -43,6 +48,7 @@ class HeadSizes:
     claims: int = len(CLAIMS)
     nora: int = len(NORA_ANSWERS)
     side: int = len(SIDE_LABELS)
+    validity: int = len(VALIDITY)
 
 
 TURN_POOLS = ("cls", "mean", "both")
@@ -70,6 +76,8 @@ class MultiHeadEncoder(nn.Module):
         self.addressee, self.claims = _mlp(d, s.addressee, dropout, dt), _mlp(d, s.claims, dropout, dt)
         self.nora, self.side = _mlp(d, s.nora, dropout, dt), _mlp(d, s.side, dropout, dt)
         self.suspicion = _mlp(d, 1, dropout, dt)
+        self.validity = _mlp(d, s.validity, dropout, dt)
+        self.vspan = nn.Sequential(nn.Dropout(dropout), nn.Linear(d, 1))
         self.uncertainty = uncertainty
         if uncertainty:  # log sigma^2 per head (Kendall, Gal & Cipolla 2018)
             self.log_vars = nn.ParameterDict({h: nn.Parameter(torch.zeros(())) for h in HEADS})
@@ -94,6 +102,7 @@ class MultiHeadEncoder(nn.Module):
             "seg": self.seg(h),
             "addressee": self.addressee(turn), "claims": self.claims(turn), "nora": self.nora(turn),
             "side": self.side(turn), "suspicion": self.suspicion(turn).squeeze(-1),
+            "validity": self.validity(turn), "vspan": self.vspan(h).squeeze(-1),
         }
         if unit_pool.shape[0]:
             u = torch.einsum("nt,ntd->nd", unit_pool.to(h.dtype), h[unit_batch])
@@ -125,6 +134,11 @@ class MultiHeadEncoder(nn.Module):
             parts["claims"] = F.binary_cross_entropy_with_logits(out["claims"].float(), batch["claims"])
         if "suspicion" in self.heads:
             parts["suspicion"] = F.mse_loss(out["suspicion"].float(), batch["suspicion"]) / 3.0
+        if "validity" in self.heads and "validity" in batch:
+            parts["validity"] = F.cross_entropy(out["validity"].float(), batch["validity"])
+        if "vspan" in self.heads and "vspan_labels" in batch and (batch["vspan_labels"] != -100).any():
+            m = batch["vspan_labels"] != -100
+            parts["vspan"] = F.binary_cross_entropy_with_logits(out["vspan"].float()[m], batch["vspan_labels"][m].float())
         total = out["seg"].new_zeros((), dtype=torch.float32)
         for h, l in parts.items():
             l = l * self.loss_weights.get(h, 1.0)

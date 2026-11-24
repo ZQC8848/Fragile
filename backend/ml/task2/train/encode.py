@@ -13,8 +13,8 @@ from typing import Any
 import torch
 
 from ..common.align import split_sentences
-from ..common.labels import ACTS, CLAIMS, NORA_ANSWERS, SEG_TAGS, TOPICS
-from .data import char_tags, chars_from_tokens, token_tags
+from ..common.labels import ACTS, CLAIMS, NORA_ANSWERS, SEG_TAGS, TOPICS, VALIDITY
+from .data import EDGE_CHARS, char_tags, chars_from_tokens, token_tags, violation_span
 from .model import ADDRESSEE_LABELS, NONE, SIDE_LABELS, TARGET_LABELS, VERB_LABELS
 
 SEG_ID = {t: i for i, t in enumerate(SEG_TAGS)}
@@ -24,6 +24,7 @@ TARGET_ID = {t: i for i, t in enumerate(TARGET_LABELS)}
 ADDR_ID = {a: i for i, a in enumerate(ADDRESSEE_LABELS)}
 NORA_ID = {a: i for i, a in enumerate(NORA_ANSWERS)}
 SIDE_ID = {a: i for i, a in enumerate(SIDE_LABELS)}
+VALID_ID = {v: i for i, v in enumerate(VALIDITY)}
 CHANNEL_OF_TAG = {"S": "speech", "A": "action", "E": "expression"}
 
 
@@ -91,6 +92,20 @@ def build_item(tok, ex: dict[str, Any], max_length: int, context_dropout: float 
         "claims": [1.0 if c in (t.get("claims") or []) else 0.0 for c in CLAIMS],
         "suspicion": float(t.get("suspicion") or 0.0),
     })
+    # compliance: turn label, and per player token whether it lies in the violation span (ok turns: none does)
+    v = (ex.get("validity") or {}).get("label") or "ok"
+    item["validity"] = VALID_ID.get(v, VALID_ID["ok"])
+    span = violation_span(ex)
+    if v != "ok" and span is None:
+        item["vspan_labels"] = [-100] * len(enc.input_ids)  # span not found in the text: no token supervision
+    else:
+        s, e = span or (0, 0)
+        text = ex["text"]
+
+        def inside(o):
+            chars = [i for i in range(max(o[0], s), min(o[1], e)) if text[i] not in EDGE_CHARS]
+            return 1 if chars else 0
+        item["vspan_labels"] = [inside(o) if pm else -100 for o, pm in zip(enc.offsets, enc.player_mask)]
     return item
 
 
@@ -100,6 +115,7 @@ def collate(items: list[dict[str, Any]], pad_id: int) -> dict[str, torch.Tensor]
     ids = torch.full((B, T), pad_id, dtype=torch.long)
     att = torch.zeros((B, T), dtype=torch.long)
     seg = torch.full((B, T), -100, dtype=torch.long)
+    vsp = torch.full((B, T), -100, dtype=torch.long)
     pm = torch.zeros((B, T), dtype=torch.bool)
     pools, ub, ua, ut, uv, utg, ui = [], [], [], [], [], [], []
     for b, it in enumerate(items):
@@ -107,6 +123,7 @@ def collate(items: list[dict[str, Any]], pad_id: int) -> dict[str, torch.Tensor]
         ids[b, :n] = torch.tensor(it["input_ids"])
         att[b, :n] = torch.tensor(it["attention_mask"])
         seg[b, :n] = torch.tensor(it["seg_labels"])
+        vsp[b, :n] = torch.tensor(it["vspan_labels"])
         pm[b, :n] = torch.tensor(it["player_mask"])
         for u in it["units"]:
             p = torch.zeros(T)
@@ -126,6 +143,7 @@ def collate(items: list[dict[str, Any]], pad_id: int) -> dict[str, torch.Tensor]
         "side": torch.tensor([i["side"] for i in items]), "m_side": torch.tensor([i["m_side"] for i in items]),
         "claims": torch.tensor([i["claims"] for i in items], dtype=torch.float),
         "suspicion": torch.tensor([i["suspicion"] for i in items], dtype=torch.float),
+        "validity": torch.tensor([i["validity"] for i in items], dtype=torch.long), "vspan_labels": vsp,
     }
 
 
@@ -154,6 +172,21 @@ def spans_from_char_tags(text: str, ctags: list[str]) -> list[tuple[str, int, in
 
 def spans_from_segments(ex: dict[str, Any]) -> list[tuple[str, int, int]]:
     return spans_from_char_tags(ex["text"], char_tags(ex["text"], ex["segments"]))
+
+
+def vspan_from_logits(item: dict[str, Any], vspan_logits: torch.Tensor, threshold: float = 0.5) -> list[list[int]]:
+    """Predicted violation span(s) as character ranges: runs of player tokens with p > threshold."""
+    enc: Encoded = item["enc"]
+    on = (vspan_logits.sigmoid() > threshold).tolist()
+    ranges: list[list[int]] = []
+    for flag, pm, (s, e) in zip(on, enc.player_mask, enc.offsets):
+        if not (flag and pm) or e <= s:
+            continue
+        if ranges and s <= ranges[-1][1] + 1:
+            ranges[-1][1] = max(ranges[-1][1], e)
+        else:
+            ranges.append([s, e])
+    return ranges
 
 
 def char_tags_from_logits(item: dict[str, Any], seg_logits: torch.Tensor, text: str) -> list[str]:

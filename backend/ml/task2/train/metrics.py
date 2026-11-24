@@ -10,7 +10,7 @@ import random
 from collections import Counter, defaultdict
 from typing import Any, Callable
 
-from .data import HEADS_MULTI, HEADS_SINGLE, char_tags, head_mask, targets
+from .data import HEADS_MULTI, HEADS_SINGLE, char_tags, head_mask, targets, violation_span
 
 
 def f1(p: float, r: float) -> float:
@@ -113,6 +113,51 @@ def seg_report(texts: list[str], gold: list[list[str]], pred: list[list[str]]) -
     return {"n": len(texts), "char_f1": f1(TP / (TP + FP) if TP + FP else 0.0, TP / (TP + FN) if TP + FN else 0.0), "per_channel_f1": per}
 
 
+def validity_binary_report(y_true: list[str], y_pred: list[str], p_ok: list[float] | None = None) -> dict[str, Any]:
+    """Compliance as ok-vs-violation. false_reject = ok turns sent back (the design ranks this first: "reject
+    narrowly"); miss = violations let through. With p_ok (the system's probability of ok), also the trade-off over
+    thresholds: reject when p_ok < t."""
+    ok_idx = [i for i, t in enumerate(y_true) if t == "ok"]
+    bad_idx = [i for i, t in enumerate(y_true) if t != "ok"]
+    rep: dict[str, Any] = {
+        "n_ok": len(ok_idx), "n_violation": len(bad_idx),
+        "false_reject": sum(y_pred[i] != "ok" for i in ok_idx) / len(ok_idx) if ok_idx else None,
+        "miss": sum(y_pred[i] == "ok" for i in bad_idx) / len(bad_idx) if bad_idx else None,
+        "category_acc_on_violations": sum(y_pred[i] == y_true[i] for i in bad_idx) / len(bad_idx) if bad_idx else None,
+    }
+    if p_ok is not None and ok_idx and bad_idx:
+        curve = []
+        for th in (0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.95):
+            fr = sum(p_ok[i] < th for i in ok_idx) / len(ok_idx)
+            ms = sum(p_ok[i] >= th for i in bad_idx) / len(bad_idx)
+            curve.append({"threshold": th, "false_reject": fr, "miss": ms})
+        rep["curve"] = curve
+        # AUROC of "violation" scored by 1 - p_ok (Mann-Whitney)
+        pos = sorted(1 - p_ok[i] for i in bad_idx)
+        neg = [1 - p_ok[i] for i in ok_idx]
+        import bisect
+        wins = sum(bisect.bisect_left(pos, x) + 0.5 * (bisect.bisect_right(pos, x) - bisect.bisect_left(pos, x)) for x in neg)
+        rep["auroc"] = 1 - wins / (len(pos) * len(neg))
+    return rep
+
+
+def span_report(examples: list[dict[str, Any]], pred_spans: list[list[list[int]] | None]) -> dict[str, Any]:
+    """Character-level F1 of the predicted violation span, on the teacher's violations whose span was located."""
+    tp = fp = fn = 0
+    n = 0
+    for e, ps in zip(examples, pred_spans):
+        g = violation_span(e)
+        if g is None:
+            continue
+        n += 1
+        gold = {i for i in range(*g) if not e["text"][i].isspace()}
+        pred = {i for s, t in (ps or []) for i in range(s, t) if i < len(e["text"]) and not e["text"][i].isspace()}
+        tp += len(gold & pred); fp += len(pred - gold); fn += len(gold - pred)
+    prec = tp / (tp + fp) if tp + fp else 0.0
+    rec = tp / (tp + fn) if tp + fn else 0.0
+    return {"n": n, "char_p": prec, "char_r": rec, "char_f1": f1(prec, rec)}
+
+
 def bootstrap(values: list[Any], stat: Callable[[list[Any]], float], n: int = 1000, seed: int = 0) -> tuple[float, float]:
     """95% percentile interval of `stat` over resamples of `values`."""
     if not values:
@@ -139,6 +184,12 @@ def score_system(examples: list[dict[str, Any]], preds: list[dict[str, Any]], se
             rep["accuracy_ci95"] = bootstrap(pairs, lambda s: sum(a == b for a, b in s) / len(s))
         out[head] = rep
     out["suspicion"] = regression_report([g["suspicion"] for g in golds], [float(p.get("suspicion", 0.0)) for p in preds])
+    yt = [g["validity"] for g in golds]
+    yp = [p.get("validity", "ok") for p in preds]
+    p_ok = [p["p_ok"] for p in preds] if preds and all("p_ok" in p for p in preds) else None
+    out["validity_binary"] = validity_binary_report(yt, yp, p_ok)
+    if preds and all("vspan" in p for p in preds):
+        out["validity_span"] = span_report(examples, [p["vspan"] for p in preds])
     if seg_preds is not None:
         idx = [i for i, e in enumerate(examples) if head_mask(e, "seg")]
         if idx:
@@ -161,6 +212,14 @@ def headline(m: dict[str, Any]) -> dict[str, Any]:
     }
     if "seg" in m:
         row["seg_charF1"] = m["seg"]["char_f1"]
+    if "validity" in m:
+        vb = m.get("validity_binary") or {}
+        row.update({"validity_acc": m["validity"]["accuracy"], "validity_macroF1": m["validity"]["macro_f1"],
+                    "false_reject": vb.get("false_reject"), "miss": vb.get("miss")})
+        if "auroc" in vb:
+            row["validity_auroc"] = vb["auroc"]
+        if "validity_span" in m:
+            row["vspan_charF1"] = m["validity_span"]["char_f1"]
     return row
 
 

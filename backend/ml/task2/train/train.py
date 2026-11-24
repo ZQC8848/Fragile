@@ -26,10 +26,10 @@ import torch
 import transformers
 from transformers import AutoConfig, AutoModel, AutoTokenizer, get_linear_schedule_with_warmup
 
-from ..common.labels import ACTS, CLAIMS, NORA_ANSWERS, TOPICS
+from ..common.labels import ACTS, CLAIMS, NORA_ANSWERS, TOPICS, VALIDITY
 from .baselines.common import evaluate, load_splits
 from .data import targets
-from .encode import build_item, char_tags_from_logits, collate, spans_from_char_tags, spans_from_segments
+from .encode import build_item, char_tags_from_logits, collate, spans_from_char_tags, spans_from_segments, vspan_from_logits
 from .metrics import score_system
 from .model import ADDRESSEE_LABELS, HEADS, NONE, SIDE_LABELS, TARGET_LABELS, TURN_POOLS, VERB_LABELS, MultiHeadEncoder
 
@@ -104,6 +104,8 @@ def predict(model, tok, exs, args, device, gold_spans: bool = False):
             for u in it["units"]:
                 unit_info[ub[k]].append((u["channel"], acts[k], topics[k], verbs[k], tgts[k]))
                 k += 1
+        val_prob = out["validity"].float().softmax(-1)
+        ok_id = VALIDITY.index("ok")
         for b, ex in enumerate(chunk):
             us = unit_info[b]
             action = "none"
@@ -120,13 +122,22 @@ def predict(model, tok, exs, args, device, gold_spans: bool = False):
                 "suspicion": float(out["suspicion"][b].float().clamp(0, 3)),
                 "nora": NORA_ANSWERS[int(out["nora"][b].float().argmax())],
                 "side": SIDE_LABELS[int(out["side"][b].float().argmax())],
+                **({"validity": VALIDITY[int(val_prob[b].argmax())], "p_ok": float(val_prob[b, ok_id]),
+                    "vspan": vspan_from_logits(items[b], out["vspan"][b].float().cpu())} if "validity" in model.heads else {}),
             })
             segs.append(ctags_all[b])
     return preds, segs
 
 
-SELECTION_PRIMARY = ("act", "topics", "addressee", "seg")
+SELECTION_PRIMARY = ("act", "topics", "addressee", "seg", "validity")
 SELECTION_FALLBACK = ("claims", "nora", "suspicion")
+
+
+def _balanced(vb: dict) -> float | None:
+    """Balanced accuracy of ok-vs-violation: 1 - (false_reject + miss) / 2."""
+    if vb.get("false_reject") is None or vb.get("miss") is None:
+        return None
+    return 1 - (vb["false_reject"] + vb["miss"]) / 2
 
 
 def selection_metrics(m: dict, heads) -> list[float]:
@@ -135,7 +146,8 @@ def selection_metrics(m: dict, heads) -> list[float]:
     their random outputs would decide early stopping."""
     value = {"act": m["act_set"]["micro_f1"], "topics": m["topics"]["micro_f1"], "addressee": m["addressee"]["accuracy"],
              "seg": m["seg"]["char_f1"] if "seg" in m else None, "claims": m["claims"]["micro_f1"],
-             "nora": m["nora"]["accuracy"] if m["nora"]["n"] else None, "suspicion": m["suspicion"]["qwk"]}
+             "nora": m["nora"]["accuracy"] if m["nora"]["n"] else None, "suspicion": m["suspicion"]["qwk"],
+             "validity": _balanced(m.get("validity_binary") or {})}
     for group in (SELECTION_PRIMARY, SELECTION_FALLBACK):
         vals = [value[h] for h in group if h in heads and value[h] is not None]
         if vals:
@@ -150,7 +162,7 @@ def val_score(model, tok, val, args, device) -> tuple[float, dict[str, float]]:
     parts = selection_metrics(m, args.heads)
     detail = {"acts": m["act_set"]["micro_f1"], "topics": m["topics"]["micro_f1"], "claims": m["claims"]["micro_f1"],
               "addressee": m["addressee"]["accuracy"], "nora": m["nora"]["accuracy"], "suspicion_qwk": m["suspicion"]["qwk"],
-              "seg": m.get("seg", {}).get("char_f1")}
+              "seg": m.get("seg", {}).get("char_f1"), "validity_bal": _balanced(m.get("validity_binary") or {})}
     return sum(parts) / len(parts), {k: round(v, 4) for k, v in detail.items() if v is not None}
 
 
