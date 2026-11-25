@@ -5,10 +5,12 @@ A system's prediction for one segment:
    "p_overreach": float | absent, "p_contradiction": float | absent  (or "overreach"/"contradiction": bool),
    "overreach_span": [[s, e], ...], "contradiction_span": [[s, e], ...]}   (spans optional)
 Thresholds for the two binary heads are 0.5, and also chosen on val (best F1) and applied unchanged to the other
-splits ("tuned"). Leaks are judged by recall, the other two by false alarms as well (backend-design.md §11: a guard
+splits ("tuned"). Tuning uses only the val examples from real sources (selfplay and logged, REAL_SOURCES): the DeepSeek
+rewrites are easier than real passages, and thresholds fitted to them do not carry over to the test set. Leaks are judged by recall, the other two by false alarms as well (backend-design.md §11: a guard
 that blocks too much kills the scene).
 
     evaluate(name, splits, predict, out_dir, extra) -> writes <out_dir>/<name>/metrics.json
+                                                       and <out_dir>/<name>/preds_<split>.jsonl (for ensembles and plots)
 """
 from __future__ import annotations
 
@@ -22,6 +24,7 @@ from .m3_data import BINARY, FACTS, LABELS, compose, find_span, gold_label
 from .metrics import f1, multi_label_report, single_label_report
 
 THRESHOLDS = [round(0.05 * i, 2) for i in range(1, 20)]
+REAL_SOURCES = ("selfplay", "logged")
 
 
 def auroc(y: list[int], s: list[float]) -> float | None:
@@ -156,12 +159,18 @@ def by_source(exs, preds, thr) -> dict[str, Any]:
 
 
 def evaluate(name: str, splits: dict[str, list[dict[str, Any]]], predict: Callable[[list[dict[str, Any]]], list[dict[str, Any]]],
-             out_dir: str | Path, extra: dict[str, Any] | None = None) -> dict[str, Any]:
+             out_dir: str | Path, extra: dict[str, Any] | None = None,
+             tune_sources: tuple[str, ...] | None = REAL_SOURCES, save_preds: bool = True) -> dict[str, Any]:
     preds = {s: predict(exs) for s, exs in splits.items() if exs}
     tuned = None
     if "val" in preds and all(any(f"p_{h}" in p for p in preds["val"]) for h in BINARY):
-        tuned = {h: best_threshold([int(e["labels"][h]) for e in splits["val"]], [_score(p, h) for p in preds["val"]]) for h in BINARY}
-    res = {"system": name, "time": time.strftime("%Y-%m-%d %H:%M:%S"), **(extra or {}), "tuned_thresholds": tuned, "splits": {}}
+        ix = [i for i, e in enumerate(splits["val"]) if tune_sources is None or e.get("source", "selfplay") in tune_sources]
+        tuned = {h: best_threshold([int(splits["val"][i]["labels"][h]) for i in ix], [_score(preds["val"][i], h) for i in ix])
+                 for h in BINARY}
+    res = {"system": name, "time": time.strftime("%Y-%m-%d %H:%M:%S"), **(extra or {}), "tuned_thresholds": tuned,
+           "tune_sources": list(tune_sources) if tune_sources else None, "splits": {}}
+    d = Path(out_dir) / name
+    d.mkdir(parents=True, exist_ok=True)
     for s, p in preds.items():
         m = score(splits[s], p)
         sp = {"n": len(p), "headline": headline(m), "detail": m, "by_source": by_source(splits[s], p, None)}
@@ -172,7 +181,9 @@ def evaluate(name: str, splits: dict[str, list[dict[str, Any]]], predict: Callab
         res["splits"][s] = sp
         hl = sp.get("headline_tuned") or sp["headline"]
         print(f"[{name}] {s} n={len(p)}: " + ", ".join(f"{k}={v:.3f}" for k, v in hl.items() if isinstance(v, float)), flush=True)
-    d = Path(out_dir) / name
-    d.mkdir(parents=True, exist_ok=True)
+        if save_preds:
+            with (d / f"preds_{s}.jsonl").open("w", encoding="utf-8") as f:
+                for e, q in zip(splits[s], p):
+                    f.write(json.dumps({"ex_id": e["ex_id"], **q}, ensure_ascii=False) + "\n")
     (d / "metrics.json").write_text(json.dumps(res, ensure_ascii=False, indent=1), encoding="utf-8")
     return res

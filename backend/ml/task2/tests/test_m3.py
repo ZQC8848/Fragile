@@ -49,3 +49,17 @@ def test_score_passage_level():
     assert m["overreach"]["f1"] == 1.0 and m["overreach"]["span"]["char_f1"] == 1.0
     assert m["passage"]["n"] == 1 and m["passage"]["recall"] == 1.0
     assert m["verdict"]["false_alarm"] == 0.0
+
+
+def test_ensemble_average():
+    from ml.task2.train.m3_data import FACTS
+    from ml.task2.train.m3_ensemble import average
+    z = [0.0] * 10
+    a = {"p_facts": [0.9] + z[1:], "p_overreach": 0.9, "p_contradiction": 0.0, "overreach_span": [[0, 6]], "contradiction_span": []}
+    b = {"p_facts": [0.4] + z[1:], "p_overreach": 0.3, "p_contradiction": 0.3, "overreach_span": [[3, 10]], "contradiction_span": [[0, 2]]}
+    c = {"p_facts": [0.5] + z[1:], "p_overreach": 0.0, "p_contradiction": 0.0, "overreach_span": [[4, 8]], "contradiction_span": []}
+    m = average([a, b, c], "0123456789")
+    assert m["facts"] == [FACTS[0]]  # mean 0.6 >= 0.5
+    assert abs(m["p_overreach"] - 0.4) < 1e-9 and abs(m["p_contradiction"] - 0.1) < 1e-9
+    assert m["overreach_span"] == [[3, 8]]  # chars covered by at least 2 of 3
+    assert m["contradiction_span"] == []

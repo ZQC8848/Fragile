@@ -10,7 +10,10 @@ The game's verdict comes from these by rule (m3_data.compose); the model never s
 
     python -m ml.task2.train.m3_train --data DATA --out RUNS --name m3_rung4_s0 --seed 0 [--save-model]
     python -m ml.task2.train.m3_train --data DATA --out RUNS --name smoke --smoke        (tiny random encoder, CPU)
-Model selection on val: mean of facts micro-F1, overreach AP and contradiction AP.
+Model selection on val: mean of facts micro-F1, overreach AP and contradiction AP, on the val examples from real
+sources only (--select-sources, default selfplay + logged; batch 8 selected on all of val, where the easy DeepSeek
+rewrites dominate the AP). Thresholds are tuned on the same subset (m3_metrics.evaluate). Predictions for every split
+are written next to metrics.json, so seeds can be averaged afterwards (m3_ensemble).
 """
 from __future__ import annotations
 
@@ -28,7 +31,7 @@ import transformers
 from transformers import AutoConfig, AutoModel, AutoTokenizer, get_linear_schedule_with_warmup
 
 from .m3_data import BINARY, FACTS, context_text, load_splits, seg_text
-from .m3_metrics import average_precision, evaluate, score
+from .m3_metrics import REAL_SOURCES, evaluate, score
 
 HEADS = ("facts", "overreach", "contradiction", "span")
 
@@ -176,6 +179,8 @@ def main() -> None:
     ap.add_argument("--heads", nargs="+", default=list(HEADS), choices=list(HEADS))
     ap.add_argument("--sources", nargs="+", default=["selfplay", "synth", "logged"],
                     help="training sources to use (ablation: --sources selfplay)")
+    ap.add_argument("--select-sources", nargs="+", default=list(REAL_SOURCES),
+                    help="val sources for model selection and threshold tuning ('all' for every source)")
     ap.add_argument("--epochs", type=int, default=None, help="default 10 (2 with --smoke)")
     ap.add_argument("--batch", type=int, default=8)
     ap.add_argument("--eval-batch", type=int, default=16)
@@ -187,7 +192,7 @@ def main() -> None:
     ap.add_argument("--max-length", type=int, default=512)
     ap.add_argument("--pos-weight-power", type=float, default=0.5,
                     help="positive weight of the binary heads = (neg/pos) ** power, capped at 20")
-    ap.add_argument("--patience", type=int, default=3)
+    ap.add_argument("--patience", type=int, default=4)
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--smoke", action="store_true")
     ap.add_argument("--save-model", action="store_true")
@@ -204,6 +209,9 @@ def main() -> None:
         pos = [e for e in train if e["labels"]["overreach"] or e["labels"]["contradiction"] or e["labels"]["facts"]]
         train = rng0.sample(pos, min(48, len(pos))) + rng0.sample(train, 80)
         splits = {k: v[:120] for k, v in splits.items()}
+    sel_sources = None if args.select_sources == ["all"] else tuple(args.select_sources)
+    val_sel = [e for e in splits["val"] if sel_sources is None or e["source"] in sel_sources]
+    print(f"train {len(train)} examples ({', '.join(args.sources)}); val for selection {len(val_sel)} of {len(splits['val'])}", flush=True)
     pos_weight = {}
     for h in BINARY:
         p = sum(e["labels"][h] for e in train)
@@ -246,7 +254,7 @@ def main() -> None:
             tot += float(loss.detach()); n += 1
             for k, v in parts.items():
                 parts_sum[k] = parts_sum.get(k, 0.0) + v
-        m = score(splits["val"], predict(model, tok, splits["val"], args, device))
+        m = score(val_sel, predict(model, tok, val_sel, args, device))
         sc = selection(m)
         rec = {"epoch": epoch + 1, "train_loss": tot / max(1, n), "val_score": sc, "elapsed_s": round(time.time() - t0, 1),
                "max_mem_gb": round(torch.cuda.max_memory_allocated() / 2**30, 2) if device.type == "cuda" else None,
@@ -272,7 +280,7 @@ def main() -> None:
              "n_train": len(train), "pos_weight": pos_weight, "args": vars(args), "best_val_score": best,
              "versions": {"torch": torch.__version__, "transformers": transformers.__version__},
              "train_time_s": round(time.time() - t0, 1)}
-    evaluate(args.name, splits, lambda exs: predict(model, tok, exs, args, device), args.out, extra)
+    evaluate(args.name, splits, lambda exs: predict(model, tok, exs, args, device), args.out, extra, tune_sources=sel_sources)
 
 
 if __name__ == "__main__":
