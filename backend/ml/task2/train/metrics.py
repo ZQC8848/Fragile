@@ -174,7 +174,10 @@ def score_system(examples: list[dict[str, Any]], preds: list[dict[str, Any]], se
     golds = [targets(e) for e in examples]
     for head, labels in HEADS_MULTI.items():
         out[head] = multi_label_report([g[head] for g in golds], [p.get(head, []) for p in preds], labels)
+    has_validity = any("validity" in p for p in preds)  # a run trained without the compliance heads has no verdicts
     for head in HEADS_SINGLE:
+        if head == "validity" and not has_validity:
+            continue
         idx = [i for i, e in enumerate(examples) if head_mask(e, head)]
         yt = [golds[i][head] for i in idx]
         yp = [preds[i].get(head, "none") for i in idx]
@@ -184,10 +187,11 @@ def score_system(examples: list[dict[str, Any]], preds: list[dict[str, Any]], se
             rep["accuracy_ci95"] = bootstrap(pairs, lambda s: sum(a == b for a, b in s) / len(s))
         out[head] = rep
     out["suspicion"] = regression_report([g["suspicion"] for g in golds], [float(p.get("suspicion", 0.0)) for p in preds])
-    yt = [g["validity"] for g in golds]
-    yp = [p.get("validity", "ok") for p in preds]
-    p_ok = [p["p_ok"] for p in preds] if preds and all("p_ok" in p for p in preds) else None
-    out["validity_binary"] = validity_binary_report(yt, yp, p_ok)
+    if has_validity:
+        yt = [g["validity"] for g in golds]
+        yp = [p.get("validity", "ok") for p in preds]
+        p_ok = [p["p_ok"] for p in preds] if all("p_ok" in p for p in preds) else None
+        out["validity_binary"] = validity_binary_report(yt, yp, p_ok)
     if preds and all("vspan" in p for p in preds):
         out["validity_span"] = span_report(examples, [p["vspan"] for p in preds])
     if seg_preds is not None:
