@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Task 2 Final Figures</title>
+<meta name="description" content="M2 input compliance and M3 narration guard: every figure for the poster, with the numbers behind it.">
+<style>
+:root {
+  color-scheme: light;
+  --page: #f9f9f7; --surface: #fcfcfb; --ink: #0b0b0b; --ink-2: #52514e; --muted: #898781;
+  --grid: #e1e0d9; --axis: #c3c2b7; --border: rgba(11,11,11,0.10);
+  --c-main: #2a78d6; --c-self: #eb6834; --c-tfidf: #1baf7a; --c-deepseek: #eda100; --c-rule: #e87ba4; --c-embed: #6250d6;
+  --c-teacher: #0b0b0b;
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface: #1a1a19; --ink: #f0efec; --ink-2: #c3c2b7; --muted: #898781;
+    --grid: #2c2c2a; --axis: #383835; --border: rgba(255,255,255,0.10);
+    --c-main: #3987e5; --c-self: #d95926; --c-tfidf: #199e70; --c-deepseek: #c98500; --c-rule: #d55181; --c-embed: #9085e9;
+    --c-teacher: #f0efec;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #0d0d0d; --surface: #1a1a19; --ink: #f0efec; --ink-2: #c3c2b7; --muted: #898781;
+  --grid: #2c2c2a; --axis: #383835; --border: rgba(255,255,255,0.10);
+  --c-main: #3987e5; --c-self: #d95926; --c-tfidf: #199e70; --c-deepseek: #c98500; --c-rule: #d55181; --c-embed: #9085e9;
+  --c-teacher: #f0efec;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page); color: var(--ink); font: 15px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif; }
+main { max-width: 920px; margin: 0 auto; padding: 32px 16px 80px; }
+h1 { font-size: 26px; line-height: 1.25; margin: 0 0 8px; }
+h2 { font-size: 19px; margin: 0 0 4px; }
+p { margin: 0 0 10px; }
+.lede { color: var(--ink-2); max-width: 70ch; }
+.toc { columns: 2; gap: 24px; padding-left: 18px; color: var(--ink-2); }
+.toc a { color: var(--ink); }
+section.fig { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin: 22px 0; }
+.claim { font-weight: 600; margin: 6px 0 12px; }
+.chart { width: 100%; overflow: visible; }
+.chart svg { width: 100%; height: auto; display: block; }
+.caption { color: var(--ink-2); font-size: 13.5px; margin-top: 10px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--ink-2); margin: 4px 0 8px; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+.legend i.dia { transform: rotate(45deg) scale(.8); border-radius: 1px; }
+.legend i.line { height: 2px; width: 16px; border-radius: 1px; }
+details { margin-top: 10px; font-size: 13.5px; }
+summary { cursor: pointer; color: var(--ink-2); }
+table { border-collapse: collapse; margin-top: 8px; width: 100%; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 4px 8px; border-bottom: 1px solid var(--grid); }
+th { color: var(--ink-2); font-weight: 600; }
+td.n { text-align: right; }
+.tools { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+button { font: inherit; font-size: 13px; background: transparent; color: var(--ink); border: 1px solid var(--axis); border-radius: 8px; padding: 4px 10px; cursor: pointer; }
+button:hover { background: var(--grid); }
+#tip { position: fixed; pointer-events: none; background: var(--surface); color: var(--ink); border: 1px solid var(--border);
+  box-shadow: 0 4px 14px rgba(0,0,0,.12); border-radius: 8px; padding: 6px 9px; font-size: 12.5px; line-height: 1.4; display: none; z-index: 10; max-width: 280px; }
+.note { border-left: 3px solid var(--axis); padding: 2px 0 2px 12px; color: var(--ink-2); font-size: 14px; margin: 14px 0; }
+code { font-size: 13px; }
+@media (max-width: 640px) { .toc { columns: 1; } section.fig { padding: 14px; } }
+</style>
+</head>
+<body>
+<main>
+<h1>Task 2 final figures: M2 input compliance and M3 narration guard</h1>
+<p class="lede">Group 26 (Fragile). Every figure the poster may use, with a one-line claim, what exactly is plotted, and the numbers
+behind it (open "Numbers" under each figure). The poster may not carry tables, so each result is drawn here as a figure.
+Training details and caveats: <code>FINAL.md</code> in this folder. All numbers are also in the JSON block <code>#figure-data</code>
+at the end of this file, and in <code>figures_data.json</code>, for any agent that reads this page.</p>
+<div class="note">All scores are agreement with an LLM teacher's labels, not with human annotation: Claude Sonnet for M3;
+for M2 the game's DeepSeek review teacher (deepseek-flash), with the Nora answers re-labelled by Claude. M3 test = 20 held-out
+self-play sessions from a later round, r1 (530 turns, 4,148 narration segments); M2 test = 609 player turns from 21 held-out sessions. Thresholds were chosen on the real-source validation set,
+never on test.</div>
+<ol class="toc" id="toc"></ol>
+<div id="figs"></div>
+</main>
+<div id="tip"></div>
+<script type="application/json" id="figure-data">{"generated": "2026-11-25", "m3": {"systems": [{"key": "rule", "label": "Keyword rules", "run": "m3_rung0_rule", "thresholds": null, "facts_microF1": 0.2925170068027211, "facts_macroF1": 0.41281509737150696, "overreach_F1": 0.13953488372093023, "overreach_AP": null, "overreach_spanF1": 1.0, "contradiction_F1": 0.0, "contradiction_AP": null, "contradiction_spanF1": null, "verdict_macroF1": 0.3220225335618219, "verdict_false_alarm": 0.0012843565373747753, "leak_recall": 0.19463087248322147, "passage_F1": 0.2697674418604651, "passage_false_reject": 0.011494252873563218, "passage_recall": 0.15934065934065933, "passage_precision": 0.8787878787878788}, {"key": "deepseek", "label": "DeepSeek guard (LLM API)", "run": "m3_llm_guard_deepseek", "thresholds": null, "facts_microF1": 0.1811460258780037, "facts_macroF1": 0.23980193700731783, "overreach_F1": 0.2318840579710145, "overreach_AP": null, "overreach_spanF1": null, "contradiction_F1": 0.2170542635658915, "contradiction_AP": null, "contradiction_spanF1": null, "verdict_macroF1": 0.48669147576675503, "verdict_false_alarm": 0.011559208836372977, "leak_recall": 0.3288590604026846, "passage_F1": 0.5244755244755245, "passage_false_reject": 0.08333333333333333, "passage_recall": 0.41208791208791207, "passage_precision": 0.7211538461538461}, {"key": "tfidf", "label": "TF-IDF + logistic regression", "run": "m3_rung1_tfidf", "thresholds": {"overreach": 0.8, "contradiction": 0.45}, "facts_microF1": 0.7388781431334623, "facts_macroF1": 0.7143588632083674, "overreach_F1": 0.3013698630136986, "overreach_AP": 0.2910130022754018, "overreach_spanF1": null, "contradiction_F1": 0.10232558139534884, "contradiction_AP": 0.09398015171038926, "contradiction_spanF1": null, "verdict_macroF1": 0.47681794027654134, "verdict_false_alarm": 0.04700744926791677, "leak_recall": 0.8859060402684564, "passage_F1": 0.6576576576576576, "passage_false_reject": 0.3333333333333333, "passage_recall": 0.8021978021978022, "passage_precision": 0.5572519083969466}, {"key": "ours_selfplay", "label": "Ours, self-play data only (3-seed ensemble)", "run": "m3_r9_selfplay_only_ens", "thresholds": {"overreach": 0.4, "contradiction": 0.05}, "facts_microF1": 0.7784156142365098, "facts_macroF1": 0.6463684993518768, "overreach_F1": 0.4, "overreach_AP": 0.30368900324938125, "overreach_spanF1": 0.2683982683982684, "contradiction_F1": 0.13793103448275862, "contradiction_AP": 0.1238832988907996, "contradiction_spanF1": 0.14500683994528044, "verdict_macroF1": 0.4970122456052053, "verdict_false_alarm": 0.007192396609298741, "leak_recall": 0.8187919463087249, "passage_F1": 0.751552795031056, "passage_false_reject": 0.05459770114942529, "passage_recall": 0.6648351648351648, "passage_precision": 0.8642857142857143}, {"key": "ours_main", "label": "Ours, + rewrites + logged drafts (3-seed ensemble)", "run": "m3_r9_ens", "thresholds": {"overreach": 0.6, "contradiction": 0.35}, "facts_microF1": 0.7596371882086167, "facts_macroF1": 0.6431029942799307, "overreach_F1": 0.40476190476190477, "overreach_AP": 0.3858699702730623, "overreach_spanF1": 0.6608467917939764, "contradiction_F1": 0.11678832116788322, "contradiction_AP": 0.07863994717373658, "contradiction_spanF1": 0.45360824742268047, "verdict_macroF1": 0.5345421197969905, "verdict_false_alarm": 0.020549704597996404, "leak_recall": 0.8120805369127517, "passage_F1": 0.6866485013623979, "passage_false_reject": 0.16954022988505746, "passage_recall": 0.6923076923076923, "passage_precision": 0.6810810810810811}], "sweep": {"ours_selfplay": [{"threshold": 0.05, "false_reject": 0.1810344827586207, "recall": 0.7252747252747253}, {"threshold": 0.1, "false_reject": 0.13505747126436782, "recall": 0.7087912087912088}, {"threshold": 0.15, "false_reject": 0.11206896551724138, "recall": 0.7087912087912088}, {"threshold": 0.2, "false_reject": 0.10057471264367816, "recall": 0.6978021978021978}, {"threshold": 0.25, "false_reject": 0.09482758620689655, "recall": 0.6923076923076923}, {"threshold": 0.3, "false_reject": 0.07183908045977011, "recall": 0.6703296703296703}, {"threshold": 0.35, "false_reject": 0.028735632183908046, "recall": 0.6428571428571429}, {"threshold": 0.4, "false_reject": 0.022988505747126436, "recall": 0.6373626373626373}, {"threshold": 0.45, "false_reject": 0.022988505747126436, "recall": 0.6318681318681318}, {"threshold": 0.5, "false_reject": 0.020114942528735632, "recall": 0.6318681318681318}, {"threshold": 0.55, "false_reject": 0.020114942528735632, "recall": 0.6263736263736264}, {"threshold": 0.6, "false_reject": 0.017241379310344827, "recall": 0.6208791208791209}, {"threshold": 0.65, "false_reject": 0.014367816091954023, "recall": 0.6153846153846154}, {"threshold": 0.7, "false_reject": 0.014367816091954023, "recall": 0.5769230769230769}, {"threshold": 0.75, "false_reject": 0.008620689655172414, "recall": 0.5714285714285714}, {"threshold": 0.8, "false_reject": 0.008620689655172414, "recall": 0.5494505494505495}, {"threshold": 0.85, "false_reject": 0.008620689655172414, "recall": 0.5054945054945055}, {"threshold": 0.9, "false_reject": 0.008620689655172414, "recall": 0.4725274725274725}, {"threshold": 0.95, "false_reject": 0.008620689655172414, "recall": 0.43956043956043955}], "ours_main": [{"threshold": 0.05, "false_reject": 0.45977011494252873, "recall": 0.8296703296703297}, {"threshold": 0.1, "false_reject": 0.4224137931034483, "recall": 0.8241758241758241}, {"threshold": 0.15, "false_reject": 0.382183908045977, "recall": 0.8186813186813187}, {"threshold": 0.2, "false_reject": 0.3620689655172414, "recall": 0.8076923076923077}, {"threshold": 0.25, "false_reject": 0.33045977011494254, "recall": 0.7967032967032966}, {"threshold": 0.3, "false_reject": 0.2988505747126437, "recall": 0.7857142857142857}, {"threshold": 0.35, "false_reject": 0.19540229885057472, "recall": 0.7197802197802198}, {"threshold": 0.4, "false_reject": 0.16954022988505746, "recall": 0.7032967032967034}, {"threshold": 0.45, "false_reject": 0.15517241379310345, "recall": 0.7032967032967034}, {"threshold": 0.5, "false_reject": 0.14942528735632185, "recall": 0.6923076923076923}, {"threshold": 0.55, "false_reject": 0.14080459770114942, "recall": 0.6813186813186813}, {"threshold": 0.6, "false_reject": 0.12931034482758622, "recall": 0.6648351648351648}, {"threshold": 0.65, "false_reject": 0.11206896551724138, "recall": 0.6593406593406593}, {"threshold": 0.7, "false_reject": 0.07183908045977011, "recall": 0.6153846153846154}, {"threshold": 0.75, "false_reject": 0.06609195402298851, "recall": 0.5934065934065934}, {"threshold": 0.8, "false_reject": 0.05747126436781609, "recall": 0.5934065934065934}, {"threshold": 0.85, "false_reject": 0.05459770114942529, "recall": 0.5769230769230769}, {"threshold": 0.9, "false_reject": 0.04885057471264368, "recall": 0.5714285714285714}, {"threshold": 0.95, "false_reject": 0.04597701149425287, "recall": 0.5604395604395604}]}, "localisation": {"ours_selfplay": {"turns_rejected_by_both": 121, "at_least_one_right_segment": 0.9669421487603306, "exactly_right_segments": 0.768595041322314, "segment_precision": 0.935251798561151, "segment_recall": 0.8074534161490683, "label_right": 1.0, "leak_fact_right": 1.0, "n_leak_segments": 122, "overreach_span_charF1": 0.2683982683982684, "contradiction_span_charF1": 0.14500683994528044}, "ours_main": {"turns_rejected_by_both": 126, "at_least_one_right_segment": 0.9444444444444444, "exactly_right_segments": 0.7380952380952381, "segment_precision": 0.8789808917197452, "segment_recall": 0.8414634146341463, "label_right": 0.9710144927536232, "leak_fact_right": 0.9917355371900827, "n_leak_segments": 121, "overreach_span_charF1": 0.6608467917939764, "contradiction_span_charF1": 0.45360824742268047}}, "logged": [{"key": "rule", "label": "Keyword rules", "verdict_macroF1": 0.17616421568627452, "overreach_recall": 0.25925925925925924, "contradiction_recall": 0.0, "leak_recall": 0.0}, {"key": "tfidf", "label": "TF-IDF + logistic regression", "verdict_macroF1": 0.5045552967422329, "overreach_recall": 0.2962962962962963, "contradiction_recall": 0.4375, "leak_recall": 0.8}, {"key": "ours_selfplay", "label": "Ours, self-play data only (3-seed ensemble)", "verdict_macroF1": 0.41032608695652173, "overreach_recall": 0.2222222222222222, "contradiction_recall": 0.0625, "leak_recall": 0.8}, {"key": "ours_main", "label": "Ours, + rewrites + logged drafts (3-seed ensemble)", "verdict_macroF1": 0.7083095568055217, "overreach_recall": 0.6296296296296297, "contradiction_recall": 0.46875, "leak_recall": 0.8}], "seeds": {"ours_main": {"seeds": [{"facts_microF1": 0.7455752212389379, "overreach_AP": 0.3205934659911272, "contradiction_AP": 0.0717395147745383, "verdict_macroF1": 0.5343502644942643, "leak_recall": 0.8120805369127517, "passage_false_reject": 0.23275862068965517}, {"facts_microF1": 0.7091295116772824, "overreach_AP": 0.3131000739623104, "contradiction_AP": 0.07087349812138756, "verdict_macroF1": 0.5050601476167463, "leak_recall": 0.7651006711409396, "passage_false_reject": 0.16091954022988506}, {"facts_microF1": 0.7142857142857143, "overreach_AP": 0.3880042720666277, "contradiction_AP": 0.058355303710162676, "verdict_macroF1": 0.5328503791087633, "leak_recall": 0.8456375838926175, "passage_false_reject": 0.2442528735632184}], "ensemble": {"facts_microF1": 0.7596371882086167, "overreach_AP": 0.3858699702730623, "contradiction_AP": 0.07863994717373658, "verdict_macroF1": 0.5345421197969905, "leak_recall": 0.8120805369127517, "passage_false_reject": 0.16954022988505746}, "thresholds": [{"overreach": 0.65, "contradiction": 0.2}, {"overreach": 0.45, "contradiction": 0.95}, {"overreach": 0.5, "contradiction": 0.1}, {"overreach": 0.6, "contradiction": 0.35}]}, "ours_selfplay": {"seeds": [{"facts_microF1": 0.688487584650113, "overreach_AP": 0.2771551501615387, "contradiction_AP": 0.06308975390263313, "verdict_macroF1": 0.4547796598396444, "leak_recall": 0.7516778523489933, "passage_false_reject": 0.04597701149425287}, {"facts_microF1": 0.7471383975026015, "overreach_AP": 0.31369967614863137, "contradiction_AP": 0.08325333611555884, "verdict_macroF1": 0.5019841302233382, "leak_recall": 0.8791946308724832, "passage_false_reject": 0.10344827586206896}, {"facts_microF1": 0.7713004484304933, "overreach_AP": 0.2996280609469241, "contradiction_AP": 0.1359867472811656, "verdict_macroF1": 0.507193916946916, "leak_recall": 0.8120805369127517, "passage_false_reject": 0.04885057471264368}], "ensemble": {"facts_microF1": 0.7784156142365098, "overreach_AP": 0.30368900324938125, "contradiction_AP": 0.1238832988907996, "verdict_macroF1": 0.4970122456052053, "leak_recall": 0.8187919463087249, "passage_false_reject": 0.05459770114942529}, "thresholds": [{"overreach": 0.5, "contradiction": 0.05}, {"overreach": 0.05, "contradiction": 0.15}, {"overreach": 0.25, "contradiction": 0.05}, {"overreach": 0.4, "contradiction": 0.05}]}}, "teacher": {"label": "Second teacher (Claude Opus vs Sonnet, 150 test turns)", "n_segments": 1150, "facts_microF1": 0.8897338403041825, "overreach_F1": 0.45161290322580644, "contradiction_F1": 0.3157894736842105, "verdict_macroF1": 0.6554484716428169, "leak_recall": 0.9767441860465116, "passage_F1": 0.8073394495412843, "passage_false_reject": 0.06593406593406594, "passage_recall": 0.7457627118644068, "n_turns": 150}, "batch8_seed_mean": {"facts_microF1": 0.6854395027100766, "overreach_AP": 0.3637459572771992, "contradiction_AP": 0.05406114954274977, "verdict_macroF1": 0.5156148124461982, "leak_recall": 0.7829977628635347, "passage_false_reject": 0.15134099616858238}, "test_stats": {"segments": 4148, "turns": 530, "turns_gold_rejected": 182, "gold_verdicts": {"consistent": 3893, "premature_leak": 149, "contradiction": 89, "player_overreach": 17}}, "data_stats": {"test": {"n": 4148, "selfplay": 4148, "overreach": 40, "contradiction": 90, "states_a_fact": 362}, "test_logged": {"n": 131, "logged": 131, "overreach": 54, "contradiction": 32, "states_a_fact": 10}, "train": {"n": 7311, "selfplay": 6295, "overreach": 439, "contradiction": 391, "states_a_fact": 570, "logged": 166, "synth": 850}, "val": {"n": 1313, "selfplay": 1137, "overreach": 78, "contradiction": 73, "states_a_fact": 111, "logged": 32, "synth": 144}}}, "m2": {"compliance": {"test": {"n_ok": 536, "n_violation": 73, "curve_mean_of_3_seeds": [{"threshold": 0.05, "false_reject": 0.007462686567164179, "miss": 0.2237442922374429}, {"threshold": 0.1, "false_reject": 0.008706467661691543, "miss": 0.2009132420091324}, {"threshold": 0.2, "false_reject": 0.011815920398009949, "miss": 0.2009132420091324}, {"threshold": 0.3, "false_reject": 0.01243781094527363, "miss": 0.1963470319634703}, {"threshold": 0.4, "false_reject": 0.014925373134328358, "miss": 0.1917808219178082}, {"threshold": 0.5, "false_reject": 0.014925373134328358, "miss": 0.1735159817351598}, {"threshold": 0.6, "false_reject": 0.01616915422885572, "miss": 0.1643835616438356}, {"threshold": 0.7, "false_reject": 0.018034825870646767, "miss": 0.1598173515981735}, {"threshold": 0.8, "false_reject": 0.020522388059701493, "miss": 0.1506849315068493}, {"threshold": 0.9, "false_reject": 0.030472636815920398, "miss": 0.1461187214611872}, {"threshold": 0.95, "false_reject": 0.04291044776119403, "miss": 0.1278538812785388}], "ours": {"false_reject": 0.013681592039800995, "miss": 0.1872146118721461, "auroc": 0.9499335514209774, "category_acc_on_violations": 0.5662100456621004}, "baselines": [{"key": "rung0_rule", "label": "Keyword rules", "false_reject": 0.03171641791044776, "miss": 0.6712328767123288}, {"key": "rung1_tfidf", "label": "TF-IDF + logistic regression", "false_reject": 0.016791044776119403, "miss": 0.5068493150684932}, {"key": "rung2_embed", "label": "Frozen e5 embeddings + LR", "false_reject": 0.041044776119402986, "miss": 0.3287671232876712}]}, "seeds": {"n_ok": 79, "n_violation": 24, "curve_mean_of_3_seeds": [{"threshold": 0.05, "false_reject": 0.0379746835443038, "miss": 0.4305555555555555}, {"threshold": 0.1, "false_reject": 0.04219409282700422, "miss": 0.4305555555555555}, {"threshold": 0.2, "false_reject": 0.05907172995780591, "miss": 0.4166666666666667}, {"threshold": 0.3, "false_reject": 0.06329113924050633, "miss": 0.4027777777777778}, {"threshold": 0.4, "false_reject": 0.06329113924050633, "miss": 0.4027777777777778}, {"threshold": 0.5, "false_reject": 0.07172995780590717, "miss": 0.4027777777777778}, {"threshold": 0.6, "false_reject": 0.08016877637130801, "miss": 0.3611111111111111}, {"threshold": 0.7, "false_reject": 0.10126582278481013, "miss": 0.3611111111111111}, {"threshold": 0.8, "false_reject": 0.11814345991561181, "miss": 0.3611111111111111}, {"threshold": 0.9, "false_reject": 0.13502109704641352, "miss": 0.3472222222222222}, {"threshold": 0.95, "false_reject": 0.16033755274261605, "miss": 0.3472222222222222}], "ours": {"false_reject": 0.06329113924050633, "miss": 0.4027777777777778, "auroc": 0.8135548523206751, "category_acc_on_violations": 0.4444444444444445}, "baselines": [{"key": "rung0_rule", "label": "Keyword rules", "false_reject": 0.012658227848101266, "miss": 0.375}, {"key": "rung1_tfidf", "label": "TF-IDF + logistic regression", "false_reject": 0.0759493670886076, "miss": 0.6666666666666666}, {"key": "rung2_embed", "label": "Frozen e5 embeddings + LR", "false_reject": 0.45569620253164556, "miss": 0.125}]}}, "understanding": [{"metric": "act_set_microF1", "label": "Dialogue acts (micro-F1)", "rung0_rule": 0.5863501483679525, "rung1_tfidf": 0.7203208556149732, "rung2_embed": 0.6462167689161554, "ours": 0.7691735418056711, "ours_seeds": [0.7699184854062582, 0.7663157894736843, 0.771286350537071]}, {"metric": "topics_microF1", "label": "Topics (micro-F1)", "rung0_rule": 0.5836363636363636, "rung1_tfidf": 0.814867762687634, "rung2_embed": 0.766368022053756, "ours": 0.8083930561716336, "ours_seeds": [0.7928626842513578, 0.8227571115973743, 0.8095593726661687]}, {"metric": "claims_microF1", "label": "Claims (micro-F1)", "rung0_rule": 0.575682382133995, "rung1_tfidf": 0.7574626865671642, "rung2_embed": 0.7100175746924429, "ours": 0.801072946410502, "ours_seeds": [0.7857142857142857, 0.8023952095808384, 0.8151093439363817]}, {"metric": "addressee_acc", "label": "Addressee (accuracy)", "rung0_rule": 0.6281800391389433, "rung1_tfidf": 0.7788649706457925, "rung2_embed": 0.7808219178082192, "ours": 0.8806262230919765, "ours_seeds": [0.8669275929549902, 0.8923679060665362, 0.8825831702544031]}, {"metric": "suspicion_QWK", "label": "Suspicion (QWK)", "rung0_rule": 0.12556622134095885, "rung1_tfidf": 0.6530128274226581, "rung2_embed": 0.6970235037635952, "ours": 0.78081019370934, "ours_seeds": [0.7686047319243513, 0.7708372530573847, 0.8029885961462839]}, {"metric": "nora_acc", "label": "Nora truth/lie (accuracy)", "rung0_rule": 0.4838709677419355, "rung1_tfidf": 0.6989247311827957, "rung2_embed": 0.6451612903225806, "ours": 0.7311827956989247, "ours_seeds": [0.7311827956989247, 0.6989247311827957, 0.7634408602150538]}, {"metric": "seg_charF1", "label": "Segmentation (char-F1)", "rung0_rule": 0.7077746741154562, "rung1_tfidf": 0.8035428639137389, "rung2_embed": null, "ours": 0.9458222055512019, "ours_seeds": [0.9463777806608717, 0.9468755303960623, 0.9442133055966715]}, {"metric": "validity_auroc", "label": "Compliance (AUROC)", "rung0_rule": null, "rung1_tfidf": null, "rung2_embed": null, "ours": 0.9499335514209774, "ours_seeds": [0.9567317521979145, 0.952629830300552, 0.9404390717644654]}], "understanding_systems": {"rung0_rule": "Keyword rules", "rung1_tfidf": "TF-IDF + logistic regression", "rung2_embed": "Frozen e5 embeddings + LR", "ours": "Ours, mDeBERTa multi-head (3 seeds, mean)"}, "test_n": 609}}</script>
+<script>
+const D = JSON.parse(document.getElementById("figure-data").textContent);
+const NS = "http://www.w3.org/2000/svg";
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const pct = v => v == null ? "—" : (v * 100).toFixed(1) + "%";
+const f3 = v => v == null ? "—" : v.toFixed(3);
+const f2 = v => v == null ? "—" : v.toFixed(2);
+
+const M3 = {
+  rule: {label: "Keyword rules", c: "--c-rule"},
+  deepseek: {label: "DeepSeek guard (LLM API)", c: "--c-deepseek"},
+  tfidf: {label: "TF-IDF + logistic regression", c: "--c-tfidf"},
+  ours_selfplay: {label: "Ours: self-play data only", c: "--c-self"},
+  ours_main: {label: "Ours: + rewrites + logged drafts", c: "--c-main"},
+};
+const M2S = {
+  rung0_rule: {label: "Keyword rules", c: "--c-rule"},
+  rung2_embed: {label: "Frozen e5 embeddings + LR", c: "--c-embed"},
+  rung1_tfidf: {label: "TF-IDF + logistic regression", c: "--c-tfidf"},
+  ours: {label: "Ours: mDeBERTa multi-head", c: "--c-main"},
+};
+const TEACHER = {label: "Second teacher (Opus vs Sonnet)", c: "--c-teacher"};
+
+function el(tag, attrs = {}, parent) {
+  const e = document.createElementNS(NS, tag);
+  for (const [k, v] of Object.entries(attrs)) if (v != null) e.setAttribute(k, v);
+  if (parent) parent.appendChild(e);
+  return e;
+}
+function text(parent, x, y, s, o = {}) {
+  const t = el("text", {x, y, fill: o.fill || css("--ink-2"), "font-size": o.size || 12, "text-anchor": o.anchor || "start",
+    "font-weight": o.weight, "dominant-baseline": o.base || "middle", "font-family": "system-ui, -apple-system, Segoe UI, sans-serif",
+    stroke: o.halo ? css("--surface") : null, "stroke-width": o.halo ? 3 : null, "paint-order": o.halo ? "stroke" : null,
+    "stroke-linejoin": o.halo ? "round" : null}, parent);
+  t.textContent = s;
+  return t;
+}
+const _cv = document.createElement("canvas").getContext("2d");
+function measure(str, size) { _cv.font = `${size}px system-ui, -apple-system, "Segoe UI", sans-serif`; return _cv.measureText(str).width; }
+function svg(w, h) { return el("svg", {viewBox: `0 0 ${w} ${h}`, role: "img"}); }
+// bar with 4px rounded data end, square at the baseline (x0)
+function hbar(g, x0, x1, y, h, fill) {
+  const w = Math.max(0, x1 - x0), r = Math.min(4, w / 2, h / 2);
+  if (w <= 0) return el("rect", {x: x0, y, width: 0, height: h}, g);
+  return el("path", {d: `M${x0},${y}H${x0 + w - r}Q${x0 + w},${y} ${x0 + w},${y + r}V${y + h - r}Q${x0 + w},${y + h} ${x0 + w - r},${y + h}H${x0}Z`, fill}, g);
+}
+const tipEl = document.getElementById("tip");
+function tip(node, html) {
+  node.style.cursor = "default";
+  node.addEventListener("mousemove", ev => {
+    tipEl.innerHTML = html; tipEl.style.display = "block";
+    const x = Math.min(ev.clientX + 14, innerWidth - tipEl.offsetWidth - 8);
+    tipEl.style.left = x + "px"; tipEl.style.top = (ev.clientY + 14) + "px";
+  });
+  node.addEventListener("mouseleave", () => { tipEl.style.display = "none"; });
+}
+function legend(host, items) {
+  const d = document.createElement("div"); d.className = "legend";
+  for (const it of items) {
+    const s = document.createElement("span"), i = document.createElement("i");
+    if (it.kind === "dia") i.className = "dia";
+    if (it.kind === "line") i.className = "line";
+    i.style.background = css(it.c);
+    s.append(i, document.createTextNode(it.label)); d.appendChild(s);
+  }
+  host.appendChild(d);
+}
+function table(host, head, rows) {
+  const det = document.createElement("details"), sum = document.createElement("summary");
+  sum.textContent = "Numbers"; det.appendChild(sum);
+  const t = document.createElement("table"), tr = t.insertRow();
+  head.forEach(h => { const th = document.createElement("th"); th.textContent = h; tr.appendChild(th); });
+  rows.forEach(r => { const row = t.insertRow(); r.forEach((v, i) => { const c = row.insertCell(); c.textContent = v; if (i) c.className = "n"; }); });
+  det.appendChild(t); host.appendChild(det);
+}
+
+// ---------- chart types ----------
+// Grouped horizontal bars: groups = [{label, values: {key: v}}], series = [{key, label, c}], marker = {key: v} per group (teacher tick)
+function groupedBars(host, {groups, series, marker, markerLabel, fmt = f2, max = 1, axisLabel}) {
+  const W = 760, R = 60, bh = 11, gap = 2, pad = 16;
+  const L = Math.min(330, Math.max(150, ...groups.map(g => measure(g.label, 12.5))) + 24);
+  const groupH = series.length * (bh + gap) - gap;
+  const H = 28 + groups.length * (groupH + pad * 2) + 24;
+  const s = svg(W, H), x = v => L + (v / max) * (W - L - R);
+  for (let t = 0; t <= 1.0001; t += 0.25) {
+    const xx = x(t * max);
+    el("line", {x1: xx, x2: xx, y1: 18, y2: H - 22, stroke: css("--grid"), "stroke-width": 1}, s);
+    text(s, xx, H - 10, fmt === pct ? Math.round(t * max * 100) + "%" : (t * max).toFixed(2), {anchor: "middle", fill: css("--muted"), size: 11});
+  }
+  if (axisLabel) text(s, W - R, 8, axisLabel, {anchor: "end", fill: css("--muted"), size: 11});
+  let y = 24;
+  for (const g of groups) {
+    const top = y + pad;
+    text(s, L - 12, top + groupH / 2, g.label, {anchor: "end", fill: css("--ink"), size: 12.5});
+    series.forEach((se, i) => {
+      const v = g.values[se.key], yy = top + i * (bh + gap);
+      const hit = el("rect", {x: L, y: yy - 1, width: W - L - R + 50, height: bh + 2, fill: "transparent"}, s);
+      if (v == null) { text(s, L + 4, yy + bh / 2, "n/a", {fill: css("--muted"), size: 10.5}); }
+      else {
+        hbar(s, L, x(v), yy, bh, css(se.c));
+        text(s, x(v) + 5, yy + bh / 2 + 0.5, fmt(v), {size: 10.5, fill: css("--ink-2"), halo: true});
+      }
+      tip(hit, `<b>${se.label}</b><br>${g.label}: ${v == null ? "not applicable" : fmt(v)}`);
+    });
+    if (marker && marker[g.label] != null) {
+      const mx = x(marker[g.label]);
+      el("line", {x1: mx, x2: mx, y1: top - 5, y2: top + groupH + 5, stroke: css("--c-teacher"), "stroke-width": 2, "stroke-linecap": "round"}, s);
+      const hit = el("rect", {x: mx - 5, y: top - 6, width: 10, height: groupH + 12, fill: "transparent"}, s);
+      tip(hit, `<b>${markerLabel}</b><br>${g.label}: ${fmt(marker[g.label])}`);
+    }
+    y += groupH + pad * 2;
+    if (g !== groups[groups.length - 1]) el("line", {x1: 8, x2: W - 8, y1: y - pad + 8, y2: y - pad + 8, stroke: css("--grid"), "stroke-width": 1}, s);
+  }
+  host.appendChild(s);
+  return s;
+}
+
+// x/y trade-off plot: curves = [{c, label, pts:[{x,y,tip}]}], points = [{x,y,c,label,shape,dx,dy,anchor,tip}]
+function tradeoff(host, {W = 760, H = 420, xmax, ymax = 1, xlabel, ylabel, curves, points, better}) {
+  const L = 56, R = 20, T = 18, B = 46;
+  const s = svg(W, H), x = v => L + v / xmax * (W - L - R), y = v => T + (1 - v / ymax) * (H - T - B);
+  for (let i = 0; i <= 5; i++) {
+    const xv = xmax * i / 5, yv = ymax * i / 5;
+    el("line", {x1: x(xv), x2: x(xv), y1: T, y2: H - B, stroke: css("--grid")}, s);
+    el("line", {x1: L, x2: W - R, y1: y(yv), y2: y(yv), stroke: css("--grid")}, s);
+    text(s, x(xv), H - B + 14, Math.round(xv * 100) + "%", {anchor: "middle", fill: css("--muted"), size: 11});
+    text(s, L - 8, y(yv), Math.round(yv * 100) + "%", {anchor: "end", fill: css("--muted"), size: 11});
+  }
+  el("line", {x1: L, x2: W - R, y1: H - B, y2: H - B, stroke: css("--axis")}, s);
+  el("line", {x1: L, x2: L, y1: T, y2: H - B, stroke: css("--axis")}, s);
+  text(s, (L + W - R) / 2, H - 10, xlabel, {anchor: "middle", fill: css("--ink-2"), size: 12});
+  const yl = text(s, 14, (T + H - B) / 2, ylabel, {anchor: "middle", fill: css("--ink-2"), size: 12});
+  yl.setAttribute("transform", `rotate(-90 14 ${(T + H - B) / 2})`);
+  if (better) text(s, better.x === "left" ? L + 8 : W - R - 8, better.y === "top" ? T + 10 : H - B - 10, better.text,
+    {anchor: better.x === "left" ? "start" : "end", fill: css("--muted"), size: 11});
+  for (const cv of curves) {
+    const d = cv.pts.map((p, i) => `${i ? "L" : "M"}${x(p.x).toFixed(1)},${y(p.y).toFixed(1)}`).join("");
+    el("path", {d, fill: "none", stroke: css(cv.c), "stroke-width": 2, "stroke-linejoin": "round", "stroke-linecap": "round"}, s);
+    if (cv.end) { const e = cv.pts[cv.end.at === "start" ? 0 : cv.pts.length - 1];
+      text(s, x(e.x) + (cv.end.dx ?? 8), y(e.y) + (cv.end.dy ?? 0), cv.end.label, {anchor: cv.end.anchor || "start", fill: css("--ink"), size: 12, halo: true}); }
+    for (const p of cv.pts) {
+      const h = el("circle", {cx: x(p.x), cy: y(p.y), r: 7, fill: "transparent"}, s);
+      tip(h, `<b>${cv.label}</b><br>${p.tip}`);
+    }
+  }
+  for (const p of points) {
+    const cx = x(p.x), cy = y(p.y), fill = css(p.c), ring = css("--surface");
+    let m;
+    if (p.shape === "dia") m = el("rect", {x: cx - 5.5, y: cy - 5.5, width: 11, height: 11, fill, stroke: ring, "stroke-width": 2, transform: `rotate(45 ${cx} ${cy})`}, s);
+    else m = el("circle", {cx, cy, r: p.r || 5.5, fill, stroke: ring, "stroke-width": 2}, s);
+    if (p.leader) el("line", {x1: cx, y1: cy + 7, x2: cx + p.dx - 3, y2: cy + p.dy - 6, stroke: css("--muted"), "stroke-width": 1}, s);
+    if (p.label) text(s, cx + (p.dx ?? 10), cy + (p.dy ?? 0), p.label, {anchor: p.anchor || "start", fill: css("--ink"), size: 12, halo: true});
+    const h = el("circle", {cx, cy, r: 11, fill: "transparent"}, s);
+    tip(h, p.tip);
+  }
+  host.appendChild(s);
+  return s;
+}
+
+// dot strip: rows = [{label, sub: [{c, label, seeds:[..], ens}]}]
+function seedStrip(host, {rows, fmt = f3}) {
+  const W = 760, L = 210, R = 30, sh = 20, pad = 12;
+  const H = 30 + rows.length * (rows[0].sub.length * sh + pad * 2) + 20;
+  const s = svg(W, H), x = v => L + v * (W - L - R);
+  for (let t = 0; t <= 1.0001; t += 0.2) {
+    el("line", {x1: x(t), x2: x(t), y1: 18, y2: H - 22, stroke: css("--grid")}, s);
+    text(s, x(t), H - 10, t.toFixed(1), {anchor: "middle", fill: css("--muted"), size: 11});
+  }
+  let y = 24;
+  for (const r of rows) {
+    const top = y + pad;
+    text(s, L - 12, top + r.sub.length * sh / 2, r.label, {anchor: "end", fill: css("--ink"), size: 12.5});
+    r.sub.forEach((sb, i) => {
+      const cy = top + i * sh + sh / 2, lo = Math.min(...sb.seeds), hi = Math.max(...sb.seeds);
+      el("line", {x1: x(lo), x2: x(hi), y1: cy, y2: cy, stroke: css(sb.c), "stroke-width": 2, "stroke-linecap": "round", opacity: 0.45}, s);
+      sb.seeds.forEach(v => el("circle", {cx: x(v), cy, r: 4.5, fill: css("--surface"), stroke: css(sb.c), "stroke-width": 2}, s));
+      el("circle", {cx: x(sb.ens), cy, r: 6, fill: css(sb.c), stroke: css("--surface"), "stroke-width": 2}, s);
+      const h = el("rect", {x: L, y: cy - sh / 2, width: W - L - R, height: sh, fill: "transparent"}, s);
+      tip(h, `<b>${sb.label}</b> · ${r.label}<br>seeds: ${sb.seeds.map(fmt).join(", ")}<br>ensemble: ${fmt(sb.ens)}`);
+    });
+    y += r.sub.length * sh + pad * 2;
+  }
+  host.appendChild(s);
+  return s;
+}
+
+// pipeline + architecture diagram
+function pipeline(host) {
+  const W = 760, H = 430, s = svg(W, H);
+  const ink = css("--ink"), ink2 = css("--ink-2"), line = css("--axis"), surf = css("--surface"), acc = css("--c-main");
+  el("defs", {}, s).innerHTML = `<marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" fill="${css("--muted")}"/></marker>`;
+  const box = (x, y, w, h, title, lines, hl) => {
+    el("rect", {x, y, width: w, height: h, rx: 8, fill: surf, stroke: hl ? acc : line, "stroke-width": hl ? 2 : 1}, s);
+    text(s, x + 10, y + 16, title, {fill: ink, size: 12.5, weight: 600});
+    lines.forEach((l, i) => text(s, x + 10, y + 34 + i * 15, l, {fill: ink2, size: 11.5}));
+  };
+  const arrow = (x1, y1, x2, y2) => el("line", {x1, y1, x2, y2, stroke: css("--muted"), "stroke-width": 1.5, "marker-end": "url(#ar)"}, s);
+  text(s, 0, 10, "Training pipeline (both M2 and M3)", {fill: ink, size: 13, weight: 600});
+  box(0, 24, 170, 84, "1 Self-play logs", ["an LLM plays the full game;", "engine, narrator and the old", "LLM guard run as normal"]);
+  box(196, 24, 178, 84, "2 Teacher labels", ["M3: Claude Sonnet, per segment", "(Opus re-labels 150 turns)", "M2: DeepSeek review teacher"]);
+  box(400, 24, 170, 84, "3 Rare positives (M3)", ["DeepSeek rewrites clean text", "into violations; Claude keeps", "only those it confirms"]);
+  box(596, 24, 164, 84, "4 Student model", ["mDeBERTa-v3-base,", "fully fine-tuned, multi-head;", "3 seeds, averaged"], true);
+  arrow(170, 66, 194, 66); arrow(374, 66, 398, 66); arrow(570, 66, 594, 66);
+  text(s, 0, 140, "M3 narration guard: learned perception + the game's own rules", {fill: ink, size: 13, weight: 600});
+  box(0, 156, 230, 112, "Input (one narration segment)", ["[kind:speaker] segment text", "</s>", "player input || scene || end of", "previous passage || who heard what"]);
+  box(262, 156, 150, 112, "Encoder", ["mDeBERTa-v3-base", "(~280M parameters)", "max 512 tokens"], true);
+  box(444, 156, 316, 112, "Heads on [CLS] ⊕ segment mean", ["facts: which of 10 secrets it states", "overreach: acts or speaks for the player", "contradiction: against scene / setting", "per token: where the violation is (span)"]);
+  arrow(230, 212, 260, 212); arrow(412, 212, 442, 212);
+  box(444, 300, 316, 112, "Rules (deterministic, from the engine)", ["fact not yet allowed, not the ending → leak", "else contradiction → contradiction", "else overreach (opening/ending exempt)", "else consistent"]);
+  arrow(602, 268, 602, 298);
+  box(0, 300, 412, 112, "Output, same format as the game's guard", ["{index, label, fact, span, confidence} per segment", "→ the engine sends the passage back with hints", "   (\"segment 3: premature_leak (leo_dead)\")", "→ after 2 failed rewrites, only that segment is replaced"]);
+  arrow(442, 356, 414, 356);
+  host.appendChild(s);
+  return s;
+}
+
+// ---------- figures ----------
+const m3 = D.m3, m2 = D.m2, sys = Object.fromEntries(m3.systems.map(r => [r.key, r]));
+const order = ["rule", "deepseek", "tfidf", "ours_selfplay", "ours_main"];
+const T = m3.teacher;
+
+const FIGS = [
+  {id: "pipeline", title: "How the models are trained",
+   claim: "A small local encoder learns what each segment says; the game's own rules decide whether it is allowed.",
+   draw(host) { return pipeline(host); },
+   caption: "Steps 1–4 are shared by M2 (player input) and M3 (narration). Splitting M3 into perception plus rules means the model never needs the list of facts the story currently allows: that list changes as the story moves, and the rules read it at run time.",
+   table: null},
+
+  {id: "tradeoff", title: "M3: sending back bad passages without blocking good ones",
+   claim: `Self-play-only guard: ${pct(sys.ours_selfplay.passage_false_reject)} of clean passages sent back, ${pct(sys.ours_selfplay.passage_recall)} of bad ones caught. DeepSeek guard: ${pct(sys.deepseek.passage_false_reject)} and ${pct(sys.deepseek.passage_recall)}.`,
+   draw(host) {
+     legend(host, [{label: M3.ours_main.label, c: M3.ours_main.c, kind: "line"}, {label: M3.ours_selfplay.label, c: M3.ours_selfplay.c, kind: "line"},
+       {label: M3.tfidf.label, c: M3.tfidf.c}, {label: M3.deepseek.label, c: M3.deepseek.c}, {label: M3.rule.label, c: M3.rule.c},
+       {label: TEACHER.label, c: TEACHER.c, kind: "dia"}]);
+     const curve = k => ({c: M3[k].c, label: M3[k].label, pts: m3.sweep[k].map(p => ({x: p.false_reject, y: p.recall,
+       tip: `threshold ${p.threshold} on every head<br>clean passages sent back: ${pct(p.false_reject)}<br>bad passages caught: ${pct(p.recall)}`}))});
+     const pt = (k, o) => ({x: sys[k].passage_false_reject, y: sys[k].passage_recall, c: M3[k].c, ...o,
+       tip: `<b>${M3[k].label}</b><br>clean passages sent back: ${pct(sys[k].passage_false_reject)}<br>bad passages caught: ${pct(sys[k].passage_recall)}<br>passage F1: ${f3(sys[k].passage_F1)}`});
+     return tradeoff(host, {xmax: 0.5, xlabel: "Clean passages sent back (false reject) →  lower is better", ylabel: "Bad passages caught (recall)",
+       curves: [curve("ours_main"), curve("ours_selfplay")],
+       points: [pt("rule", {label: "Rules"}), pt("deepseek", {label: "DeepSeek guard", dy: 2}), pt("tfidf", {label: "TF-IDF", dy: 14, dx: 8}),
+         pt("ours_selfplay", {r: 6.5, label: "Ours, self-play only", dx: 22, dy: 48, leader: true}), pt("ours_main", {r: 6.5, label: "Ours, + rewrites", dx: 10, dy: 16}),
+         {x: T.passage_false_reject, y: T.passage_recall, c: TEACHER.c, shape: "dia", label: "Second teacher", dx: 10, dy: -10,
+          tip: `<b>${TEACHER.label}</b><br>${T.n_turns} test turns only<br>clean passages sent back: ${pct(T.passage_false_reject)}<br>bad passages caught: ${pct(T.passage_recall)}`}],
+       better: {x: "left", y: "top", text: "← better: catches more, blocks less"}});
+   },
+   caption: () => `Test: ${m3.test_stats.turns} turns (passages), ${m3.test_stats.turns_gold_rejected} of which the teacher would send back. A passage is sent back if any segment fails. Lines: one threshold applied to every head, swept 0.05–0.95; large dots: the thresholds chosen on validation. Baselines give hard decisions, so they are single points. The second teacher was run on 150 of the 530 turns.`,
+   table: () => [["System", "Sent back (clean)", "Caught (bad)", "Passage F1"],
+     ...order.map(k => [M3[k].label, pct(sys[k].passage_false_reject), pct(sys[k].passage_recall), f3(sys[k].passage_F1)]),
+     [TEACHER.label + ", 150 turns", pct(T.passage_false_reject), pct(T.passage_recall), f3(T.passage_F1)]]},
+
+  {id: "headline", title: "M3: the three numbers the game cares about",
+   claim: `Both of our guards catch about 4 in 5 premature leaks (DeepSeek: ${pct(sys.deepseek.leak_recall)}), and ours with rewrites has the best verdict macro-F1.`,
+   draw(host) {
+     const series = order.map(k => ({key: k, label: M3[k].label, c: M3[k].c}));
+     legend(host, [...series.map(s => ({label: s.label, c: s.c})), {label: TEACHER.label + " (tick)", c: TEACHER.c, kind: "line"}]);
+     return groupedBars(host, {fmt: pct, series, markerLabel: TEACHER.label + " (150 turns)",
+       marker: {"Premature leaks caught": T.leak_recall, "Verdict macro-F1": T.verdict_macroF1, "Clean passages sent back (lower = better)": T.passage_false_reject},
+       groups: [
+         {label: "Premature leaks caught", values: Object.fromEntries(order.map(k => [k, sys[k].leak_recall]))},
+         {label: "Verdict macro-F1", values: Object.fromEntries(order.map(k => [k, sys[k].verdict_macroF1]))},
+         {label: "Clean passages sent back (lower = better)", values: Object.fromEntries(order.map(k => [k, sys[k].passage_false_reject]))},
+       ]});
+   },
+   caption: () => `Test, ${m3.test_stats.segments} segments. Verdict macro-F1 averages the F1 of the four verdicts (consistent, premature leak, contradiction, player overreach); the teacher's gold counts are ${Object.entries(m3.test_stats.gold_verdicts).map(([k, v]) => k + " " + v).join(", ")}. Black tick: the second teacher on its 150-turn sample, a ceiling rather than a competitor.`,
+   table: () => [["System", "Leaks caught", "Verdict macro-F1", "Segment false alarm", "Clean passages sent back"],
+     ...order.map(k => [M3[k].label, pct(sys[k].leak_recall), f3(sys[k].verdict_macroF1), pct(sys[k].verdict_false_alarm), pct(sys[k].passage_false_reject)]),
+     [TEACHER.label, pct(T.leak_recall), f3(T.verdict_macroF1), "—", pct(T.passage_false_reject)]]},
+
+  {id: "heads", title: "M3: each perception head against the teacher ceiling",
+   claim: "Facts are learned close to the ceiling; overreach is learned about as well as two teachers agree; contradiction is not learned.",
+   draw(host) {
+     const series = order.map(k => ({key: k, label: M3[k].label, c: M3[k].c}));
+     legend(host, [...series.map(s => ({label: s.label, c: s.c})), {label: TEACHER.label + " (tick)", c: TEACHER.c, kind: "line"}]);
+     return groupedBars(host, {fmt: f2, series, markerLabel: TEACHER.label,
+       marker: {"Facts stated (micro-F1)": T.facts_microF1, "Overreach (F1)": T.overreach_F1, "Contradiction (F1)": T.contradiction_F1},
+       groups: [
+         {label: "Facts stated (micro-F1)", values: Object.fromEntries(order.map(k => [k, sys[k].facts_microF1]))},
+         {label: "Overreach (F1)", values: Object.fromEntries(order.map(k => [k, sys[k].overreach_F1]))},
+         {label: "Contradiction (F1)", values: Object.fromEntries(order.map(k => [k, sys[k].contradiction_F1]))},
+       ]});
+   },
+   caption: () => `Test segments: ${m3.data_stats.test.states_a_fact} state a secret fact, ${m3.data_stats.test.overreach} overreach, ${m3.data_stats.test.contradiction} contradict. The second teacher agrees with the first on contradiction only at F1 ${f2(T.contradiction_F1)}: the task itself is ill-defined, so this head is reported as a limitation.`,
+   table: () => [["System", "Facts µF1", "Overreach F1", "Overreach AP", "Contradiction F1", "Contradiction AP"],
+     ...order.map(k => [M3[k].label, f3(sys[k].facts_microF1), f3(sys[k].overreach_F1), f3(sys[k].overreach_AP), f3(sys[k].contradiction_F1), f3(sys[k].contradiction_AP)]),
+     [TEACHER.label, f3(T.facts_microF1), f3(T.overreach_F1), "—", f3(T.contradiction_F1), "—"]]},
+
+  {id: "logged", title: "M3: on the drafts the game's guard really blocked",
+   claim: () => { const L = Object.fromEntries(m3.logged.map(r => [r.key, r])); return `Training on rewrites lifts verdict macro-F1 on real blocked drafts from ${f2(L.ours_selfplay.verdict_macroF1)} to ${f2(L.ours_main.verdict_macroF1)}.`; },
+   draw(host) {
+     const ks = ["rule", "tfidf", "ours_selfplay", "ours_main"], L = Object.fromEntries(m3.logged.map(r => [r.key, r]));
+     const series = ks.map(k => ({key: k, label: M3[k].label, c: M3[k].c}));
+     legend(host, series.map(s => ({label: s.label, c: s.c})));
+     return groupedBars(host, {fmt: f2, series, groups: [
+       {label: "Verdict macro-F1", values: Object.fromEntries(ks.map(k => [k, L[k].verdict_macroF1]))},
+       {label: "Overreach recall", values: Object.fromEntries(ks.map(k => [k, L[k].overreach_recall]))},
+       {label: "Contradiction recall", values: Object.fromEntries(ks.map(k => [k, L[k].contradiction_recall]))},
+     ]});
+   },
+   caption: () => `test_logged: ${m3.data_stats.test_logged.n} segments the game's LLM guard flagged in the held-out sessions, re-labelled by the teacher (${m3.data_stats.test_logged.overreach} overreach, ${m3.data_stats.test_logged.contradiction} contradiction). The DeepSeek guard is not shown: these are its own flags.`,
+   table: () => [["System", "Verdict macro-F1", "Overreach recall", "Contradiction recall", "Leak recall"],
+     ...m3.logged.map(r => [M3[r.key].label, f3(r.verdict_macroF1), f3(r.overreach_recall), f3(r.contradiction_recall), f3(r.leak_recall)])]},
+
+  {id: "where", title: "M3: when it sends a passage back, does it point at the right sentence?",
+   claim: () => `In ${pct(m3.localisation.ours_main.at_least_one_right_segment)} of correctly sent-back passages it names at least one right segment, and the violation type is right ${pct(m3.localisation.ours_main.label_right)} of the time.`,
+   draw(host) {
+     const ks = ["ours_selfplay", "ours_main"], Lc = m3.localisation;
+     const series = ks.map(k => ({key: k, label: M3[k].label, c: M3[k].c}));
+     legend(host, series.map(s => ({label: s.label, c: s.c})));
+     const g = (label, f) => ({label, values: Object.fromEntries(ks.map(k => [k, Lc[k][f]]))});
+     return groupedBars(host, {fmt: pct, series, groups: [
+       g("At least one right segment", "at_least_one_right_segment"), g("Exactly the right segments", "exactly_right_segments"),
+       g("Flagged segments that are bad", "segment_precision"), g("Bad segments that are flagged", "segment_recall"),
+       g("Violation type right", "label_right"), g("Leak: names the right secret", "leak_fact_right"),
+       g("Overreach span (char-F1)", "overreach_span_charF1"), g("Contradiction span (char-F1)", "contradiction_span_charF1")]});
+   },
+   caption: () => `Computed on the ${m3.localisation.ours_main.turns_rejected_by_both} test turns that both the teacher and the model send back. The engine's rewrite hints and its fallback repair work at segment level ("segment 3: premature_leak (leo_dead)"); spans are an extra hint. Leaks are located to the segment only: the facts head has no span tagger.`,
+   table: () => [["Measure", M3.ours_selfplay.label, M3.ours_main.label],
+     ...["turns_rejected_by_both", "at_least_one_right_segment", "exactly_right_segments", "segment_precision", "segment_recall", "label_right", "leak_fact_right", "overreach_span_charF1", "contradiction_span_charF1"]
+       .map(k => [k, ...["ours_selfplay", "ours_main"].map(s => k === "turns_rejected_by_both" ? String(m3.localisation[s][k]) : pct(m3.localisation[s][k]))])]},
+
+  {id: "seeds", title: "M3: three seeds disagree; their average is stable",
+   claim: "Single seeds spread widely on the same data; averaging their probabilities beats the average seed on every measure, for both models.",
+   draw(host) {
+     legend(host, [{label: M3.ours_main.label, c: M3.ours_main.c}, {label: M3.ours_selfplay.label, c: M3.ours_selfplay.c},
+       {label: "hollow = one seed, filled = 3-seed ensemble", c: "--muted"}]);
+     const S = m3.seeds, keys = [["facts_microF1", "Facts micro-F1"], ["overreach_AP", "Overreach AP"], ["contradiction_AP", "Contradiction AP"],
+       ["verdict_macroF1", "Verdict macro-F1"], ["leak_recall", "Leak recall"], ["passage_false_reject", "Clean passages sent back"]];
+     return seedStrip(host, {rows: keys.map(([k, lab]) => ({label: lab, sub: ["ours_main", "ours_selfplay"].map(g => ({
+       c: M3[g].c, label: M3[g].label, seeds: S[g].seeds.map(x => x[k]), ens: S[g].ensemble[k]}))}))});
+   },
+   caption: "Test set, thresholds chosen on real-source validation for each run. AP: average precision (area under the precision–recall curve), independent of the threshold.",
+   table: () => { const S = m3.seeds; return [["Run", "Facts µF1", "Overreach AP", "Contra. AP", "Verdict F1", "Leak recall", "Sent back"],
+     ...["ours_main", "ours_selfplay"].flatMap(g => [...S[g].seeds.map((x, i) => [`${M3[g].label}, seed ${i}`, ...Object.values(x).map(f3)]),
+       [`${M3[g].label}, ensemble`, ...Object.values(S[g].ensemble).map(f3)]])]; }},
+
+  {id: "compliance", title: "M2 compliance: sending back a valid input vs letting a violation through",
+   claim: () => `On test: ${pct(m2.compliance.test.ours.false_reject)} of valid inputs rejected, ${pct(m2.compliance.test.ours.miss)} of violations missed, AUROC ${f2(m2.compliance.test.ours.auroc)}; keyword rules miss ${pct(m2.compliance.test.baselines.find(b => b.key === "rung0_rule").miss)}. On the seed set (a different source) the gain over rules disappears.`,
+   draw(host) {
+     legend(host, [{label: M2S.ours.label + " (mean of 3 seeds)", c: M2S.ours.c, kind: "line"}, {label: M2S.rung1_tfidf.label, c: M2S.rung1_tfidf.c},
+       {label: M2S.rung2_embed.label, c: M2S.rung2_embed.c}, {label: M2S.rung0_rule.label, c: M2S.rung0_rule.c}]);
+     const wrap = document.createElement("div");
+     wrap.style.cssText = "display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px";
+     host.appendChild(wrap);
+     const short = {rung0_rule: "Rules", rung1_tfidf: "TF-IDF", rung2_embed: "e5 + LR"};
+     const offs = {test: {rung0_rule: [8, -10], rung1_tfidf: [8, 0], rung2_embed: [8, 0]}, seeds: {rung0_rule: [8, 14], rung1_tfidf: [8, -10], rung2_embed: [-8, -12]}};
+     let last;
+     for (const sp of ["test", "seeds"]) {
+       const c = m2.compliance[sp], box = document.createElement("div");
+       const h = document.createElement("div"); h.style.cssText = "font-size:13px;color:var(--ink-2);margin-bottom:2px";
+       h.textContent = sp === "test" ? `Test: ${c.n_ok + c.n_violation} turns, ${c.n_violation} violations` : `Seed set (different source): ${c.n_ok + c.n_violation} turns, ${c.n_violation} violations`;
+       box.appendChild(h); wrap.appendChild(box);
+       last = tradeoff(box, {W: 380, H: 330, xmax: sp === "test" ? 0.1 : 0.5, xlabel: "Valid inputs rejected", ylabel: "Violations missed",
+         curves: [{c: M2S.ours.c, label: M2S.ours.label, pts: c.curve_mean_of_3_seeds.map(p => ({x: p.false_reject, y: p.miss,
+           tip: `reject when P(ok) < ${p.threshold}<br>valid rejected: ${pct(p.false_reject)}<br>violations missed: ${pct(p.miss)}`}))}],
+         points: [...c.baselines.map(b => ({x: b.false_reject, y: b.miss, c: M2S[b.key].c, label: short[b.key], dx: offs[sp][b.key][0], dy: offs[sp][b.key][1],
+             anchor: offs[sp][b.key][0] < 0 ? "end" : "start", tip: `<b>${b.label}</b><br>valid rejected: ${pct(b.false_reject)}<br>violations missed: ${pct(b.miss)}`})),
+           {x: c.ours.false_reject, y: c.ours.miss, c: M2S.ours.c, r: 6.5, label: "Ours", dx: 10, dy: sp === "test" ? -10 : -16,
+            tip: `<b>${M2S.ours.label}</b> (default decision)<br>valid rejected: ${pct(c.ours.false_reject)}<br>violations missed: ${pct(c.ours.miss)}<br>AUROC ${f3(c.ours.auroc)}`}],
+         better: {x: "left", y: "bottom", text: "↙ better"}});
+     }
+     return last;
+   },
+   caption: "The design ranks false rejects first (\"reject narrowly\"), misses second. Line: our model's trade-off as the rejection threshold on P(ok) moves; large dot: its default decision. The seed set is 103 example inputs imported from the design phase (written by Claude Sonnet in English and Chinese, plus the review evals), teacher-labelled the same way: a different style from the self-play turns the model was trained on.",
+   table: () => [["Split", "System", "Valid rejected", "Violations missed", "AUROC"],
+     ...["test", "seeds"].flatMap(sp => [[sp, M2S.ours.label, pct(m2.compliance[sp].ours.false_reject), pct(m2.compliance[sp].ours.miss), f3(m2.compliance[sp].ours.auroc)],
+       ...m2.compliance[sp].baselines.map(b => [sp, b.label, pct(b.false_reject), pct(b.miss), "—"])])]},
+
+  {id: "understanding", title: "M2 understanding: every head of the multi-head model",
+   claim: () => { const a = m2.understanding.find(r => r.metric === "addressee_acc"), s = m2.understanding.find(r => r.metric === "seg_charF1");
+     return `The fine-tuned model leads on 6 of 7 heads; the largest gains are segmentation (${f2(s.ours)} vs ${f2(s.rung1_tfidf)}) and addressee (${f2(a.ours)} vs ${f2(a.rung1_tfidf)}).`; },
+   draw(host) {
+     const ks = ["rung0_rule", "rung2_embed", "rung1_tfidf", "ours"], series = ks.map(k => ({key: k, label: M2S[k].label, c: M2S[k].c}));
+     legend(host, series.map(s => ({label: s.label, c: s.c})));
+     return groupedBars(host, {fmt: f2, series, groups: m2.understanding.filter(r => r.metric !== "validity_auroc")
+       .map(r => ({label: r.label, values: Object.fromEntries(ks.map(k => [k, r[k]]))}))});
+   },
+   caption: () => `Test: ${m2.test_n} player turns. Ours is the mean of 3 seeds of the full model (understanding + compliance heads, 30 epochs). QWK: quadratic-weighted kappa. Topics is a tie with TF-IDF.`,
+   table: () => [["Head", ...["rung0_rule", "rung2_embed", "rung1_tfidf", "ours"].map(k => M2S[k].label), "Ours, per seed"],
+     ...m2.understanding.map(r => [r.label, f3(r.rung0_rule), f3(r.rung2_embed), f3(r.rung1_tfidf), f3(r.ours), r.ours_seeds.map(f3).join(" / ")])]},
+];
+
+function render() {
+  const host = document.getElementById("figs"), toc = document.getElementById("toc");
+  host.innerHTML = ""; toc.innerHTML = "";
+  FIGS.forEach((f, i) => {
+    const sec = document.createElement("section"); sec.className = "fig"; sec.id = f.id;
+    const h = document.createElement("h2"); h.textContent = `Figure ${i + 1}. ${f.title}`;
+    const c = document.createElement("p"); c.className = "claim"; c.textContent = typeof f.claim === "function" ? f.claim() : f.claim;
+    const chart = document.createElement("div"); chart.className = "chart";
+    sec.append(h, c, chart);
+    const node = f.draw(chart);
+    const cap = document.createElement("p"); cap.className = "caption"; cap.textContent = typeof f.caption === "function" ? f.caption() : f.caption;
+    sec.appendChild(cap);
+    if (f.table) { const t = f.table(); table(sec, t[0], t.slice(1)); }
+    const tools = document.createElement("div"); tools.className = "tools";
+    const b = document.createElement("button"); b.textContent = "Download SVG";
+    b.onclick = () => {
+      const svgs = chart.querySelectorAll("svg");
+      svgs.forEach((sv, j) => {
+        const clone = sv.cloneNode(true); clone.setAttribute("xmlns", NS);
+        const r = el("rect", {x: -4, y: -4, width: "110%", height: "110%", fill: css("--surface")}); clone.insertBefore(r, clone.firstChild);
+        const blob = new Blob([clone.outerHTML], {type: "image/svg+xml"}), a = document.createElement("a");
+        a.href = URL.createObjectURL(blob); a.download = `fig${i + 1}-${f.id}${svgs.length > 1 ? "-" + (j + 1) : ""}.svg`; a.click();
+      });
+    };
+    tools.appendChild(b); sec.appendChild(tools);
+    host.appendChild(sec);
+    const li = document.createElement("li"), a = document.createElement("a"); a.href = "#" + f.id; a.textContent = f.title; li.appendChild(a); toc.appendChild(li);
+  });
+}
+render();
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", render);
+new MutationObserver(render).observe(document.documentElement, {attributes: true, attributeFilter: ["data-theme"]});
+</script>
+</body>
+</html>

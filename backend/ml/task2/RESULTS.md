@@ -1,5 +1,7 @@
 # Task 2 results (status 2026-11-12, batch 5 in)
 
+> Superseded for the final report by `final/FINAL.md` (2026-11-25: M2 compliance, M3 narration guard, all figures in `final/figures.html`).
+
 Numbers behind the M2 part of the midterm report. All scores are against the teacher's labels (review v1,
 deepseek-flash). `test_v1` is the frozen first test split (129 turns from 5 held-out sessions) and is the
 only split comparable across all batches. The raw run outputs (`metrics.json`, `train_log.jsonl`) and the
