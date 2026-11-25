@@ -7,6 +7,7 @@ not the guard's input (GuardContext) or the drafts it rejected. So each record c
   - scene: rooms, who is present, crate, phones, Nora's call, heard_by, and who moved this turn (from the previous state)
   - previous_passage: the text of the passage before, for "contradicts what was just said"
   - opening / ending flags (the guard exempts authored player actions there)
+  - revealed: facts revealed by the end of the turn (GuardContext.allowed is not logged; this stands in for it)
 plus the logged guard verdicts (the first attempt's failures keep their offending span: real positives) and the split.
 
     uv run python -m ml.task2.gen.m3_export [--raw DIR]
@@ -79,6 +80,8 @@ def main() -> int:
                     "player_input": ({k: ch.get(k) or "" for k in ("speech", "action", "expression")} | {"addressee": ch.get("addressee")}) if ch else None,
                     "scene": scene_of(state, prev_state), "previous_passage": prev_text,
                     "opening": t["turn"] == 0, "ending": ending,
+                    # facts revealed by the end of this turn: the closest logged stand-in for GuardContext.allowed
+                    "revealed": sorted(state.get("revealed") or []),
                     "narrator_model": (nar.get("meta") or {}).get("model"), "rewrites": nar.get("rewrites", 0), "repaired": nar.get("repaired", False),
                     "first_failures": [v for v in first if v.get("label") != "consistent"],
                     "last_verdicts": last if not nar.get("rewrites") or len(guard) > 1 else [],

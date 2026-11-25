@@ -9,7 +9,7 @@ independent questions instead:
   contradiction  the segment contradicts the fixed setting, the secret, the scene or the previous passage
 The setting, the secret and the fact ids are taken verbatim from guard_v1.md, so the definitions stay the guard's.
 
-    uv run python -m ml.task2.gen.m3_relabel [--model sonnet] [--split train,val,test] [--out NAME] [--limit N]
+    uv run python -m ml.task2.gen.m3_relabel [--model sonnet] [--split train,val,test] [--out NAME] [--limit N] [--sample N]
 Reads $TASK2_DATA/m3/turns.jsonl, writes $TASK2_DATA/m3/labels_<NAME>.jsonl (resumable).
 """
 from __future__ import annotations
@@ -104,10 +104,14 @@ def main() -> int:
     ap.add_argument("--out", default="sonnet")
     ap.add_argument("--concurrency", type=int, default=3)
     ap.add_argument("--limit", type=int, default=0)
+    ap.add_argument("--sample", type=int, default=0, help="a fixed random sample of N turns (seed 0), e.g. for a second teacher")
     a = ap.parse_args()
     splits = set(a.split.split(","))
     rows = [json.loads(l) for l in (DATA / "m3" / "turns.jsonl").read_text(encoding="utf-8").splitlines() if l.strip()]
     rows = [r for r in rows if r["split"] in splits]
+    if a.sample:
+        import random
+        rows = random.Random(0).sample(rows, min(a.sample, len(rows)))
     jobs = [{"id": r["id"], "user": payload(r), "meta": {"n": len(r["segments"]), "split": r["split"]}} for r in rows]
     if a.limit:
         jobs = jobs[:a.limit]
